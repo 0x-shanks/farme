@@ -3,6 +3,7 @@
 import {
   AssetRecordType,
   TLImageShape,
+  TLShapeId,
   Tldraw,
   track,
   useActions,
@@ -11,12 +12,23 @@ import {
 import {
   Box,
   Button,
+  Center,
+  Drawer,
+  DrawerBody,
+  DrawerCloseButton,
+  DrawerContent,
+  DrawerHeader,
+  DrawerOverlay,
+  GridItem,
   HStack,
   Icon,
   IconButton,
   Input,
+  SimpleGrid,
   Spacer,
+  Spinner,
   VStack,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { CiImageOn } from "react-icons/ci";
@@ -24,8 +36,33 @@ import { PiSticker } from "react-icons/pi";
 import { IoMdClose } from "react-icons/io";
 import { LuSave } from "react-icons/lu";
 import { create as createKubo } from "kubo-rpc-client";
+import { usePrivy } from "@privy-io/react-auth";
 
 export default function Home() {
+  const { ready, authenticated, login, user } = usePrivy();
+
+  console.log(user);
+
+  if (!ready) {
+    return (
+      <main>
+        <Center w="full" h="100dvh">
+          <Spinner />
+        </Center>
+      </main>
+    );
+  }
+
+  if (!authenticated) {
+    return (
+      <main>
+        <Center w="full" h="100dvh">
+          <Button onClick={login}>Sign in with Farcaster </Button>
+        </Center>
+      </main>
+    );
+  }
+
   return (
     <main>
       <Box w="full" h="100dvh">
@@ -48,8 +85,15 @@ export default function Home() {
 
 const Tools = track(() => {
   const editor = useEditor();
+  const {
+    isOpen: isStickerOpen,
+    onOpen: onStickerOpen,
+    onClose: onStickerClose,
+  } = useDisclosure();
   const [uploadedFile, setUploadedFile] = useState<File>();
+  const [uploadedShapeId, setUploadedShapeId] = useState<string>();
   const [selectedShapeId, setSelectedShapeId] = useState<string>();
+  const [fileName, setFileName] = useState<string>();
 
   const kubo = createKubo({ url: "https://ipfs-uploader.zora.co/api/v0" });
 
@@ -112,7 +156,6 @@ const Tools = track(() => {
         isLocked: true,
       }))
     );
-    console.log(editor.getCurrentPageShapes());
 
     const file = event.target.files?.[0];
     if (file == null) {
@@ -128,13 +171,15 @@ const Tools = track(() => {
       ignoreParent: false,
     });
 
-    setSelectedShapeId(editor.getSelectedShapeIds()[0]);
+    setUploadedShapeId(editor.getSelectedShapeIds()[0]);
+    setFileName(file.name);
   };
 
   const handleDeleteImage = () => {
     editor.deleteShapes(editor.getSelectedShapeIds());
     setUploadedFile(undefined);
-    setSelectedShapeId(undefined);
+    setUploadedShapeId(undefined);
+    setFileName("");
     const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
     editor.updateShapes(
       allShapeIds.map((s) => ({
@@ -147,8 +192,12 @@ const Tools = track(() => {
   };
 
   const handleDrop = async () => {
+    if (!uploadedShapeId) {
+      throw new Error("uploadedShapeId is not found");
+    }
+
     const res = await kubo.add({
-      path: uploadedFile?.name ?? "",
+      path: fileName ?? "",
       content: uploadedFile,
     });
 
@@ -158,9 +207,7 @@ const Tools = track(() => {
     const contractAddress = "0xabcdefg";
     const id = 1;
 
-    const shape = editor.getShape<TLImageShape>(
-      editor.getSelectedShapeIds()[0]
-    );
+    const shape = editor.getShape<TLImageShape>(uploadedShapeId as TLShapeId);
 
     if (!shape) {
       throw new Error("shape is not found");
@@ -187,7 +234,8 @@ const Tools = track(() => {
     editor.updateAssets([{ ...asset, props: { ...asset.props, src: url } }]);
 
     setUploadedFile(undefined);
-    setSelectedShapeId(undefined);
+    setUploadedShapeId(undefined);
+    setFileName("");
     const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
     editor.updateShapes(
       allShapeIds.map((s) => ({
@@ -228,28 +276,35 @@ const Tools = track(() => {
         {uploadedFile ? (
           <>
             <Spacer />
-            <HStack>
-              <IconButton
-                aria-label="insert image"
-                icon={<Icon as={IoMdClose} />}
-                colorScheme="gray"
-                rounded="full"
-                shadow="xl"
+            <VStack>
+              <Input
+                onChange={(e) => setFileName(e.target.value)}
+                value={fileName}
                 pointerEvents="all"
-                onClick={handleDeleteImage}
-                size="lg"
               />
-              <Button
-                pointerEvents="all"
-                colorScheme="blue"
-                shadow="xl"
-                rounded="full"
-                size="lg"
-                onClick={handleDrop}
-              >
-                Drop
-              </Button>
-            </HStack>
+              <HStack>
+                <IconButton
+                  aria-label="insert image"
+                  icon={<Icon as={IoMdClose} />}
+                  colorScheme="gray"
+                  rounded="full"
+                  shadow="xl"
+                  pointerEvents="all"
+                  onClick={handleDeleteImage}
+                  size="lg"
+                />
+                <Button
+                  pointerEvents="all"
+                  colorScheme="blue"
+                  shadow="xl"
+                  rounded="full"
+                  size="lg"
+                  onClick={handleDrop}
+                >
+                  Drop
+                </Button>
+              </HStack>
+            </VStack>
             <Spacer />
           </>
         ) : (
@@ -263,6 +318,7 @@ const Tools = track(() => {
                 shadow="xl"
                 pointerEvents="all"
                 size="lg"
+                onClick={onStickerOpen}
               />
 
               <Box pos="relative" pointerEvents="all">
@@ -304,6 +360,22 @@ const Tools = track(() => {
           </>
         )}
       </HStack>
+
+      <Drawer
+        placement="bottom"
+        onClose={onStickerClose}
+        isOpen={isStickerOpen}
+        size="full"
+      >
+        <DrawerOverlay />
+        <DrawerContent>
+          <DrawerCloseButton />
+          <DrawerHeader>Sticker</DrawerHeader>
+          <SimpleGrid>
+            <GridItem></GridItem>
+          </SimpleGrid>
+        </DrawerContent>
+      </Drawer>
     </Box>
   );
 });

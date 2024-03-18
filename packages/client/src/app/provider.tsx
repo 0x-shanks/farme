@@ -42,7 +42,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             //   sendConnectWalletEvent(user, isNewUser);
             // }}
             config={{
-              loginMethods: ["wallet"],
+              loginMethods: ["farcaster"],
               appearance: {
                 accentColor: "#D5EE5A",
                 logo: "images/logo-privy.png",
