@@ -5,11 +5,14 @@ import { ChakraProvider } from "@chakra-ui/react";
 import { PrivyProvider } from "@privy-io/react-auth";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { WagmiProvider, createConfig } from "@privy-io/wagmi";
 
 import { theme, toastOption } from "./styles";
 import getIsPWA from "@/utils/getIsPWA";
 
 import { defaultChain, supportedChains } from "./constants";
+import { baseSepolia } from "viem/chains";
+import { fallback, http } from "viem";
 
 export const PWAContext = createContext<boolean>(false);
 
@@ -28,6 +31,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   const queryClient = new QueryClient();
 
+  const wagmiConfig = createConfig({
+    chains: [baseSepolia],
+    transports: {
+      [baseSepolia.id]: fallback([
+        http(process.env.NEXT_PUBLIC_ALCHEMY_ENDPOINT ?? ""),
+        http(),
+      ]),
+    },
+  });
+
   useEffect(() => {
     setMounted(true);
   }, [ref]);
@@ -42,7 +55,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             //   sendConnectWalletEvent(user, isNewUser);
             // }}
             config={{
-              loginMethods: ["farcaster"],
+              loginMethods: ["wallet"],
               appearance: {
                 accentColor: "#D5EE5A",
                 logo: "images/logo-privy.png",
@@ -59,11 +72,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
             }}
           >
             <QueryClientProvider client={queryClient}>
-              <CacheProvider>
-                <ChakraProvider theme={theme} toastOptions={toastOption}>
-                  {children}
-                </ChakraProvider>
-              </CacheProvider>
+              <WagmiProvider config={wagmiConfig}>
+                <CacheProvider>
+                  <ChakraProvider theme={theme} toastOptions={toastOption}>
+                    {children}
+                  </ChakraProvider>
+                </CacheProvider>
+              </WagmiProvider>
             </QueryClientProvider>
           </PrivyProvider>
         </PWAProvider>
