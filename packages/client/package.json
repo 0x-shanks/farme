@@ -19,6 +19,7 @@
     "@privy-io/wagmi-connector": "^0.1.12",
     "@tanstack/react-query": "^5.24.6",
     "@tldraw/editor": "^2.0.1",
+    "@zoralabs/protocol-sdk": "^0.5.7",
     "@zoralabs/zdk": "^2.4.0",
     "framer-motion": "^11.0.8",
     "kubo-rpc-client": "^3.0.4",
