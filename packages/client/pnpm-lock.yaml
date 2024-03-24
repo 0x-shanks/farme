@@ -38,6 +38,9 @@ dependencies:
   '@zoralabs/zdk':
     specifier: ^2.4.0
     version: 2.4.0
+  date-fns:
+    specifier: ^3.6.0
+    version: 3.6.0
   framer-motion:
     specifier: ^11.0.8
     version: 11.0.8(react-dom@18.0.0)(react@18.0.0)
@@ -8551,6 +8554,10 @@ packages:
     engines: {node: '>=0.11'}
     dependencies:
       '@babel/runtime': 7.24.0
+    dev: false
+
+  /date-fns@3.6.0:
+    resolution: {integrity: sha512-fRHTG8g/Gif+kSh50gaGEdToemgfj74aRX3swtiouboip5JDLAyDE9F11nHMIcvOaXeOC6D7SpNhi7uFyB7Uww==}
     dev: false
 
   /dateformat@4.6.3:

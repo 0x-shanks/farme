@@ -1,0 +1,5 @@
+forge-std/=node_modules/forge-std/src/
+ds-test/=node_modules/ds-test/src/
+@zoralabs/zora-1155-contracts/=node_modules/@zoralabs/zora-1155-contracts/src/
+@openzeppelin=node_modules/@openzeppelin/
+@zoralabs/openzeppelin-contracts-upgradeable/=node_modules/@zoralabs/openzeppelin-contracts-upgradeable/

@@ -47,6 +47,7 @@ import {
   TokenContract,
   TokenContentMedia,
 } from "@zoralabs/zdk/dist/queries/queries-sdk";
+import { getUnixTime } from "date-fns";
 
 export default function Home() {
   const { ready, authenticated, login, user } = usePrivy();
@@ -246,15 +247,6 @@ const Tools = track(() => {
       throw new Error("shape is not found");
     }
 
-    editor.updateShape({
-      ...shape,
-      meta: {
-        tokenContract,
-        tokenId,
-        maker: address,
-      },
-    });
-
     const assetId = shape.props.assetId;
     if (!assetId) {
       throw new Error("assetId is not found");
@@ -265,8 +257,23 @@ const Tools = track(() => {
       throw new Error("asset is not found");
     }
 
+    editor.updateShape({
+      ...shape,
+      meta: {
+        creator: address,
+        createdAt: getUnixTime(new Date()),
+      },
+    });
+
     editor.updateAssets([
-      { ...asset, props: { ...asset.props, src: image.url } },
+      {
+        ...asset,
+        props: { ...asset.props, src: image.url },
+        meta: {
+          tokenContract,
+          tokenId,
+        },
+      },
     ]);
 
     onStickerClose();
@@ -345,15 +352,6 @@ const Tools = track(() => {
       throw new Error("shape is not found");
     }
 
-    editor.updateShape({
-      ...shape,
-      meta: {
-        tokenContract,
-        tokenId,
-        maker: address,
-      },
-    });
-
     const assetId = shape.props.assetId;
     if (!assetId) {
       throw new Error("assetId is not found");
@@ -364,7 +362,24 @@ const Tools = track(() => {
       throw new Error("asset is not found");
     }
 
-    editor.updateAssets([{ ...asset, props: { ...asset.props, src: url } }]);
+    editor.updateShape({
+      ...shape,
+      meta: {
+        creator: address,
+        createdAt: getUnixTime(new Date()),
+      },
+    });
+
+    editor.updateAssets([
+      {
+        ...asset,
+        props: { ...asset.props, src: url },
+        meta: {
+          tokenContract,
+          tokenId,
+        },
+      },
+    ]);
 
     setUploadedFile(undefined);
     setUploadedShapeId(undefined);

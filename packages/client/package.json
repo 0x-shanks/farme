@@ -21,6 +21,7 @@
     "@tldraw/editor": "^2.0.1",
     "@zoralabs/protocol-sdk": "^0.5.7",
     "@zoralabs/zdk": "^2.4.0",
+    "date-fns": "^3.6.0",
     "framer-motion": "^11.0.8",
     "kubo-rpc-client": "^3.0.4",
     "next": "14.1.1",
