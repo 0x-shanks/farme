@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "deploy:testnet": "source .env && forge script script/CanvasDeploy.s.sol --rpc-url $ZORA_SEPOLIA_RPC_URL --broadcast",
     "test": "pnpm forge test"
   },
   "keywords": [],
