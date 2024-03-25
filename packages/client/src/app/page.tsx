@@ -132,7 +132,15 @@ const Tools = track(() => {
             ...token.image,
             url:
               token.image?.url?.split(":")[0] == "ipfs"
-                ? `https://ipfs.io/ipfs/${token.image?.url.split("://")[1]}`
+                ? new URL(
+                    `https://remote-image.decentralized-content.com/image?${new URLSearchParams(
+                      {
+                        url: `https://ipfs-gateway-dev.zoralabs.workers.dev/ipfs/${token.image?.url.split("://")[1]}`,
+                        w: "3840",
+                        q: "75",
+                      }
+                    ).toString()}`
+                  ).toString()
                 : token.image?.url,
           },
         }))
@@ -148,7 +156,7 @@ const Tools = track(() => {
   }, [address]);
 
   useEffect(() => {
-    console.log(tokens);
+    console.log("tokens", tokens);
   }, [tokens]);
 
   const {
@@ -392,7 +400,7 @@ const Tools = track(() => {
       await waitForTransactionReceipt(config, {
         hash: result,
         onReplaced: (res) => {
-          console.log(res);
+          console.log("onReplaced", res);
         },
       });
 
