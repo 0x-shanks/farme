@@ -11,8 +11,8 @@ import { theme, toastOption } from "./styles";
 import getIsPWA from "@/utils/getIsPWA";
 
 import { defaultChain, supportedChains } from "./constants";
-import { baseSepolia } from "viem/chains";
 import { fallback, http } from "viem";
+import { baseSepolia, zoraSepolia } from "wagmi/chains";
 
 export const PWAContext = createContext<boolean>(false);
 
@@ -32,9 +32,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient();
 
   const wagmiConfig = createConfig({
-    chains: [baseSepolia],
+    chains: [zoraSepolia],
     transports: {
-      [baseSepolia.id]: fallback([
+      [zoraSepolia.id]: fallback([
         http(process.env.NEXT_PUBLIC_ALCHEMY_ENDPOINT ?? ""),
         http(),
       ]),

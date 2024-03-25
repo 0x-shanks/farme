@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "format": "prettier --write './**/*.{ts,tsx,yaml,json}'"
+    "format": "prettier --write './**/*.{ts,tsx,yaml,json}'",
+    "copy:contract": "cp ../contracts/broadcast/CanvasDeploy.s.sol/999999999/run-latest.json src/utils/contract/testnet.json",
+    "gen:wagmi": "wagmi generate",
+    "prepare:contract": "pnpm copy:contract && pnpm gen:wagmi"
   },
   "dependencies": {
     "@chakra-ui/next-js": "^2.2.0",
@@ -19,6 +22,8 @@
     "@privy-io/wagmi-connector": "^0.1.12",
     "@tanstack/react-query": "^5.24.6",
     "@tldraw/editor": "^2.0.1",
+    "@wagmi/core": "^2.6.9",
+    "@zoralabs/1155-deployments": "^0.0.13",
     "@zoralabs/protocol-sdk": "^0.5.7",
     "@zoralabs/zdk": "^2.4.0",
     "date-fns": "^3.6.0",
@@ -31,8 +36,8 @@
     "react-icons": "^5.0.1",
     "tldraw": "2.1.0-canary.8658e20ab55b",
     "usehooks-ts": "^2.15.1",
-    "viem": "^2.7.18",
-    "wagmi": "^2.5.7"
+    "viem": "^2.8.18",
+    "wagmi": "^2.5.12"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -40,11 +45,13 @@
     "@types/react-dom": "^18",
     "@typescript-eslint/eslint-plugin": "^7.1.0",
     "@typescript-eslint/parser": "^7.1.0",
+    "@wagmi/cli": "^2.1.4",
     "eslint": "^8",
     "eslint-config-next": "14.1.1",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-unused-imports": "^3.1.0",
+    "plugins": "link:@wagmi/cli/plugins",
     "prettier": "^3.2.5",
     "typescript": "^5"
   }

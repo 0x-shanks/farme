@@ -38,7 +38,7 @@ import { IoMdClose } from "react-icons/io";
 import { LuSave } from "react-icons/lu";
 import { create as createKubo } from "kubo-rpc-client";
 import { usePrivy } from "@privy-io/react-auth";
-import { useAccount } from "wagmi";
+import { useAccount, useConfig, useWriteContract } from "wagmi";
 import { ZDK, ZDKNetwork, ZDKChain } from "@zoralabs/zdk";
 import { baseSepolia, zoraSepolia } from "viem/chains";
 import {
@@ -47,7 +47,12 @@ import {
   TokenContract,
   TokenContentMedia,
 } from "@zoralabs/zdk/dist/queries/queries-sdk";
-import { getUnixTime } from "date-fns";
+import { addDays, getUnixTime } from "date-fns";
+import { canvasAbi } from "@/utils/contract/generated";
+import { canvasAddress, tokenAddress } from "@/utils/contract/address";
+import { waitForTransactionReceipt } from "@wagmi/core";
+import { keccak256, zeroAddress } from "viem";
+import { getDefaultFixedPriceMinterAddress } from "@zoralabs/protocol-sdk";
 
 export default function Home() {
   const { ready, authenticated, login, user } = usePrivy();
@@ -111,31 +116,34 @@ const Tools = track(() => {
   const zdk = new ZDK(args);
 
   const [tokens, setTokens] = useState<Token[]>();
+  const fetchTokens = async () => {
+    const tokens = await zdk.tokens({
+      where: {
+        ownerAddresses: [address ?? ""],
+      },
+    });
+
+    setTokens(
+      tokens.tokens.nodes
+        .map((n) => n.token as Token)
+        .map((token) => ({
+          ...token,
+          image: {
+            ...token.image,
+            url:
+              token.image?.url?.split(":")[0] == "ipfs"
+                ? `https://ipfs.io/ipfs/${token.image?.url.split("://")[1]}`
+                : token.image?.url,
+          },
+        }))
+    );
+  };
   useEffect(() => {
     if (!address) {
       return;
     }
     (async () => {
-      const tokens = await zdk.tokens({
-        where: {
-          ownerAddresses: [address ?? ""],
-        },
-      });
-
-      setTokens(
-        tokens.tokens.nodes
-          .map((n) => n.token as Token)
-          .map((token) => ({
-            ...token,
-            image: {
-              ...token.image,
-              url:
-                token.image?.url?.split(":")[0] == "ipfs"
-                  ? `https://ipfs.io/ipfs/${token.image?.url.split("://")[1]}`
-                  : token.image?.url,
-            },
-          }))
-      );
+      await fetchTokens();
     })();
   }, [address]);
 
@@ -326,79 +334,142 @@ const Tools = track(() => {
     );
   };
 
+  const { writeContractAsync } = useWriteContract();
+  const config = useConfig();
+
+  const [isDropLoading, setIsDropLoading] = useState<boolean>(false);
+
   const handleDrop = async () => {
+    if (!address) {
+      throw new Error("address is not found");
+    }
     if (!uploadedShapeId) {
       throw new Error("uploadedShapeId is not found");
     }
 
-    const res = await kubo.add({
-      path: fileName ?? "",
-      content: uploadedFile,
-    });
+    setIsDropLoading(true);
 
-    const url = `https://ipfs.io/ipfs/${res.cid.toString()}`;
+    try {
+      const res = await kubo.add({
+        path: fileName ?? "",
+        content: uploadedFile,
+      });
 
-    // TODO: fix
-    const tokenContract: TokenContract = {
-      chain: zoraSepolia.id,
-      network: ZDKNetwork.Zora,
-      collectionAddress: "0x",
-    };
-    const tokenId = 1;
+      const metadata = JSON.stringify({
+        name: fileName,
+        description: ``,
+        image: `ipfs://${res.cid}`,
+        decimals: 0,
+        animation_url: "",
+      });
 
-    const shape = editor.getShape<TLImageShape>(uploadedShapeId as TLShapeId);
+      const metaRes = await kubo.add({
+        path: `${fileName}-metadata`,
+        content: metadata,
+      });
 
-    if (!shape) {
-      throw new Error("shape is not found");
-    }
+      const salesConfig = {
+        saleStart: BigInt(getUnixTime(new Date())),
+        saleEnd: BigInt(getUnixTime(addDays(new Date(), 10))),
+        maxTokensPerAddress: BigInt(0),
+        pricePerToken: BigInt(0),
+        fundsRecipient: zeroAddress,
+      };
 
-    const assetId = shape.props.assetId;
-    if (!assetId) {
-      throw new Error("assetId is not found");
-    }
+      const result = await writeContractAsync({
+        abi: canvasAbi,
+        address: canvasAddress,
+        functionName: "createSticker",
+        args: [
+          tokenAddress,
+          `ipfs://${metaRes.cid.toString()}`,
+          BigInt(Number.MAX_SAFE_INTEGER),
+          getDefaultFixedPriceMinterAddress(zoraSepolia.id),
+          salesConfig,
+        ],
+      });
 
-    const asset = editor.getAsset(assetId);
-    if (!asset) {
-      throw new Error("asset is not found");
-    }
-
-    editor.updateShape({
-      ...shape,
-      meta: {
-        creator: address,
-        createdAt: getUnixTime(new Date()),
-      },
-    });
-
-    editor.updateAssets([
-      {
-        ...asset,
-        props: { ...asset.props, src: url },
-        meta: {
-          tokenContract,
-          tokenId,
+      await waitForTransactionReceipt(config, {
+        hash: result,
+        onReplaced: (res) => {
+          console.log(res);
         },
-      },
-    ]);
+      });
 
-    setUploadedFile(undefined);
-    setUploadedShapeId(undefined);
-    setFileName("");
-    const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
-    editor.updateShapes(
-      allShapeIds.map((s) => ({
-        id: s,
-        type: "image",
-        opacity: 1,
-        isLocked: false,
-      }))
-    );
+      // TODO: fix
+      const tokenContract: TokenContract = {
+        chain: zoraSepolia.id,
+        network: ZDKNetwork.Zora,
+        collectionAddress: tokenAddress,
+      };
+      const tokenId = 1;
+
+      const shape = editor.getShape<TLImageShape>(uploadedShapeId as TLShapeId);
+
+      if (!shape) {
+        throw new Error("shape is not found");
+      }
+
+      const assetId = shape.props.assetId;
+      if (!assetId) {
+        throw new Error("assetId is not found");
+      }
+
+      const asset = editor.getAsset(assetId);
+      if (!asset) {
+        throw new Error("asset is not found");
+      }
+
+      editor.updateShape({
+        ...shape,
+        meta: {
+          creator: address,
+          createdAt: getUnixTime(new Date()),
+        },
+      });
+
+      editor.updateAssets([
+        {
+          ...asset,
+          props: {
+            ...asset.props,
+            src: `https://ipfs.io/ipfs/${res.cid.toString()}`,
+          },
+          meta: {
+            tokenContract,
+            tokenId,
+          },
+        },
+      ]);
+
+      setUploadedFile(undefined);
+      setUploadedShapeId(undefined);
+      setFileName("");
+      const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
+      editor.updateShapes(
+        allShapeIds.map((s) => ({
+          id: s,
+          type: "image",
+          opacity: 1,
+          isLocked: false,
+        }))
+      );
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsDropLoading(false);
+    }
   };
 
   const handleSave = () => {
     const snapshot = editor.store.getSnapshot();
     const stringified = JSON.stringify(snapshot);
     console.log(stringified);
+  };
+
+  const handleStickerOpen = async () => {
+    onStickerOpen();
+    await fetchTokens();
   };
 
   return (
@@ -448,6 +519,7 @@ const Tools = track(() => {
                   rounded="full"
                   size="lg"
                   onClick={handleDrop}
+                  isLoading={isDropLoading}
                 >
                   Drop
                 </Button>
@@ -466,7 +538,7 @@ const Tools = track(() => {
                 shadow="xl"
                 pointerEvents="all"
                 size="lg"
-                onClick={onStickerOpen}
+                onClick={handleStickerOpen}
               />
 
               <Box pos="relative" pointerEvents="all">
