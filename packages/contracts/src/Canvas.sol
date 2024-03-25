@@ -2,6 +2,7 @@
 pragma solidity >=0.8.24;
 
 import { IZoraCreator1155 } from "@zoralabs/zora-1155-contracts/interfaces/IZoraCreator1155.sol";
+import { ZoraCreatorFixedPriceSaleStrategy } from "@zoralabs/zora-1155-contracts/minters/fixed-price/ZoraCreatorFixedPriceSaleStrategy.sol";
 
 error Forbidden();
 error InvalidCreateReferral();
@@ -51,13 +52,20 @@ contract Canvas {
     address contractAddress,
     string calldata newURI,
     uint256 maxSupply,
-    address createReferral
-  ) external {
-    if (createReferral == address(0)) {
-      revert InvalidCreateReferral();
-    }
+    address fixedPriceMinterAddress,
+    ZoraCreatorFixedPriceSaleStrategy.SalesConfig memory salesConfig
+  ) external returns (uint256) {
     IZoraCreator1155 token = IZoraCreator1155(contractAddress);
-    uint256 tokenId = token.setupNewTokenWithCreateReferral(newURI, maxSupply, createReferral);
+    uint256 tokenId = token.setupNewTokenWithCreateReferral(newURI, maxSupply, msg.sender);
+
+    token.addPermission(0, fixedPriceMinterAddress, token.PERMISSION_BIT_MINTER());
+    token.callSale(
+      tokenId,
+      ZoraCreatorFixedPriceSaleStrategy(fixedPriceMinterAddress),
+      abi.encodeWithSelector(ZoraCreatorFixedPriceSaleStrategy.setSale.selector, tokenId, salesConfig)
+    );
+
+    token.adminMint(msg.sender, tokenId, 1, "0x");
 
     uint256 chainId;
     assembly {
@@ -67,6 +75,8 @@ contract Canvas {
     uint256 assetId = getAssetId(tokenId, contractAddress, chainId);
 
     assets[assetId] = Asset(tokenId, contractAddress, chainId);
+
+    return tokenId;
   }
 
   function getAssetId(uint256 tokenId, address contractAddress, uint256 chainId) public pure returns (uint256) {

@@ -1,3 +1,14 @@
+diff --git a/_imagine/mint/Enjoy.sol b/_imagine/mint/Enjoy.sol
+index 0953b92570abf37e43b29125eb0baaf45ef65a36..a4dd68ac9e2f54ad8ccd9400a50a8d9b2c083685 100644
+--- a/_imagine/mint/Enjoy.sol
++++ b/_imagine/mint/Enjoy.sol
+@@ -1,5 +1,5 @@
+ // SPDX-License-Identifier: MIT
+-pragma solidity 0.8.17;
++pragma solidity ^0.8.17;
+ 
+ /*
+ 
 diff --git a/package.json b/package.json
 index f6b7e374c1a754d5ba6436bfb382d819fa3687c4..1301fe687fcba8d40ee65b5911a6f6289f2caba8 100644
 --- a/package.json
@@ -71,6 +82,50 @@ index 0000000000000000000000000000000000000000..a6ccaf5fb6dc8456c0792b8c0c1478d2
 + import {ITransferHookReceiver} from "../interfaces/ITransferHookReceiver.sol";
 + 
 \ No newline at end of file
+diff --git a/src/minters/SaleStrategy.sol b/src/minters/SaleStrategy.sol
+index c6eb31d601146eea3ddc2328a27f119b34441475..a7542900d3854a082ead07fa1eb7460cada4bb01 100644
+--- a/src/minters/SaleStrategy.sol
++++ b/src/minters/SaleStrategy.sol
+@@ -1,5 +1,5 @@
+ // SPDX-License-Identifier: MIT
+-pragma solidity 0.8.17;
++pragma solidity ^0.8.17;
+ 
+ import {IERC165Upgradeable} from "@zoralabs/openzeppelin-contracts-upgradeable/contracts/interfaces/IERC165Upgradeable.sol";
+ import {IMinter1155} from "../interfaces/IMinter1155.sol";
+diff --git a/src/minters/fixed-price/ZoraCreatorFixedPriceSaleStrategy.sol b/src/minters/fixed-price/ZoraCreatorFixedPriceSaleStrategy.sol
+index 33042ff4368f4f5b34760b46162645b420c00148..f940e7abef18e9298b52d5dcd6f10851f22f5857 100644
+--- a/src/minters/fixed-price/ZoraCreatorFixedPriceSaleStrategy.sol
++++ b/src/minters/fixed-price/ZoraCreatorFixedPriceSaleStrategy.sol
+@@ -1,5 +1,5 @@
+ // SPDX-License-Identifier: MIT
+-pragma solidity 0.8.17;
++pragma solidity ^0.8.17;
+ 
+ import {Enjoy} from "_imagine/mint/Enjoy.sol";
+ import {IMinter1155} from "../../interfaces/IMinter1155.sol";
+diff --git a/src/minters/utils/LimitedMintPerAddress.sol b/src/minters/utils/LimitedMintPerAddress.sol
+index ee46b53575872cfb909ab997a3571a3173556313..8c1e655b18d9bf440d91d9fc43f94a0c40e0d0c6 100644
+--- a/src/minters/utils/LimitedMintPerAddress.sol
++++ b/src/minters/utils/LimitedMintPerAddress.sol
+@@ -1,5 +1,5 @@
+ // SPDX-License-Identifier: MIT
+-pragma solidity 0.8.17;
++pragma solidity ^0.8.17;
+ 
+ import {ILimitedMintPerAddress} from "../../interfaces/ILimitedMintPerAddress.sol";
+ 
+diff --git a/src/minters/utils/SaleCommandHelper.sol b/src/minters/utils/SaleCommandHelper.sol
+index 4098faf108814f381f61bd93a8b50704d83da306..76881b37148d1ec8b2a261a818b79b685440f1ef 100644
+--- a/src/minters/utils/SaleCommandHelper.sol
++++ b/src/minters/utils/SaleCommandHelper.sol
+@@ -1,5 +1,5 @@
+ // SPDX-License-Identifier: MIT
+-pragma solidity 0.8.17;
++pragma solidity ^0.8.17;
+ 
+ import {ICreatorCommands} from "../../interfaces/ICreatorCommands.sol";
+ 
 diff --git a/src/nft/IZoraCreator1155TypesV1.sol b/src/nft/IZoraCreator1155TypesV1.sol
 index 3084da7321376d42b7644f796b4b115f47122999..ada8c30bdcff84716bb234226f2aac9b95cb1e04 100644
 --- a/src/nft/IZoraCreator1155TypesV1.sol

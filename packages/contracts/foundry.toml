@@ -2,6 +2,7 @@
 solc = "0.8.24"
 src = "src"
 out = "out"
+via_ir = true
 libs = ["lib"]
 allow_paths = [
   "node_modules",
