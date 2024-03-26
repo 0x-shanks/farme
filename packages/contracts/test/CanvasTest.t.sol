@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import { Test, console } from "forge-std/Test.sol";
 import { Canvas } from "../src/Canvas.sol";
 
-contract CounterTest is Test {
+contract CanvasTest is Test {
   Canvas public canvas;
 
   function setUp() public {

@@ -8,38 +8,67 @@ error Forbidden();
 error InvalidCreateReferral();
 
 contract Canvas {
+  struct Float {
+    uint16 decimal;
+    int256 value;
+  }
+
   struct Asset {
-    uint256 tokenId;
+    uint256 tokenID;
     address contractAddress;
-    uint256 chainId;
+    uint256 chainID;
+    string srcURI;
+    string srcName;
+    string mineType;
+    Float w;
+    Float h;
   }
 
   struct Shape {
     uint256 id;
-    uint256 x;
-    uint256 y;
-    uint256 rotation;
+    Float x;
+    Float y;
+    Float rotation;
     address creator;
     uint256 createdAt;
     uint256 assetId;
+    Float w;
+    Float h;
+    string index;
   }
 
-  mapping(address => mapping(uint256 => Shape)) public canvases;
+  mapping(address => mapping(uint256 => Shape)) public shapeMap;
+  mapping(address => uint256[]) public shapeIds;
   mapping(uint256 => Asset) public assets;
 
+  function getCanvas(address canvasOwner) external view returns (Shape[] memory, Asset[] memory) {
+    uint256 length = shapeIds[canvasOwner].length;
+    Shape[] memory shapes = new Shape[](length);
+    Asset[] memory assets_ = new Asset[](length);
+    for (uint256 i = 0; i < length; i++) {
+      shapes[i] = shapeMap[canvasOwner][shapeIds[canvasOwner][i]];
+      assets_[i] = assets[shapes[i].assetId];
+    }
+
+    return (shapes, assets_);
+  }
+
   function editCanvas(address canvasOwner, Shape[] memory shapes, Asset[] memory assets_) external {
+    uint256[] memory shapeIds_ = new uint256[](shapes.length);
     for (uint256 i = 0; i < shapes.length; i++) {
-      Shape memory shape = canvases[canvasOwner][shapes[i].id];
+      Shape memory shape = shapeMap[canvasOwner][shapes[i].id];
       if (msg.sender != canvasOwner && msg.sender != shape.creator) {
         revert Forbidden();
       }
 
-      canvases[canvasOwner][shapes[i].id] = shapes[i];
+      shapeMap[canvasOwner][shapes[i].id] = shapes[i];
+      shapeIds_[i] = shapes[i].id;
     }
+    shapeIds[canvasOwner] = shapeIds_;
 
     // Adding new assets
     for (uint i = 0; i < assets_.length; i++) {
-      uint256 assetId = getAssetId(assets_[i].tokenId, assets_[i].contractAddress, assets_[i].chainId);
+      uint256 assetId = getAssetId(assets_[i].tokenID, assets_[i].contractAddress, assets_[i].chainID);
 
       if (assets[assetId].contractAddress != address(0)) {
         continue;
@@ -49,34 +78,43 @@ contract Canvas {
   }
 
   function createSticker(
-    address contractAddress,
     string calldata newURI,
+    Asset calldata asset,
     uint256 maxSupply,
     address fixedPriceMinterAddress,
     ZoraCreatorFixedPriceSaleStrategy.SalesConfig memory salesConfig
   ) external returns (uint256) {
-    IZoraCreator1155 token = IZoraCreator1155(contractAddress);
-    uint256 tokenId = token.setupNewTokenWithCreateReferral(newURI, maxSupply, msg.sender);
+    IZoraCreator1155 token = IZoraCreator1155(asset.contractAddress);
+    uint256 tokenID = token.setupNewTokenWithCreateReferral(newURI, maxSupply, msg.sender);
 
     token.addPermission(0, fixedPriceMinterAddress, token.PERMISSION_BIT_MINTER());
     token.callSale(
-      tokenId,
+      tokenID,
       ZoraCreatorFixedPriceSaleStrategy(fixedPriceMinterAddress),
-      abi.encodeWithSelector(ZoraCreatorFixedPriceSaleStrategy.setSale.selector, tokenId, salesConfig)
+      abi.encodeWithSelector(ZoraCreatorFixedPriceSaleStrategy.setSale.selector, tokenID, salesConfig)
     );
 
-    token.adminMint(msg.sender, tokenId, 1, "0x");
+    token.adminMint(msg.sender, tokenID, 1, "0x");
 
-    uint256 chainId;
+    uint256 chainID;
     assembly {
-      chainId := chainid()
+      chainID := chainid()
     }
 
-    uint256 assetId = getAssetId(tokenId, contractAddress, chainId);
+    uint256 assetID = getAssetId(tokenID, asset.contractAddress, chainID);
 
-    assets[assetId] = Asset(tokenId, contractAddress, chainId);
+    assets[assetID] = Asset({
+      tokenID: tokenID,
+      contractAddress: asset.contractAddress,
+      chainID: chainID,
+      srcURI: asset.srcURI,
+      srcName: asset.srcName,
+      mineType: asset.mineType,
+      w: asset.w,
+      h: asset.h
+    });
 
-    return tokenId;
+    return tokenID;
   }
 
   function getAssetId(uint256 tokenId, address contractAddress, uint256 chainId) public pure returns (uint256) {

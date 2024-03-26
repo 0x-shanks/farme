@@ -2,9 +2,17 @@
 
 import {
   AssetRecordType,
+  IndexKey,
+  TLAsset,
+  TLAssetId,
+  TLImageAsset,
   TLImageShape,
+  TLParentId,
+  TLShape,
   TLShapeId,
+  TLStore,
   Tldraw,
+  createTLStore,
   track,
   useActions,
   useEditor,
@@ -38,7 +46,12 @@ import { IoMdClose } from "react-icons/io";
 import { LuSave } from "react-icons/lu";
 import { create as createKubo } from "kubo-rpc-client";
 import { usePrivy } from "@privy-io/react-auth";
-import { useAccount, useConfig, useWriteContract } from "wagmi";
+import {
+  useAccount,
+  useConfig,
+  useReadContract,
+  useWriteContract,
+} from "wagmi";
 import { ZDK, ZDKNetwork, ZDKChain } from "@zoralabs/zdk";
 import { baseSepolia, zoraSepolia } from "viem/chains";
 import {
@@ -51,7 +64,15 @@ import { addDays, getUnixTime } from "date-fns";
 import { canvasAbi } from "@/utils/contract/generated";
 import { canvasAddress, tokenAddress } from "@/utils/contract/address";
 import { waitForTransactionReceipt } from "@wagmi/core";
-import { keccak256, zeroAddress } from "viem";
+import {
+  Address,
+  encodePacked,
+  fromHex,
+  Hex,
+  keccak256,
+  toHex,
+  zeroAddress,
+} from "viem";
 import { getDefaultFixedPriceMinterAddress } from "@zoralabs/protocol-sdk";
 
 export default function Home() {
@@ -115,7 +136,120 @@ const Tools = track(() => {
 
   const zdk = new ZDK(args);
 
+  const { data: canvasData, isFetched: isCanvasFetched } = useReadContract({
+    abi: canvasAbi,
+    address: canvasAddress,
+    functionName: "getCanvas",
+    args: [address ?? zeroAddress],
+    query: {
+      enabled: address != undefined,
+    },
+  });
+
+  const decodeFloat = ({
+    decimal,
+    value,
+  }: {
+    decimal: number;
+    value: bigint;
+  }): number => {
+    if (decimal == 0) {
+      return Number(value);
+    }
+    return parseFloat(
+      `${value.toString().slice(0, decimal)}.${value.toString().slice(decimal)}`,
+    );
+  };
+
+  useEffect(() => {
+    if (isCanvasFetched && canvasData != undefined) {
+      let snapshot = editor.store.getSnapshot();
+
+      canvasData[1].forEach((asset) => {
+        const assetId = fromHex(
+          keccak256(
+            encodePacked(
+              ["uint256", "address", "uint256"],
+              [asset.tokenID, asset.contractAddress, asset.chainID],
+            ),
+          ),
+          "bigint",
+        );
+        const assets: TLAsset[] = [
+          {
+            meta: {
+              tokenContract: {
+                name: "",
+                network: "",
+                description: null,
+                collectionAddress: asset.contractAddress,
+                symbol: "",
+                chain: Number(asset.chainID),
+              },
+              tokenId: Number(asset.tokenID),
+            },
+            id: `asset:${assetId}` as TLAssetId,
+            type: "image",
+            typeName: "asset",
+            props: {
+              name: asset.srcName,
+              src: asset.srcURI,
+              w: decodeFloat(asset.w),
+              h: decodeFloat(asset.h),
+              mimeType: asset.mineType,
+              isAnimated: asset.mineType == "image/gif",
+            },
+          },
+        ];
+
+        editor.createAssets(assets);
+      });
+
+      canvasData[0].forEach((shape) => {
+        editor.createShape({
+          x: decodeFloat(shape.x),
+          y: decodeFloat(shape.y),
+          rotation: decodeFloat(shape.rotation),
+          isLocked: shape.creator != address && canvasOwner != address,
+          opacity: 1,
+          meta: {
+            creator: shape.creator,
+            createdAt: Number(shape.createdAt),
+          },
+          id: `shape:${shape.id}` as TLShapeId,
+          type: "image",
+          props: {
+            w: decodeFloat(shape.w),
+            h: decodeFloat(shape.h),
+            assetId: `asset:${shape.assetId}`,
+            playing: true,
+            url: "",
+            crop: null,
+          },
+          parentId: "page:page" as TLParentId,
+          index: shape.index as IndexKey,
+          typeName: "shape",
+        });
+      });
+
+      editor.zoomOut();
+    }
+  }, [canvasData, isCanvasFetched]);
+
   const [tokens, setTokens] = useState<Token[]>();
+
+  const getIPFSPreviewURL = (cid: string) => {
+    return new URL(
+      `https://remote-image.decentralized-content.com/image?${new URLSearchParams(
+        {
+          url: `https://ipfs-gateway-dev.zoralabs.workers.dev/ipfs/${cid}`,
+          w: "3840",
+          q: "75",
+        },
+      ).toString()}`,
+    ).toString();
+  };
+
   const fetchTokens = async () => {
     const tokens = await zdk.tokens({
       where: {
@@ -132,18 +266,10 @@ const Tools = track(() => {
             ...token.image,
             url:
               token.image?.url?.split(":")[0] == "ipfs"
-                ? new URL(
-                    `https://remote-image.decentralized-content.com/image?${new URLSearchParams(
-                      {
-                        url: `https://ipfs-gateway-dev.zoralabs.workers.dev/ipfs/${token.image?.url.split("://")[1]}`,
-                        w: "3840",
-                        q: "75",
-                      }
-                    ).toString()}`
-                  ).toString()
+                ? getIPFSPreviewURL(token.image?.url.split("://")[1])
                 : token.image?.url,
           },
-        }))
+        })),
     );
   };
   useEffect(() => {
@@ -196,7 +322,7 @@ const Tools = track(() => {
 
     if (selectedShapeId) {
       const filtered = allShapeIds.filter(
-        (s) => s.toString() != selectedShapeId
+        (s) => s.toString() != selectedShapeId,
       );
       editor.updateShapes(
         filtered.map((s) => ({
@@ -204,7 +330,7 @@ const Tools = track(() => {
           type: "image",
           opacity: 0.5,
           isLocked: true,
-        }))
+        })),
       );
     } else {
       editor.updateShapes(
@@ -213,7 +339,7 @@ const Tools = track(() => {
           type: "image",
           opacity: 1,
           isLocked: false,
-        }))
+        })),
       );
     }
   }, [selectedShapeId]);
@@ -222,7 +348,7 @@ const Tools = track(() => {
     tokenContract: TokenContract | null | undefined,
     tokenId: string,
     image: TokenContentMedia | null | undefined,
-    name: string | null | undefined
+    name: string | null | undefined,
   ) => {
     if (!tokenContract) {
       throw new Error("tokenContract is not found");
@@ -256,7 +382,7 @@ const Tools = track(() => {
     });
 
     const shape = editor.getShape<TLImageShape>(
-      editor.getSelectedShapeIds()[0]
+      editor.getSelectedShapeIds()[0],
     );
 
     if (!shape) {
@@ -296,7 +422,7 @@ const Tools = track(() => {
   };
 
   const handleInsertImage = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
     editor.updateShapes(
@@ -305,7 +431,7 @@ const Tools = track(() => {
         type: "image",
         opacity: 0.5,
         isLocked: true,
-      }))
+      })),
     );
 
     const file = event.target.files?.[0];
@@ -338,7 +464,7 @@ const Tools = track(() => {
         type: "image",
         opacity: 1,
         isLocked: false,
-      }))
+      })),
     );
   };
 
@@ -353,6 +479,22 @@ const Tools = track(() => {
     }
     if (!uploadedShapeId) {
       throw new Error("uploadedShapeId is not found");
+    }
+
+    const shape = editor.getShape<TLImageShape>(uploadedShapeId as TLShapeId);
+
+    if (!shape) {
+      throw new Error("shape is not found");
+    }
+
+    const assetId = shape.props.assetId;
+    if (!assetId) {
+      throw new Error("assetId is not found");
+    }
+
+    const asset = editor.getAsset(assetId) as TLImageAsset | undefined;
+    if (!asset) {
+      throw new Error("asset is not found");
     }
 
     setIsDropLoading(true);
@@ -389,8 +531,17 @@ const Tools = track(() => {
         address: canvasAddress,
         functionName: "createSticker",
         args: [
-          tokenAddress,
           `ipfs://${metaRes.cid.toString()}`,
+          {
+            tokenID: BigInt(0),
+            contractAddress: tokenAddress,
+            chainID: BigInt(0),
+            srcURI: `ipfs://${res.cid}`,
+            srcName: fileName ?? "",
+            mineType: asset.props.mimeType ?? "",
+            w: encodeFloat(asset.props.w),
+            h: encodeFloat(asset.props.h),
+          },
           BigInt(Number.MAX_SAFE_INTEGER),
           getDefaultFixedPriceMinterAddress(zoraSepolia.id),
           salesConfig,
@@ -412,22 +563,6 @@ const Tools = track(() => {
       };
       const tokenId = 1;
 
-      const shape = editor.getShape<TLImageShape>(uploadedShapeId as TLShapeId);
-
-      if (!shape) {
-        throw new Error("shape is not found");
-      }
-
-      const assetId = shape.props.assetId;
-      if (!assetId) {
-        throw new Error("assetId is not found");
-      }
-
-      const asset = editor.getAsset(assetId);
-      if (!asset) {
-        throw new Error("asset is not found");
-      }
-
       editor.updateShape({
         ...shape,
         meta: {
@@ -441,7 +576,7 @@ const Tools = track(() => {
           ...asset,
           props: {
             ...asset.props,
-            src: `https://ipfs.io/ipfs/${res.cid.toString()}`,
+            src: getIPFSPreviewURL(res.cid.toString()),
           },
           meta: {
             tokenContract,
@@ -460,7 +595,7 @@ const Tools = track(() => {
           type: "image",
           opacity: 1,
           isLocked: false,
-        }))
+        })),
       );
     } catch (e) {
       console.error(e);
@@ -469,10 +604,110 @@ const Tools = track(() => {
     }
   };
 
-  const handleSave = () => {
+  // TODO: fix
+  const canvasOwner = address;
+
+  const encodeFloat = (number: number) => {
+    const dec = number.toString().indexOf(".");
+    return {
+      decimal: dec != -1 ? dec : 0,
+      value: BigInt(number.toString().replace(".", "")),
+    };
+  };
+
+  const handleSave = async () => {
+    if (canvasOwner == undefined) {
+      throw new Error("canvasOwner is not found");
+    }
+
     const snapshot = editor.store.getSnapshot();
+
     const stringified = JSON.stringify(snapshot);
     console.log(stringified);
+
+    const shapes = Object.values(snapshot.store).filter(
+      (s) => s.typeName == "shape",
+    ) as TLImageShape[];
+
+    type ImageAsset = TLImageAsset & { assetId: bigint };
+
+    const assets = Object.values(snapshot.store)
+      .filter((s) => s.typeName == "asset")
+      .map((asset) => {
+        const a = asset as TLImageAsset;
+        const tokenContract = a.meta.tokenContract as {
+          collectionAddress: Address;
+          chain: number;
+        };
+
+        return {
+          ...a,
+          assetId: fromHex(
+            keccak256(
+              encodePacked(
+                ["uint256", "address", "uint256"],
+                [
+                  BigInt((a.meta.tokenId as number) ?? 0),
+                  tokenContract.collectionAddress,
+                  BigInt(tokenContract.chain),
+                ],
+              ),
+            ),
+            "bigint",
+          ),
+        };
+      }) as ImageAsset[];
+
+    const formattedAssets = assets.map((a) => {
+      const tokenContract = a.meta.tokenContract as {
+        collectionAddress: Address;
+        chain: number;
+      };
+      return {
+        tokenID: BigInt((a.meta.tokenId as number) ?? 0),
+        contractAddress: tokenContract.collectionAddress,
+        chainID: BigInt(tokenContract.chain),
+        srcURI: a.props.src ?? "",
+        srcName: a.props.name ?? "",
+        mineType: a.props.mimeType ?? "",
+        w: encodeFloat(a.props.w),
+        h: encodeFloat(a.props.h),
+      };
+    });
+
+    const formattedShapes = shapes.map((s) => {
+      const asset = assets.find((a) => a.id == s.props.assetId);
+      if (asset == undefined) {
+        throw new Error("asset is not found");
+      }
+
+      return {
+        id: fromHex(keccak256(toHex(s.id)), "bigint"),
+        x: encodeFloat(s.x),
+        y: encodeFloat(s.y),
+        rotation: encodeFloat(s.rotation),
+        creator: s.meta.creator as Address,
+        createdAt: BigInt(s.meta.createdAt as number),
+        assetId: asset.assetId,
+        w: encodeFloat(s.props.w),
+        h: encodeFloat(s.props.h),
+        index: s.index,
+      };
+    });
+
+    const result = await writeContractAsync({
+      abi: canvasAbi,
+      address: canvasAddress,
+      functionName: "editCanvas",
+      args: [canvasOwner, formattedShapes, formattedAssets],
+    });
+
+    await waitForTransactionReceipt(config, {
+      hash: result,
+      onReplaced: (res) => {
+        console.log("onReplaced", res);
+      },
+    });
   };
 
   const handleStickerOpen = async () => {
@@ -618,7 +853,7 @@ const Tools = track(() => {
                       token.tokenContract,
                       token.tokenId,
                       token.image,
-                      token.name
+                      token.name,
                     )
                   }
                 >
