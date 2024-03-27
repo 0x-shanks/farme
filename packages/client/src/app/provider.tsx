@@ -13,6 +13,9 @@ import getIsPWA from "@/utils/getIsPWA";
 import { defaultChain, supportedChains } from "./constants";
 import { fallback, http } from "viem";
 import { baseSepolia, zoraSepolia } from "wagmi/chains";
+import { SessionProvider } from "next-auth/react";
+
+import { AuthKitProvider } from "@farcaster/auth-kit";
 
 export const PWAContext = createContext<boolean>(false);
 
@@ -45,6 +48,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, [ref]);
 
+  const farcasterConfig = {
+    siweUri: "http://localhost:8000/login",
+    domain: "localhost",
+  };
+
   return (
     <>
       {mounted && (
@@ -73,11 +81,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
           >
             <QueryClientProvider client={queryClient}>
               <WagmiProvider config={wagmiConfig}>
-                <CacheProvider>
-                  <ChakraProvider theme={theme} toastOptions={toastOption}>
-                    {children}
-                  </ChakraProvider>
-                </CacheProvider>
+                <SessionProvider>
+                  <AuthKitProvider config={farcasterConfig}>
+                    <CacheProvider>
+                      <ChakraProvider theme={theme} toastOptions={toastOption}>
+                        {children}
+                      </ChakraProvider>
+                    </CacheProvider>
+                  </AuthKitProvider>
+                </SessionProvider>
               </WagmiProvider>
             </QueryClientProvider>
           </PrivyProvider>

@@ -39,11 +39,11 @@ import {
   useDisclosure,
   Image,
 } from "@chakra-ui/react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CiImageOn } from "react-icons/ci";
 import { PiSticker } from "react-icons/pi";
 import { IoMdClose } from "react-icons/io";
-import { LuSave } from "react-icons/lu";
+import { LuLogOut, LuSave } from "react-icons/lu";
 import { create as createKubo } from "kubo-rpc-client";
 import { usePrivy } from "@privy-io/react-auth";
 import {
@@ -74,9 +74,39 @@ import {
   zeroAddress,
 } from "viem";
 import { getDefaultFixedPriceMinterAddress } from "@zoralabs/protocol-sdk";
+import { StatusAPIResponse, useProfile } from "@farcaster/auth-kit";
+import { SignInButton } from "@farcaster/auth-kit";
+import { getCsrfToken, signIn, signOut, useSession } from "next-auth/react";
 
 export default function Home() {
   const { ready, authenticated, login, user } = usePrivy();
+  const { data: session } = useSession();
+  useEffect(() => {
+    console.log("session", session);
+  }, [session]);
+
+  const getNonce = useCallback(async () => {
+    const nonce = await getCsrfToken();
+    if (nonce == undefined) throw new Error("Unable to generate nonce");
+    return nonce;
+  }, []);
+
+  const handleSuccess = useCallback(
+    (res: StatusAPIResponse) => {
+      console.log(res);
+      signIn("credentials", {
+        message: res.message,
+        signature: res.signature,
+        name: res.username,
+        displayName: res.displayName,
+        pfp: res.pfpUrl,
+        nonce: res.nonce,
+        bio: res.bio,
+        redirect: false,
+      });
+    },
+    [signIn],
+  );
 
   if (!ready) {
     return (
@@ -93,6 +123,16 @@ export default function Home() {
       <main>
         <Center w="full" h="100dvh">
           <Button onClick={login}>Connect Wallet</Button>
+        </Center>
+      </main>
+    );
+  }
+
+  if (!session) {
+    return (
+      <main>
+        <Center w="full" h="100dvh">
+          <SignInButton nonce={getNonce} onSuccess={handleSuccess} />
         </Center>
       </main>
     );
@@ -818,6 +858,16 @@ const Tools = track(() => {
                 pointerEvents="all"
                 size="lg"
                 onClick={handleSave}
+              />
+              <IconButton
+                aria-label="save"
+                icon={<Icon as={LuLogOut} />}
+                colorScheme="blue"
+                rounded="full"
+                shadow="xl"
+                pointerEvents="all"
+                size="lg"
+                onClick={() => signOut()}
               />
             </HStack>
           </>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import "tldraw/tldraw.css";
+import "@farcaster/auth-kit/styles.css";
 
 import { Providers } from "./provider";
 
