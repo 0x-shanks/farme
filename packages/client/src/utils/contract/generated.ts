@@ -71,6 +71,64 @@ export const canvasAbi = [
           },
         ],
       },
+      {
+        name: "shape",
+        internalType: "struct Canvas.Shape",
+        type: "tuple",
+        components: [
+          { name: "id", internalType: "uint256", type: "uint256" },
+          {
+            name: "x",
+            internalType: "struct Canvas.Float",
+            type: "tuple",
+            components: [
+              { name: "decimal", internalType: "uint16", type: "uint16" },
+              { name: "value", internalType: "int256", type: "int256" },
+            ],
+          },
+          {
+            name: "y",
+            internalType: "struct Canvas.Float",
+            type: "tuple",
+            components: [
+              { name: "decimal", internalType: "uint16", type: "uint16" },
+              { name: "value", internalType: "int256", type: "int256" },
+            ],
+          },
+          {
+            name: "rotation",
+            internalType: "struct Canvas.Float",
+            type: "tuple",
+            components: [
+              { name: "decimal", internalType: "uint16", type: "uint16" },
+              { name: "value", internalType: "int256", type: "int256" },
+            ],
+          },
+          { name: "creator", internalType: "address", type: "address" },
+          { name: "createdAt", internalType: "uint256", type: "uint256" },
+          { name: "fid", internalType: "uint256", type: "uint256" },
+          { name: "assetID", internalType: "uint256", type: "uint256" },
+          {
+            name: "w",
+            internalType: "struct Canvas.Float",
+            type: "tuple",
+            components: [
+              { name: "decimal", internalType: "uint16", type: "uint16" },
+              { name: "value", internalType: "int256", type: "int256" },
+            ],
+          },
+          {
+            name: "h",
+            internalType: "struct Canvas.Float",
+            type: "tuple",
+            components: [
+              { name: "decimal", internalType: "uint16", type: "uint16" },
+              { name: "value", internalType: "int256", type: "int256" },
+            ],
+          },
+          { name: "index", internalType: "string", type: "string" },
+        ],
+      },
       { name: "maxSupply", internalType: "uint256", type: "uint256" },
       {
         name: "fixedPriceMinterAddress",
@@ -95,7 +153,7 @@ export const canvasAbi = [
       },
     ],
     name: "createSticker",
-    outputs: [{ name: "", internalType: "uint256", type: "uint256" }],
+    outputs: [],
   },
   {
     stateMutability: "nonpayable",
@@ -137,7 +195,8 @@ export const canvasAbi = [
           },
           { name: "creator", internalType: "address", type: "address" },
           { name: "createdAt", internalType: "uint256", type: "uint256" },
-          { name: "assetId", internalType: "uint256", type: "uint256" },
+          { name: "fid", internalType: "uint256", type: "uint256" },
+          { name: "assetID", internalType: "uint256", type: "uint256" },
           {
             name: "w",
             internalType: "struct Canvas.Float",
@@ -246,7 +305,8 @@ export const canvasAbi = [
           },
           { name: "creator", internalType: "address", type: "address" },
           { name: "createdAt", internalType: "uint256", type: "uint256" },
-          { name: "assetId", internalType: "uint256", type: "uint256" },
+          { name: "fid", internalType: "uint256", type: "uint256" },
+          { name: "assetID", internalType: "uint256", type: "uint256" },
           {
             name: "w",
             internalType: "struct Canvas.Float",
@@ -308,7 +368,7 @@ export const canvasAbi = [
       { name: "", internalType: "address", type: "address" },
       { name: "", internalType: "uint256", type: "uint256" },
     ],
-    name: "shapeIds",
+    name: "shapeIDs",
     outputs: [{ name: "", internalType: "uint256", type: "uint256" }],
   },
   {
@@ -350,7 +410,8 @@ export const canvasAbi = [
       },
       { name: "creator", internalType: "address", type: "address" },
       { name: "createdAt", internalType: "uint256", type: "uint256" },
-      { name: "assetId", internalType: "uint256", type: "uint256" },
+      { name: "fid", internalType: "uint256", type: "uint256" },
+      { name: "assetID", internalType: "uint256", type: "uint256" },
       {
         name: "w",
         internalType: "struct Canvas.Float",
@@ -371,6 +432,20 @@ export const canvasAbi = [
       },
       { name: "index", internalType: "string", type: "string" },
     ],
+  },
+  {
+    type: "event",
+    anonymous: false,
+    inputs: [
+      {
+        name: "creator",
+        internalType: "address",
+        type: "address",
+        indexed: false,
+      },
+      { name: "id", internalType: "uint256", type: "uint256", indexed: false },
+    ],
+    name: "CreateSticker",
   },
   { type: "error", inputs: [], name: "Forbidden" },
 ] as const;

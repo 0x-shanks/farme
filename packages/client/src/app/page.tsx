@@ -66,6 +66,7 @@ import { canvasAddress, tokenAddress } from "@/utils/contract/address";
 import { waitForTransactionReceipt } from "@wagmi/core";
 import {
   Address,
+  decodeEventLog,
   encodePacked,
   fromHex,
   Hex,
@@ -81,9 +82,6 @@ import { getCsrfToken, signIn, signOut, useSession } from "next-auth/react";
 export default function Home() {
   const { ready, authenticated, login, user } = usePrivy();
   const { data: session } = useSession();
-  useEffect(() => {
-    console.log("session", session);
-  }, [session]);
 
   const getNonce = useCallback(async () => {
     const nonce = await getCsrfToken();
@@ -161,6 +159,10 @@ export default function Home() {
 const Tools = track(() => {
   const editor = useEditor();
   const { address } = useAccount();
+  const { data: session } = useSession();
+  useEffect(() => {
+    console.log("session", session);
+  }, [session]);
 
   const API_ENDPOINT = "https://api.zora.co/graphql";
   const args = {
@@ -261,7 +263,7 @@ const Tools = track(() => {
           props: {
             w: decodeFloat(shape.w),
             h: decodeFloat(shape.h),
-            assetId: `asset:${shape.assetId}`,
+            assetId: `asset:${shape.assetID}`,
             playing: true,
             url: "",
             crop: null,
@@ -537,6 +539,14 @@ const Tools = track(() => {
       throw new Error("asset is not found");
     }
 
+    if (
+      session == null ||
+      session.user == undefined ||
+      session.user.id == undefined
+    ) {
+      throw new Error("fid is not found");
+    }
+
     setIsDropLoading(true);
 
     try {
@@ -576,11 +586,24 @@ const Tools = track(() => {
             tokenID: BigInt(0),
             contractAddress: tokenAddress,
             chainID: BigInt(0),
-            srcURI: `ipfs://${res.cid}`,
+            srcURI: getIPFSPreviewURL(res.cid.toString()),
             srcName: fileName ?? "",
             mineType: asset.props.mimeType ?? "",
             w: encodeFloat(asset.props.w),
             h: encodeFloat(asset.props.h),
+          },
+          {
+            id: fromHex(keccak256(toHex(shape.id)), "bigint"),
+            x: encodeFloat(shape.x),
+            y: encodeFloat(shape.y),
+            rotation: encodeFloat(shape.rotation),
+            creator: address,
+            createdAt: BigInt(getUnixTime(new Date())),
+            fid: BigInt(session.user.id),
+            assetID: BigInt(0),
+            w: encodeFloat(shape.props.w),
+            h: encodeFloat(shape.props.h),
+            index: shape.index,
           },
           BigInt(Number.MAX_SAFE_INTEGER),
           getDefaultFixedPriceMinterAddress(zoraSepolia.id),
@@ -588,20 +611,26 @@ const Tools = track(() => {
         ],
       });
 
-      await waitForTransactionReceipt(config, {
+      const receipt = await waitForTransactionReceipt(config, {
         hash: result,
-        onReplaced: (res) => {
-          console.log("onReplaced", res);
-        },
       });
 
-      // TODO: fix
+      const event = receipt.logs.filter(
+        (l) => l.address.toLowerCase() == canvasAddress.toLowerCase(),
+      )[0];
+
+      const decodedLog = decodeEventLog({
+        abi: canvasAbi,
+        data: event.data,
+        topics: event.topics,
+      });
+
       const tokenContract: TokenContract = {
         chain: zoraSepolia.id,
         network: ZDKNetwork.Zora,
         collectionAddress: tokenAddress,
       };
-      const tokenId = 1;
+      const tokenId = Number(decodedLog.args.id);
 
       editor.updateShape({
         ...shape,
@@ -658,6 +687,14 @@ const Tools = track(() => {
   const handleSave = async () => {
     if (canvasOwner == undefined) {
       throw new Error("canvasOwner is not found");
+    }
+
+    if (
+      session == null ||
+      session.user == undefined ||
+      session.user.id == undefined
+    ) {
+      throw new Error("fid is not found");
     }
 
     const snapshot = editor.store.getSnapshot();
@@ -728,7 +765,8 @@ const Tools = track(() => {
         rotation: encodeFloat(s.rotation),
         creator: s.meta.creator as Address,
         createdAt: BigInt(s.meta.createdAt as number),
-        assetId: asset.assetId,
+        fid: BigInt(session.user!.id),
+        assetID: asset.assetId,
         w: encodeFloat(s.props.w),
         h: encodeFloat(s.props.h),
         index: s.index,

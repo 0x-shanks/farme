@@ -31,23 +31,26 @@ contract Canvas {
     Float rotation;
     address creator;
     uint256 createdAt;
-    uint256 assetId;
+    uint256 fid;
+    uint256 assetID;
     Float w;
     Float h;
     string index;
   }
 
   mapping(address => mapping(uint256 => Shape)) public shapeMap;
-  mapping(address => uint256[]) public shapeIds;
+  mapping(address => uint256[]) public shapeIDs;
   mapping(uint256 => Asset) public assets;
 
+  event CreateSticker(address creator, uint256 id);
+
   function getCanvas(address canvasOwner) external view returns (Shape[] memory, Asset[] memory) {
-    uint256 length = shapeIds[canvasOwner].length;
+    uint256 length = shapeIDs[canvasOwner].length;
     Shape[] memory shapes = new Shape[](length);
     Asset[] memory assets_ = new Asset[](length);
     for (uint256 i = 0; i < length; i++) {
-      shapes[i] = shapeMap[canvasOwner][shapeIds[canvasOwner][i]];
-      assets_[i] = assets[shapes[i].assetId];
+      shapes[i] = shapeMap[canvasOwner][shapeIDs[canvasOwner][i]];
+      assets_[i] = assets[shapes[i].assetID];
     }
 
     return (shapes, assets_);
@@ -64,7 +67,7 @@ contract Canvas {
       shapeMap[canvasOwner][shapes[i].id] = shapes[i];
       shapeIds_[i] = shapes[i].id;
     }
-    shapeIds[canvasOwner] = shapeIds_;
+    shapeIDs[canvasOwner] = shapeIds_;
 
     // Adding new assets
     for (uint i = 0; i < assets_.length; i++) {
@@ -80,10 +83,11 @@ contract Canvas {
   function createSticker(
     string calldata newURI,
     Asset calldata asset,
+    Shape calldata shape,
     uint256 maxSupply,
     address fixedPriceMinterAddress,
     ZoraCreatorFixedPriceSaleStrategy.SalesConfig memory salesConfig
-  ) external returns (uint256) {
+  ) external {
     IZoraCreator1155 token = IZoraCreator1155(asset.contractAddress);
     uint256 tokenID = token.setupNewTokenWithCreateReferral(newURI, maxSupply, msg.sender);
 
@@ -114,7 +118,22 @@ contract Canvas {
       h: asset.h
     });
 
-    return tokenID;
+    shapeIDs[msg.sender].push(shape.id);
+    shapeMap[msg.sender][shape.id] = Shape({
+      id: shape.id,
+      x: shape.x,
+      y: shape.y,
+      rotation: shape.rotation,
+      creator: shape.creator,
+      createdAt: shape.createdAt,
+      fid: shape.fid,
+      assetID: assetID,
+      w: shape.w,
+      h: shape.h,
+      index: shape.index
+    });
+
+    emit CreateSticker(msg.sender, tokenID);
   }
 
   function getAssetId(uint256 tokenId, address contractAddress, uint256 chainId) public pure returns (uint256) {
