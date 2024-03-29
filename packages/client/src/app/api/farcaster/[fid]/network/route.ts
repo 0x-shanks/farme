@@ -1,3 +1,4 @@
+import { UsersResponse } from "@/models/userResponse";
 import { farcasterHubClient } from "@/utils/farcaster";
 import { CastAddBody, ReactionBody, UserDataType } from "@farcaster/hub-nodejs";
 
@@ -91,7 +92,7 @@ export async function GET(
     .sort((a, b) => b[1] - a[1])
     .map((v) => v[0]);
 
-  fids = fids.slice(0, fids.length - 1 > 10 ? 10 : fids.length - 1);
+  fids = fids.slice(0, fids.length - 1 > 23 ? 23 : fids.length - 1);
 
   const users = await Promise.all(
     fids.map(
@@ -134,6 +135,10 @@ export async function GET(
       const data: UserRes = {};
 
       u.messages.forEach((m) => {
+        if (addresses.get(m.data?.fid ?? 0) == undefined) {
+          return;
+        }
+
         if (data.fid == undefined) {
           data.fid = m.data?.fid;
         }
@@ -159,9 +164,15 @@ export async function GET(
             return;
         }
       });
-      userData.push(data);
+      if (Object.keys(data).length != 0) {
+        userData.push(data);
+      }
     }
   });
 
-  return Response.json({ userData });
+  const response: UsersResponse = {
+    users: userData,
+  };
+
+  return Response.json(response);
 }

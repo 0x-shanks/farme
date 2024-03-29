@@ -83,6 +83,9 @@ dependencies:
   react-icons:
     specifier: ^5.0.1
     version: 5.0.1(react@18.0.0)
+  runes:
+    specifier: ^0.4.3
+    version: 0.4.3
   tldraw:
     specifier: 2.1.0-canary.8658e20ab55b
     version: 2.1.0-canary.8658e20ab55b(@types/react-dom@18.2.22)(@types/react@18.2.72)(react-dom@18.0.0)(react@18.0.0)
@@ -106,6 +109,9 @@ devDependencies:
   '@types/react-dom':
     specifier: ^18.2.22
     version: 18.2.22
+  '@types/runes':
+    specifier: ^0.4.3
+    version: 0.4.3
   '@typescript-eslint/eslint-plugin':
     specifier: ^7.1.0
     version: 7.1.0(@typescript-eslint/parser@7.1.0)(eslint@8.0.0)(typescript@5.0.2)
@@ -7684,6 +7690,10 @@ packages:
       '@types/node': 20.11.30
     dev: false
 
+  /@types/runes@0.4.3:
+    resolution: {integrity: sha512-kncnfKlRj4FM0+9IRBlZ/06b1BNVDya3d5hN5kFfuzCNAgZFZuApz/XBqe0+d6Y5cV/f86UD8q2ehnaSVdtBrw==}
+    dev: true
+
   /@types/secp256k1@4.0.6:
     resolution: {integrity: sha512-hHxJU6PAEUn0TP4S/ZOzuTUvJWuZ6eIKeNKb5RBpODvSl6hp1Wrw4s7ATY50rklRCScUDpHzVA/DQdSjJ3UoYQ==}
     dependencies:
@@ -15167,6 +15177,11 @@ packages:
     resolution: {integrity: sha512-5l4VyZR86LZ/lDxZTR6jqL8AFE2S0IFLMP26AbjsLVADxHdhB/c0GUsH+y39UfCi3dzz8OlQuPmnaJOMoDHQBA==}
     dependencies:
       queue-microtask: 1.2.3
+
+  /runes@0.4.3:
+    resolution: {integrity: sha512-K6p9y4ZyL9wPzA+PMDloNQPfoDGTiFYDvdlXznyGKgD10BJpcAosvATKrExRKOrNLgD8E7Um7WGW0lxsnOuNLg==}
+    engines: {node: '>=4.0.0'}
+    dev: false
 
   /safe-array-concat@1.1.0:
     resolution: {integrity: sha512-ZdQ0Jeb9Ofti4hbt5lX3T2JcAamT9hfzYU1MNB+z/jaEbB6wfFfPIR/zEORmZqobkCCJhSjodobH6WHNmJ97dg==}

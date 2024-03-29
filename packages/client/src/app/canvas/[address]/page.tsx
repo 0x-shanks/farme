@@ -70,7 +70,7 @@ import { getDefaultFixedPriceMinterAddress } from "@zoralabs/protocol-sdk";
 
 import { signOut, useSession } from "next-auth/react";
 
-export default function Home({ params }: { params: { fid: number } }) {
+export default function Home({ params }: { params: { address: Address } }) {
   return (
     <main>
       <Box w="full" h="100dvh">
@@ -83,7 +83,7 @@ export default function Home({ params }: { params: { fid: number } }) {
           overflow="hidden"
         >
           <Tldraw hideUi>
-            <Tools />
+            <Canvas canvasOwner={params.address} />
           </Tldraw>
         </Box>
       </Box>
@@ -91,7 +91,7 @@ export default function Home({ params }: { params: { fid: number } }) {
   );
 }
 
-const Tools = track(() => {
+const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
   const editor = useEditor();
   const { address } = useAccount();
   const { data: session } = useSession();
@@ -140,8 +140,6 @@ const Tools = track(() => {
 
   useEffect(() => {
     if (isCanvasFetched && canvasData != undefined) {
-      let snapshot = editor.store.getSnapshot();
-
       canvasData[1].forEach((asset) => {
         const assetId = fromHex(
           keccak256(
@@ -607,9 +605,6 @@ const Tools = track(() => {
       setIsDropLoading(false);
     }
   };
-
-  // TODO: fix
-  const canvasOwner = address;
 
   const encodeFloat = (number: number) => {
     const dec = number.toString().indexOf(".");

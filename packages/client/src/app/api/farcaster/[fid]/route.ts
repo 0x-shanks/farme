@@ -1,5 +1,6 @@
 // export const revalidate = 1; // A whole day
 
+import { UserResponse } from "@/models/userResponse";
 import { farcasterHubClient } from "@/utils/farcaster";
 import { UserDataType } from "@farcaster/hub-nodejs";
 import { cache } from "react";
@@ -73,5 +74,9 @@ export async function GET(
     }
   });
 
-  return Response.json({ userData });
+  const response: UserResponse = {
+    user: userData,
+  };
+
+  return Response.json(response);
 }
