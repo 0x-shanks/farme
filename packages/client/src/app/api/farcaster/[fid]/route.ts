@@ -9,16 +9,16 @@ export const revalidate = 3600 * 24; // A whole day
 
 export async function GET(
   request: Request,
-  { params }: { params: { fid: number } }
+  { params }: { params: { fid: number } },
 ) {
   const fid = params.fid;
 
   const getUser = cache(
-    async () => await farcasterHubClient.getUserDataByFid({ fid })
+    async () => await farcasterHubClient.getUserDataByFid({ fid }),
   );
 
   const getVerification = cache(
-    async () => await farcasterHubClient.getVerificationsByFid({ fid })
+    async () => await farcasterHubClient.getVerificationsByFid({ fid }),
   );
 
   const user = await getUser();

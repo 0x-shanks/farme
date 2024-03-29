@@ -33,7 +33,7 @@ export default function Home() {
         redirect: false,
       });
     },
-    [signIn]
+    [signIn],
   );
 
   if (!ready) {

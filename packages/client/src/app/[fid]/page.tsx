@@ -134,7 +134,7 @@ const Tools = track(() => {
       return Number(value);
     }
     return parseFloat(
-      `${value.toString().slice(0, decimal)}.${value.toString().slice(decimal)}`
+      `${value.toString().slice(0, decimal)}.${value.toString().slice(decimal)}`,
     );
   };
 
@@ -147,10 +147,10 @@ const Tools = track(() => {
           keccak256(
             encodePacked(
               ["uint256", "address", "uint256"],
-              [asset.tokenID, asset.contractAddress, asset.chainID]
-            )
+              [asset.tokenID, asset.contractAddress, asset.chainID],
+            ),
           ),
-          "bigint"
+          "bigint",
         );
         const assets: TLAsset[] = [
           {
@@ -222,8 +222,8 @@ const Tools = track(() => {
           url: `https://ipfs-gateway-dev.zoralabs.workers.dev/ipfs/${cid}`,
           w: "3840",
           q: "75",
-        }
-      ).toString()}`
+        },
+      ).toString()}`,
     ).toString();
   };
 
@@ -246,7 +246,7 @@ const Tools = track(() => {
                 ? getIPFSPreviewURL(token.image?.url.split("://")[1])
                 : token.image?.url,
           },
-        }))
+        })),
     );
   };
   useEffect(() => {
@@ -299,7 +299,7 @@ const Tools = track(() => {
 
     if (selectedShapeId) {
       const filtered = allShapeIds.filter(
-        (s) => s.toString() != selectedShapeId
+        (s) => s.toString() != selectedShapeId,
       );
       editor.updateShapes(
         filtered.map((s) => ({
@@ -307,7 +307,7 @@ const Tools = track(() => {
           type: "image",
           opacity: 0.5,
           isLocked: true,
-        }))
+        })),
       );
     } else {
       editor.updateShapes(
@@ -316,7 +316,7 @@ const Tools = track(() => {
           type: "image",
           opacity: 1,
           isLocked: false,
-        }))
+        })),
       );
     }
   }, [selectedShapeId]);
@@ -325,7 +325,7 @@ const Tools = track(() => {
     tokenContract: TokenContract | null | undefined,
     tokenId: string,
     image: TokenContentMedia | null | undefined,
-    name: string | null | undefined
+    name: string | null | undefined,
   ) => {
     if (!tokenContract) {
       throw new Error("tokenContract is not found");
@@ -359,7 +359,7 @@ const Tools = track(() => {
     });
 
     const shape = editor.getShape<TLImageShape>(
-      editor.getSelectedShapeIds()[0]
+      editor.getSelectedShapeIds()[0],
     );
 
     if (!shape) {
@@ -399,7 +399,7 @@ const Tools = track(() => {
   };
 
   const handleInsertImage = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
     editor.updateShapes(
@@ -408,7 +408,7 @@ const Tools = track(() => {
         type: "image",
         opacity: 0.5,
         isLocked: true,
-      }))
+      })),
     );
 
     const file = event.target.files?.[0];
@@ -441,7 +441,7 @@ const Tools = track(() => {
         type: "image",
         opacity: 1,
         isLocked: false,
-      }))
+      })),
     );
   };
 
@@ -551,7 +551,7 @@ const Tools = track(() => {
       });
 
       const event = receipt.logs.filter(
-        (l) => l.address.toLowerCase() == canvasAddress.toLowerCase()
+        (l) => l.address.toLowerCase() == canvasAddress.toLowerCase(),
       )[0];
 
       const decodedLog = decodeEventLog({
@@ -599,7 +599,7 @@ const Tools = track(() => {
           type: "image",
           opacity: 1,
           isLocked: false,
-        }))
+        })),
       );
     } catch (e) {
       console.error(e);
@@ -638,7 +638,7 @@ const Tools = track(() => {
     console.log(stringified);
 
     const shapes = Object.values(snapshot.store).filter(
-      (s) => s.typeName == "shape"
+      (s) => s.typeName == "shape",
     ) as TLImageShape[];
 
     type ImageAsset = TLImageAsset & { assetId: bigint };
@@ -662,10 +662,10 @@ const Tools = track(() => {
                   BigInt((a.meta.tokenId as number) ?? 0),
                   tokenContract.collectionAddress,
                   BigInt(tokenContract.chain),
-                ]
-              )
+                ],
+              ),
             ),
-            "bigint"
+            "bigint",
           ),
         };
       }) as ImageAsset[];
@@ -876,7 +876,7 @@ const Tools = track(() => {
                       token.tokenContract,
                       token.tokenId,
                       token.image,
-                      token.name
+                      token.name,
                     )
                   }
                 >
