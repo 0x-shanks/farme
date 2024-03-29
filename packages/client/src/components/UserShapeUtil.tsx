@@ -7,6 +7,11 @@ import {
   ShapeUtil,
   T,
   TLBaseShape,
+  TLOnClickHandler,
+  TLOnDragHandler,
+  TLOnHandleDragHandler,
+  TLOnResizeHandler,
+  TLShapeUtilFlag,
 } from "tldraw";
 import runes from "runes";
 
@@ -21,6 +26,7 @@ export type IUserShape = TLBaseShape<
     bio: string;
     userName: string;
     address: string;
+    onClick: () => void;
   }
 >;
 
@@ -33,11 +39,16 @@ const cardShapeProps: ShapeProps<IUserShape> = {
   bio: T.string,
   userName: T.string,
   address: T.string,
+  onClick: T.any,
 };
 
 export class UserShapeUtil extends ShapeUtil<IUserShape> {
   static override type = "user" as const;
   static override props = cardShapeProps;
+
+  override onClick?: TLOnClickHandler<IUserShape> = (shape) => {
+    shape.props.onClick();
+  };
 
   getDefaultProps(): IUserShape["props"] {
     return {
@@ -49,6 +60,7 @@ export class UserShapeUtil extends ShapeUtil<IUserShape> {
       bio: "",
       userName: "",
       address: "",
+      onClick: () => {},
     };
   }
 
@@ -56,7 +68,7 @@ export class UserShapeUtil extends ShapeUtil<IUserShape> {
     return new Rectangle2d({
       width: shape.props.w,
       height: shape.props.h,
-      isFilled: false,
+      isFilled: true,
     });
   }
 

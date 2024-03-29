@@ -34,7 +34,6 @@ export async function GET(
     address?: Address;
   };
 
-  const userData: UserRes = {};
   const u = user.unwrapOr(undefined);
 
   if (u == undefined) {
@@ -75,7 +74,7 @@ export async function GET(
   });
 
   const response: UserResponse = {
-    user: userData,
+    user: data,
   };
 
   return Response.json(response);

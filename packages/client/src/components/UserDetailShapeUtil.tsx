@@ -56,7 +56,7 @@ export class UserDetailShapeUtil extends ShapeUtil<IUserDetailShape> {
     return new Rectangle2d({
       width: shape.props.w,
       height: shape.props.h,
-      isFilled: false,
+      isFilled: true,
     });
   }
 
