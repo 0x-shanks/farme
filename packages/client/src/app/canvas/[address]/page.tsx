@@ -36,7 +36,7 @@ import {
 import { useEffect, useState } from "react";
 import { CiImageOn } from "react-icons/ci";
 import { PiSticker } from "react-icons/pi";
-import { IoMdClose } from "react-icons/io";
+import { IoIosArrowBack, IoMdClose } from "react-icons/io";
 import { LuLogOut, LuSave } from "react-icons/lu";
 import { create as createKubo } from "kubo-rpc-client";
 import {
@@ -69,6 +69,7 @@ import {
 import { getDefaultFixedPriceMinterAddress } from "@zoralabs/protocol-sdk";
 
 import { signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function Home({ params }: { params: { address: Address } }) {
   return (
@@ -95,9 +96,6 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
   const editor = useEditor();
   const { address } = useAccount();
   const { data: session } = useSession();
-  useEffect(() => {
-    console.log("session", session);
-  }, [session]);
 
   const API_ENDPOINT = "https://api.zora.co/graphql";
   const args = {
@@ -117,10 +115,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     abi: canvasAbi,
     address: canvasAddress,
     functionName: "getCanvas",
-    args: [address ?? zeroAddress],
-    query: {
-      enabled: address != undefined,
-    },
+    args: [canvasOwner],
   });
 
   const decodeFloat = ({
@@ -137,6 +132,8 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       `${value.toString().slice(0, decimal)}.${value.toString().slice(decimal)}`,
     );
   };
+
+  const [lastSave, setLastSave] = useState<number>(0);
 
   useEffect(() => {
     if (isCanvasFetched && canvasData != undefined) {
@@ -207,7 +204,10 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         });
       });
 
+      editor.zoomToContent();
       editor.zoomOut();
+
+      setLastSave(editor.store.history.get());
     }
   }, [canvasData, isCanvasFetched]);
 
@@ -599,6 +599,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
           isLocked: false,
         })),
       );
+      setLastSave(editor.store.history.get());
     } catch (e) {
       console.error(e);
     } finally {
@@ -723,6 +724,11 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     await fetchTokens();
   };
 
+  const router = useRouter();
+  const handleBack = () => {
+    router.back();
+  };
+
   return (
     <Box
       pos="absolute"
@@ -829,13 +835,13 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
               />
               <IconButton
                 aria-label="save"
-                icon={<Icon as={LuLogOut} />}
+                icon={<Icon as={IoIosArrowBack} />}
                 colorScheme="blue"
                 rounded="full"
                 shadow="xl"
                 pointerEvents="all"
                 size="lg"
-                onClick={() => signOut()}
+                onClick={handleBack}
               />
             </HStack>
           </>

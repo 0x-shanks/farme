@@ -7,6 +7,7 @@ import {
   ShapeUtil,
   T,
   TLBaseShape,
+  TLOnClickHandler,
 } from "tldraw";
 import runes from "runes";
 
@@ -21,6 +22,7 @@ export type IUserDetailShape = TLBaseShape<
     bio: string;
     userName: string;
     address: string;
+    onClick: () => void;
   }
 >;
 
@@ -33,11 +35,16 @@ const cardShapeProps: ShapeProps<IUserDetailShape> = {
   bio: T.string,
   userName: T.string,
   address: T.string,
+  onClick: T.any,
 };
 
 export class UserDetailShapeUtil extends ShapeUtil<IUserDetailShape> {
   static override type = "userDetail" as const;
   static override props = cardShapeProps;
+
+  override onClick?: TLOnClickHandler<IUserDetailShape> = (shape) => {
+    shape.props.onClick();
+  };
 
   getDefaultProps(): IUserDetailShape["props"] {
     return {
@@ -49,6 +56,7 @@ export class UserDetailShapeUtil extends ShapeUtil<IUserDetailShape> {
       bio: "",
       userName: "",
       address: "",
+      onClick: () => {},
     };
   }
 

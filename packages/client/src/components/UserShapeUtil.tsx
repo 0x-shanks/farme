@@ -8,10 +8,6 @@ import {
   T,
   TLBaseShape,
   TLOnClickHandler,
-  TLOnDragHandler,
-  TLOnHandleDragHandler,
-  TLOnResizeHandler,
-  TLShapeUtilFlag,
 } from "tldraw";
 import runes from "runes";
 

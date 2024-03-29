@@ -44,7 +44,7 @@ export default function Home({ params }: { params: { fid: number } }) {
           right={0}
           overflow="hidden"
         >
-          <Network user={user} />
+          <Network user={user} hasPrevious={true} />
         </Box>
       </Box>
     </main>

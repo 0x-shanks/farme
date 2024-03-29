@@ -122,6 +122,7 @@ export default function Home() {
               userName: session.user?.displayName,
               address,
             }}
+            hasPrevious={false}
           />
         </Box>
       </Box>
