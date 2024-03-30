@@ -292,6 +292,9 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     if (selectedShapeId == undefined) {
       return;
     }
+    if (session?.user?.id == undefined) {
+      return;
+    }
     (async () => {
       const res = await httpClient.get<UserResponse>(
         `/farcaster/${session?.user?.id}`,
