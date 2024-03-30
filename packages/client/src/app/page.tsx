@@ -1,40 +1,38 @@
 "use client";
 
-import {
-  Avatar,
-  Box,
-  Button,
-  Center,
-  Spinner,
-  VStack,
-  Text,
-  Card,
-  CardBody,
-  Flex,
-} from "@chakra-ui/react";
+import { Box, Button, Center, Spinner, VStack } from "@chakra-ui/react";
 import { useCallback, useEffect, useRef, useState } from "react";
-
 import { usePrivy } from "@privy-io/react-auth";
-
 import { StatusAPIResponse } from "@farcaster/auth-kit";
 import { SignInButton } from "@farcaster/auth-kit";
-import { getCsrfToken, signIn, useSession } from "next-auth/react";
-import { httpClient } from "@/utils/http/client";
-import { UserResponseItem, UsersResponse } from "@/models/userResponse";
-import runes from "runes";
-import { IUserShape, UserShapeUtil } from "@/components/UserShapeUtil";
-import { Tldraw, track, useEditor, Vec } from "tldraw";
-import { Session } from "next-auth";
-import {
-  IUserDetailShape,
-  UserDetailShapeUtil,
-} from "@/components/UserDetailShapeUtil";
+import { getCsrfToken, signIn, signOut, useSession } from "next-auth/react";
 import { useAccount } from "wagmi";
 import { Network } from "@/components/Network";
+import { UserResponse, UserResponseItem } from "@/models/userResponse";
+import { httpClient } from "@/utils/http/client";
 
 export default function Home() {
-  const { ready, authenticated, login, user } = usePrivy();
+  const { ready, authenticated, login, user, logout } = usePrivy();
   const { data: session, status: sessionStatus } = useSession();
+  const { address } = useAccount();
+
+  const [farcasterUser, setFarcasterUser] = useState<UserResponseItem>();
+  const onceUserFetch = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (onceUserFetch.current) {
+      return;
+    }
+    if (session?.user?.id == undefined) {
+      return;
+    }
+    (async () => {
+      const res = await httpClient.get<UserResponse>(
+        `/farcaster/${session?.user?.id}`,
+      );
+      setFarcasterUser(res.data.user);
+    })();
+  }, [session?.user?.id]);
 
   const getNonce = useCallback(async () => {
     const nonce = await getCsrfToken();
@@ -58,9 +56,6 @@ export default function Home() {
     },
     [signIn],
   );
-
-  const customShapeUtils = [UserShapeUtil, UserDetailShapeUtil];
-  const { address } = useAccount();
 
   if (!ready) {
     return (
@@ -101,6 +96,30 @@ export default function Home() {
       </main>
     );
   }
+
+  if (farcasterUser == undefined) {
+    return (
+      <main>
+        <Center w="full" h="100dvh">
+          <Spinner />
+        </Center>
+      </main>
+    );
+  }
+
+  // TODO: be enabled
+  // if (address?.toLowerCase() != farcasterUser.address?.toLowerCase()) {
+  //   return (
+  //     <main>
+  //       <Center w="full" h="100dvh">
+  //         <VStack>
+  //           <Button onClick={() => logout()}>Disconnect wallet</Button>
+  //           <Button onClick={() => signOut()}>Signout farcaster</Button>
+  //         </VStack>
+  //       </Center>
+  //     </main>
+  //   );
+  // }
 
   return (
     <main>

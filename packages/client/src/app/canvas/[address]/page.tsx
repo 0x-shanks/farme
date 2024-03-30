@@ -37,8 +37,7 @@ import { useEffect, useState } from "react";
 import { CiImageOn } from "react-icons/ci";
 import { PiSticker } from "react-icons/pi";
 import { IoIosArrowBack, IoMdClose } from "react-icons/io";
-import { LuLogOut, LuSave } from "react-icons/lu";
-import { create as createKubo } from "kubo-rpc-client";
+import { LuSave } from "react-icons/lu";
 import {
   useAccount,
   useConfig,
@@ -68,8 +67,13 @@ import {
 } from "viem";
 import { getDefaultFixedPriceMinterAddress } from "@zoralabs/protocol-sdk";
 
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { TokensResponse } from "@/models/tokensResponse";
+import { ipfsClient } from "@/utils/ipfs/client";
+import { httpClient } from "@/utils/http/client";
+import { decodeFloat, encodeFloat } from "@/utils/contract/float";
+import { getIPFSPreviewURL } from "@/utils/ipfs/utils";
 
 export default function Home({ params }: { params: { address: Address } }) {
   return (
@@ -96,21 +100,26 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
   const editor = useEditor();
   const { address } = useAccount();
   const { data: session } = useSession();
+  const config = useConfig();
+  const router = useRouter();
 
-  const API_ENDPOINT = "https://api.zora.co/graphql";
-  const args = {
-    endPoint: API_ENDPOINT,
-    networks: [
-      {
-        network: ZDKNetwork.Zora,
-        chain: "ZORA_SEPOLIA" as Chain,
-      },
-    ],
-    // apiKey: process.env.API_KEY,
-  };
+  // States
+  const [lastSave, setLastSave] = useState<number>(0);
+  const [isDropLoading, setIsDropLoading] = useState<boolean>(false);
+  const [uploadedFile, setUploadedFile] = useState<File>();
+  const [uploadedShapeId, setUploadedShapeId] = useState<string>();
+  const [selectedShapeId, setSelectedShapeId] = useState<string>();
+  const [fileName, setFileName] = useState<string>();
+  const [tokens, setTokens] = useState<Token[]>();
 
-  const zdk = new ZDK(args);
+  const {
+    isOpen: isStickerOpen,
+    onOpen: onStickerOpen,
+    onClose: onStickerClose,
+  } = useDisclosure();
 
+  // Contract
+  const { writeContractAsync } = useWriteContract();
   const { data: canvasData, isFetched: isCanvasFetched } = useReadContract({
     abi: canvasAbi,
     address: canvasAddress,
@@ -118,23 +127,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     args: [canvasOwner],
   });
 
-  const decodeFloat = ({
-    decimal,
-    value,
-  }: {
-    decimal: number;
-    value: bigint;
-  }): number => {
-    if (decimal == 0) {
-      return Number(value);
-    }
-    return parseFloat(
-      `${value.toString().slice(0, decimal)}.${value.toString().slice(decimal)}`,
-    );
-  };
-
-  const [lastSave, setLastSave] = useState<number>(0);
-
+  // Load canvas
   useEffect(() => {
     if (isCanvasFetched && canvasData != undefined) {
       canvasData[1].forEach((asset) => {
@@ -211,41 +204,10 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     }
   }, [canvasData, isCanvasFetched]);
 
-  const [tokens, setTokens] = useState<Token[]>();
-
-  const getIPFSPreviewURL = (cid: string) => {
-    return new URL(
-      `https://remote-image.decentralized-content.com/image?${new URLSearchParams(
-        {
-          url: `https://ipfs-gateway-dev.zoralabs.workers.dev/ipfs/${cid}`,
-          w: "3840",
-          q: "75",
-        },
-      ).toString()}`,
-    ).toString();
-  };
-
+  // Fetch zora tokens
   const fetchTokens = async () => {
-    const tokens = await zdk.tokens({
-      where: {
-        ownerAddresses: [address ?? ""],
-      },
-    });
-
-    setTokens(
-      tokens.tokens.nodes
-        .map((n) => n.token as Token)
-        .map((token) => ({
-          ...token,
-          image: {
-            ...token.image,
-            url:
-              token.image?.url?.split(":")[0] == "ipfs"
-                ? getIPFSPreviewURL(token.image?.url.split("://")[1])
-                : token.image?.url,
-          },
-        })),
-    );
+    const res = await httpClient.get<TokensResponse>(`/zora/tokens/${address}`);
+    setTokens(res.data.tokens);
   };
   useEffect(() => {
     if (!address) {
@@ -256,22 +218,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     })();
   }, [address]);
 
-  useEffect(() => {
-    console.log("tokens", tokens);
-  }, [tokens]);
-
-  const {
-    isOpen: isStickerOpen,
-    onOpen: onStickerOpen,
-    onClose: onStickerClose,
-  } = useDisclosure();
-  const [uploadedFile, setUploadedFile] = useState<File>();
-  const [uploadedShapeId, setUploadedShapeId] = useState<string>();
-  const [selectedShapeId, setSelectedShapeId] = useState<string>();
-  const [fileName, setFileName] = useState<string>();
-
-  const kubo = createKubo({ url: "https://ipfs-uploader.zora.co/api/v0" });
-
+  // Watch select token
   editor.store.listen((entry) => {
     if (entry.changes.updated.hasOwnProperty("instance_page_state:page:page")) {
       const updatedEntry =
@@ -318,6 +265,10 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       );
     }
   }, [selectedShapeId]);
+
+  //
+  // Handler
+  //
 
   const handleInsertSticker = async (
     tokenContract: TokenContract | null | undefined,
@@ -443,11 +394,6 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     );
   };
 
-  const { writeContractAsync } = useWriteContract();
-  const config = useConfig();
-
-  const [isDropLoading, setIsDropLoading] = useState<boolean>(false);
-
   const handleDrop = async () => {
     if (!address) {
       throw new Error("address is not found");
@@ -483,7 +429,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     setIsDropLoading(true);
 
     try {
-      const res = await kubo.add({
+      const res = await ipfsClient.add({
         path: fileName ?? "",
         content: uploadedFile,
       });
@@ -496,7 +442,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         animation_url: "",
       });
 
-      const metaRes = await kubo.add({
+      const metaRes = await ipfsClient.add({
         path: `${fileName}-metadata`,
         content: metadata,
       });
@@ -605,14 +551,6 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     } finally {
       setIsDropLoading(false);
     }
-  };
-
-  const encodeFloat = (number: number) => {
-    const dec = number.toString().indexOf(".");
-    return {
-      decimal: dec != -1 ? dec : 0,
-      value: BigInt(number.toString().replace(".", "")),
-    };
   };
 
   const handleSave = async () => {
@@ -724,7 +662,6 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     await fetchTokens();
   };
 
-  const router = useRouter();
   const handleBack = () => {
     router.back();
   };
