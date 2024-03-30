@@ -61,5 +61,10 @@
     "plugins": "link:@wagmi/cli/plugins",
     "prettier": "^3.2.5",
     "typescript": "^5"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "tldraw@2.1.0-canary.8658e20ab55b": "patches/tldraw@2.1.0-canary.8658e20ab55b.patch"
+    }
   }
 }

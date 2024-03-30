@@ -41,10 +41,11 @@ contract Canvas {
   mapping(address => mapping(uint256 => Shape)) public shapeMap;
   mapping(address => uint256[]) public shapeIDs;
   mapping(uint256 => Asset) public assets;
+  mapping(address => string) public canvasPreviewURI;
 
   event CreateSticker(address creator, uint256 id);
 
-  function getCanvas(address canvasOwner) external view returns (Shape[] memory, Asset[] memory) {
+  function getCanvas(address canvasOwner) external view returns (Shape[] memory, Asset[] memory, string memory) {
     uint256 length = shapeIDs[canvasOwner].length;
     Shape[] memory shapes = new Shape[](length);
     Asset[] memory assets_ = new Asset[](length);
@@ -52,15 +53,30 @@ contract Canvas {
       shapes[i] = shapeMap[canvasOwner][shapeIDs[canvasOwner][i]];
       assets_[i] = assets[shapes[i].assetID];
     }
+    string memory previewURI = canvasPreviewURI[canvasOwner];
 
-    return (shapes, assets_);
+    return (shapes, assets_, previewURI);
   }
 
-  function editCanvas(address canvasOwner, Shape[] memory shapes, Asset[] memory assets_) external {
+  function editCanvas(
+    address canvasOwner,
+    Shape[] memory shapes,
+    Asset[] memory assets_,
+    string memory previewURI
+  ) external {
     uint256[] memory shapeIds_ = new uint256[](shapes.length);
     for (uint256 i = 0; i < shapes.length; i++) {
       Shape memory shape = shapeMap[canvasOwner][shapes[i].id];
-      if (msg.sender != canvasOwner && msg.sender != shape.creator) {
+      bool hasAuthorization = msg.sender == canvasOwner;
+
+      if (shape.creator == address(0)) {
+        // when creating new shape
+        hasAuthorization == true;
+      } else if (msg.sender == shape.creator) {
+        hasAuthorization = true;
+      }
+
+      if (!hasAuthorization) {
         revert Forbidden();
       }
 
@@ -78,6 +94,9 @@ contract Canvas {
       }
       assets[assetId] = assets_[i];
     }
+
+    // Set preview
+    canvasPreviewURI[canvasOwner] = previewURI;
   }
 
   function createSticker(
@@ -86,10 +105,15 @@ contract Canvas {
     Shape calldata shape,
     uint256 maxSupply,
     address fixedPriceMinterAddress,
-    ZoraCreatorFixedPriceSaleStrategy.SalesConfig memory salesConfig
+    ZoraCreatorFixedPriceSaleStrategy.SalesConfig memory salesConfig,
+    address createReferral
   ) external {
+    if (createReferral == address(0)) {
+      revert InvalidCreateReferral();
+    }
+
     IZoraCreator1155 token = IZoraCreator1155(asset.contractAddress);
-    uint256 tokenID = token.setupNewTokenWithCreateReferral(newURI, maxSupply, msg.sender);
+    uint256 tokenID = token.setupNewTokenWithCreateReferral(newURI, maxSupply, createReferral);
 
     token.addPermission(0, fixedPriceMinterAddress, token.PERMISSION_BIT_MINTER());
     token.callSale(

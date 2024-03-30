@@ -8,6 +8,7 @@ import {
   T,
   TLBaseShape,
   TLOnClickHandler,
+  TLShapeUtilFlag,
 } from "tldraw";
 import runes from "runes";
 
@@ -45,6 +46,11 @@ export class UserShapeUtil extends ShapeUtil<IUserShape> {
   override onClick?: TLOnClickHandler<IUserShape> = (shape) => {
     shape.props.onClick();
   };
+
+  override hideResizeHandles = () => true;
+  override hideRotateHandle = () => true;
+  override hideSelectionBoundsBg = () => true;
+  override hideSelectionBoundsFg = () => true;
 
   getDefaultProps(): IUserShape["props"] {
     return {

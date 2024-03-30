@@ -7,20 +7,25 @@ import {
   IUserDetailShape,
   UserDetailShapeUtil,
 } from "@/components/UserDetailShapeUtil";
-import { Tldraw, track, useEditor } from "tldraw";
+import { Tldraw, TLGeoShape, track, useEditor } from "tldraw";
 import { httpClient } from "@/utils/http/client";
 import { useRouter } from "next/navigation";
 import { Box, Button, HStack, Icon } from "@chakra-ui/react";
 import { IoIosArrowBack } from "react-icons/io";
+import { canvasAbi } from "@/utils/contract/generated";
+import { canvasAddress } from "@/utils/contract/address";
+import { useReadContract } from "wagmi";
+import { MobileTool } from "./MobileTool";
 
 export const Network: FC<{
   user: UserResponseItem;
   hasPrevious: boolean;
 }> = ({ user, hasPrevious }) => {
   const customShapeUtils = [UserShapeUtil, UserDetailShapeUtil];
+  const customTools = [MobileTool];
 
   return (
-    <Tldraw hideUi shapeUtils={customShapeUtils}>
+    <Tldraw hideUi shapeUtils={customShapeUtils} tools={customTools}>
       <Content user={user} hasPrevious={hasPrevious} />
     </Tldraw>
   );
@@ -30,19 +35,36 @@ const Content = track(
   ({ user, hasPrevious }: { user: UserResponseItem; hasPrevious: boolean }) => {
     const editor = useEditor();
 
+    editor.setCurrentTool("mobile");
+
     const [isDetailReady, setIsDetailsReady] = useState<boolean>(false);
     const [isNetworkReady, setNetworkReady] = useState<boolean>(false);
     const onceFetch = useRef<boolean>(false);
     const router = useRouter();
 
+    const { data: canvasData, isFetched: isCanvasFetched } = useReadContract({
+      abi: canvasAbi,
+      address: canvasAddress,
+      functionName: "getCanvas",
+      args: [user.address!],
+      query: {
+        enabled: user.address != undefined,
+      },
+    });
+
     const detailW = 200;
-    const detailH = 200;
+    const detailH = 360;
+
     useEffect(() => {
       if (!user?.fid) {
         return;
       }
 
       if (!user.address) {
+        return;
+      }
+
+      if (!isCanvasFetched) {
         return;
       }
 
@@ -55,8 +77,8 @@ const Content = track(
       editor.createShape<IUserDetailShape>({
         type: "userDetail",
         props: {
-          w: 200,
-          h: 360,
+          w: detailW,
+          h: detailH,
           fid: user?.fid ?? "0",
           pfp: user?.pfp ?? "",
           displayName: user?.displayName ?? "",
@@ -66,9 +88,10 @@ const Content = track(
           onClick: () => {
             router.push(`/canvas/${user.address}`);
           },
+          preview: canvasData?.[2],
         },
         x: center.x - detailW / 2,
-        y: center.y - detailH / 2 - 90,
+        y: center.y - detailH / 2,
       });
 
       editor.updateInstanceState({ canMoveCamera: false });
@@ -81,7 +104,6 @@ const Content = track(
         const res = await httpClient.get<UsersResponse>(
           `/farcaster/${user?.fid}/network`,
         );
-        console.log(res);
 
         const users = res.data.users;
 
@@ -122,7 +144,7 @@ const Content = track(
           }
 
           const xWeight = 100;
-          const yWeight = 180;
+          const yWeight = 120;
 
           editor.createShape<IUserShape>({
             type: "user",
@@ -148,9 +170,7 @@ const Content = track(
               center.y -
               h / 2 +
               yOffset * yWeight * level +
-              (yOffset * detailH) / 2 +
-              detailH / 2 -
-              100,
+              (yOffset * detailH) / 2,
           });
         });
 
@@ -158,7 +178,7 @@ const Content = track(
 
         setNetworkReady(true);
       })();
-    }, [user?.fid, user.address]);
+    }, [user?.fid, user.address, isCanvasFetched]);
 
     const handleBack = () => {
       router.back();

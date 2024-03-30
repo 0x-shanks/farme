@@ -1,6 +1,7 @@
 import { UsersResponse } from "@/models/userResponse";
 import { farcasterHubClient } from "@/utils/farcaster";
 import { CastAddBody, ReactionBody, UserDataType } from "@farcaster/hub-nodejs";
+import { NextResponse } from "next/server";
 
 import { cache } from "react";
 import { Address, fromBytes } from "viem";
@@ -89,6 +90,7 @@ export async function GET(
   });
 
   let fids = Array.from(score.entries())
+    .filter((v) => v[0] != fid)
     .sort((a, b) => b[1] - a[1])
     .map((v) => v[0]);
 
@@ -174,5 +176,5 @@ export async function GET(
     users: userData,
   };
 
-  return Response.json(response);
+  return NextResponse.json(response);
 }

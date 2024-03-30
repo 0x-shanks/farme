@@ -1,0 +1,118 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+deleted file mode 100644
+index f15f7d1a0754ece7d0fe5d398b7cc8cafb8070a6..0000000000000000000000000000000000000000
+diff --git a/dist-cjs/lib/canvas/TldrawSelectionForeground.js b/dist-cjs/lib/canvas/TldrawSelectionForeground.js
+index 1cbc1f2539898bb9edb59eaab3e17eddf4684307..4e717db82d2cb7fc2fe1212e877ea38f5a7adbf1 100644
+--- a/dist-cjs/lib/canvas/TldrawSelectionForeground.js
++++ b/dist-cjs/lib/canvas/TldrawSelectionForeground.js
+@@ -92,7 +92,18 @@ const TldrawSelectionForeground = (0, import_editor.track)(function TldrawSelect
+     "select.crop.idle",
+     "select.crop.pointing_crop",
+     "select.pointing_resize_handle",
+-    "select.pointing_crop_handle"
++    "select.pointing_crop_handle",
++    'mobileSelect.idle',
++		'mobileSelect.brushing',
++		'mobileSelect.scribble_brushing',
++		'mobileSelect.pointing_canvas',
++		'mobileSelect.pointing_selection',
++		'mobileSelect.pointing_shape',
++		'mobileSelect.crop.idle',
++		'mobileSelect.crop.pointing_crop',
++		'mobileSelect.pointing_resize_handle',
++		'mobileSelect.pointing_crop_handle',
++		'mobileSelect.dragging'
+   ) || showSelectionBounds && editor.isIn("select.resizing") && onlyShape && editor.isShapeOfType(onlyShape, "text");
+   if (onlyShape && shouldDisplayBox) {
+     if (editor.environment.isFirefox && editor.isShapeOfType(onlyShape, "embed")) {
+@@ -108,7 +119,12 @@ const TldrawSelectionForeground = (0, import_editor.track)(function TldrawSelect
+     "select.idle",
+     "select.pointing_selection",
+     "select.pointing_shape",
+-    "select.crop.idle"
++    "select.crop.idle",
++    "mobileSelect.idle",
++    "mobileSelect.pointing_selection",
++    "mobileSelect.pointing_shape",
++    "mobileSelect.crop.idle",
++    'mobileSelect.dragging'
+   ) && !isChangingStyle && !isReadonlyMode;
+   const showCornerRotateHandles = !isCoarsePointer && !(isTinyX || isTinyY) && (shouldDisplayControls || showCropHandles) && (onlyShape ? !editor.getShapeUtil(onlyShape).hideRotateHandle(onlyShape) : true) && !isLockedShape;
+   const showMobileRotateHandle = isCoarsePointer && (!isSmallX || !isSmallY) && (shouldDisplayControls || showCropHandles) && (onlyShape ? !editor.getShapeUtil(onlyShape).hideRotateHandle(onlyShape) : true) && !isLockedShape;
+diff --git a/dist-esm/lib/canvas/TldrawSelectionForeground.mjs b/dist-esm/lib/canvas/TldrawSelectionForeground.mjs
+index b999b21c46639d738d1e64923f4e9a49b7145afa..aeded5d462ded97864b26a0feb62e962ce86e25a 100644
+--- a/dist-esm/lib/canvas/TldrawSelectionForeground.mjs
++++ b/dist-esm/lib/canvas/TldrawSelectionForeground.mjs
+@@ -65,7 +65,18 @@ const TldrawSelectionForeground = track(function TldrawSelectionForeground2({
+     "select.crop.idle",
+     "select.crop.pointing_crop",
+     "select.pointing_resize_handle",
+-    "select.pointing_crop_handle"
++    "select.pointing_crop_handle",
++    'mobileSelect.idle',
++		'mobileSelect.brushing',
++		'mobileSelect.scribble_brushing',
++		'mobileSelect.pointing_canvas',
++		'mobileSelect.pointing_selection',
++		'mobileSelect.pointing_shape',
++		'mobileSelect.crop.idle',
++		'mobileSelect.crop.pointing_crop',
++		'mobileSelect.pointing_resize_handle',
++		'mobileSelect.pointing_crop_handle',
++		'mobileSelect.dragging'
+   ) || showSelectionBounds && editor.isIn("select.resizing") && onlyShape && editor.isShapeOfType(onlyShape, "text");
+   if (onlyShape && shouldDisplayBox) {
+     if (editor.environment.isFirefox && editor.isShapeOfType(onlyShape, "embed")) {
+@@ -81,7 +92,12 @@ const TldrawSelectionForeground = track(function TldrawSelectionForeground2({
+     "select.idle",
+     "select.pointing_selection",
+     "select.pointing_shape",
+-    "select.crop.idle"
++    "select.crop.idle",
++    "mobileSelect.idle",
++    "mobileSelect.pointing_selection",
++    "mobileSelect.pointing_shape",
++    "mobileSelect.crop.idle",
++    'mobileSelect.dragging'
+   ) && !isChangingStyle && !isReadonlyMode;
+   const showCornerRotateHandles = !isCoarsePointer && !(isTinyX || isTinyY) && (shouldDisplayControls || showCropHandles) && (onlyShape ? !editor.getShapeUtil(onlyShape).hideRotateHandle(onlyShape) : true) && !isLockedShape;
+   const showMobileRotateHandle = isCoarsePointer && (!isSmallX || !isSmallY) && (shouldDisplayControls || showCropHandles) && (onlyShape ? !editor.getShapeUtil(onlyShape).hideRotateHandle(onlyShape) : true) && !isLockedShape;
+diff --git a/src/lib/canvas/TldrawSelectionForeground.tsx b/src/lib/canvas/TldrawSelectionForeground.tsx
+index 295b4f8cbb5eceb8f98abd5dd31b4d1bfb4ecd10..7100bd912abffcd76e50cdf533773f2857f2e48d 100644
+--- a/src/lib/canvas/TldrawSelectionForeground.tsx
++++ b/src/lib/canvas/TldrawSelectionForeground.tsx
+@@ -91,7 +91,18 @@ export const TldrawSelectionForeground = track(function TldrawSelectionForegroun
+ 				'select.crop.idle',
+ 				'select.crop.pointing_crop',
+ 				'select.pointing_resize_handle',
+-				'select.pointing_crop_handle'
++				'select.pointing_crop_handle',
++				'mobileSelect.idle',
++				'mobileSelect.brushing',
++				'mobileSelect.scribble_brushing',
++				'mobileSelect.pointing_canvas',
++				'mobileSelect.pointing_selection',
++				'mobileSelect.pointing_shape',
++				'mobileSelect.crop.idle',
++				'mobileSelect.crop.pointing_crop',
++				'mobileSelect.pointing_resize_handle',
++				'mobileSelect.pointing_crop_handle',
++				'mobileSelect.dragging'
+ 			)) ||
+ 		(showSelectionBounds &&
+ 			editor.isIn('select.resizing') &&
+@@ -118,7 +129,13 @@ export const TldrawSelectionForeground = track(function TldrawSelectionForegroun
+ 			'select.idle',
+ 			'select.pointing_selection',
+ 			'select.pointing_shape',
+-			'select.crop.idle'
++			'select.crop.idle',
++
++			'mobileSelect.idle',
++			'mobileSelect.pointing_selection',
++			'mobileSelect.pointing_shape',
++			'mobileSelect.crop.idle',
++			'mobileSelect.dragging'
+ 		) &&
+ 		!isChangingStyle &&
+ 		!isReadonlyMode

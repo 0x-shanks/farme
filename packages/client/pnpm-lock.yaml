@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  tldraw@2.1.0-canary.8658e20ab55b:
+    hash: i23mpuxtki766tkmqzhvgt7kn4
+    path: patches/tldraw@2.1.0-canary.8658e20ab55b.patch
+
 dependencies:
   '@chakra-ui/next-js':
     specifier: ^2.2.0
@@ -88,7 +93,7 @@ dependencies:
     version: 0.4.3
   tldraw:
     specifier: 2.1.0-canary.8658e20ab55b
-    version: 2.1.0-canary.8658e20ab55b(@types/react-dom@18.2.22)(@types/react@18.2.72)(react-dom@18.0.0)(react@18.0.0)
+    version: 2.1.0-canary.8658e20ab55b(patch_hash=i23mpuxtki766tkmqzhvgt7kn4)(@types/react-dom@18.2.22)(@types/react@18.2.72)(react-dom@18.0.0)(react@18.0.0)
   usehooks-ts:
     specifier: ^2.15.1
     version: 2.15.1(react@18.0.0)
@@ -15991,7 +15996,7 @@ packages:
     resolution: {integrity: sha512-XPaBkWQJdsf3pLKJV9p4qN/S+fm2Oj8AIPo1BTUhg5oxkvm9+SVEGFdhyOz7tTdUTfvxMiAs4sp6/eZO2Ew+pw==}
     dev: false
 
-  /tldraw@2.1.0-canary.8658e20ab55b(@types/react-dom@18.2.22)(@types/react@18.2.72)(react-dom@18.0.0)(react@18.0.0):
+  /tldraw@2.1.0-canary.8658e20ab55b(patch_hash=i23mpuxtki766tkmqzhvgt7kn4)(@types/react-dom@18.2.22)(@types/react@18.2.72)(react-dom@18.0.0)(react@18.0.0):
     resolution: {integrity: sha512-5kchLlxYGLixwo6XO9NGLE5GZsgd+r21ekfYR+NOMCRcxyWAW2dePQvNCfBUX/7wzOolEwMKfkV9RGhB4vzcJg==}
     peerDependencies:
       react: ^18
@@ -16016,6 +16021,7 @@ packages:
       - '@types/react'
       - '@types/react-dom'
     dev: false
+    patched: true
 
   /tmpl@1.0.5:
     resolution: {integrity: sha512-3f0uOEAQwIqGuWW2MVzYg8fV/QNnc/IpuJNG837rLuczAaLVHslWHZQj4IGiEl5Hs3kkbhwL9Ab7Hrsmuj+Smw==}

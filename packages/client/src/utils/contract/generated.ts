@@ -36,6 +36,13 @@ export const canvasAbi = [
     ],
   },
   {
+    stateMutability: "view",
+    type: "function",
+    inputs: [{ name: "", internalType: "address", type: "address" }],
+    name: "canvasPreviewURI",
+    outputs: [{ name: "", internalType: "string", type: "string" }],
+  },
+  {
     stateMutability: "nonpayable",
     type: "function",
     inputs: [
@@ -151,6 +158,7 @@ export const canvasAbi = [
           { name: "fundsRecipient", internalType: "address", type: "address" },
         ],
       },
+      { name: "createReferral", internalType: "address", type: "address" },
     ],
     name: "createSticker",
     outputs: [],
@@ -249,6 +257,7 @@ export const canvasAbi = [
           },
         ],
       },
+      { name: "previewURI", internalType: "string", type: "string" },
     ],
     name: "editCanvas",
     outputs: [],
@@ -359,6 +368,7 @@ export const canvasAbi = [
           },
         ],
       },
+      { name: "", internalType: "string", type: "string" },
     ],
   },
   {
@@ -448,6 +458,7 @@ export const canvasAbi = [
     name: "CreateSticker",
   },
   { type: "error", inputs: [], name: "Forbidden" },
+  { type: "error", inputs: [], name: "InvalidCreateReferral" },
 ] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

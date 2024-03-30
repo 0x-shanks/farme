@@ -3,6 +3,7 @@
 import { UserResponse } from "@/models/userResponse";
 import { farcasterHubClient } from "@/utils/farcaster";
 import { UserDataType } from "@farcaster/hub-nodejs";
+import { NextResponse } from "next/server";
 import { cache } from "react";
 import { Address, fromBytes } from "viem";
 
@@ -77,5 +78,5 @@ export async function GET(
     user: data,
   };
 
-  return Response.json(response);
+  return NextResponse.json(response);
 }

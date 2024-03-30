@@ -12,7 +12,7 @@ import getIsPWA from "@/utils/getIsPWA";
 
 import { defaultChain, supportedChains } from "./constants";
 import { fallback, http } from "viem";
-import { baseSepolia, zoraSepolia } from "wagmi/chains";
+import { zoraSepolia } from "wagmi/chains";
 import { SessionProvider } from "next-auth/react";
 
 import { AuthKitProvider } from "@farcaster/auth-kit";
@@ -37,10 +37,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const wagmiConfig = createConfig({
     chains: [zoraSepolia],
     transports: {
-      [zoraSepolia.id]: fallback([
-        http(process.env.NEXT_PUBLIC_ALCHEMY_ENDPOINT ?? ""),
-        http(),
-      ]),
+      [zoraSepolia.id]: fallback([http()]),
     },
   });
 

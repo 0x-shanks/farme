@@ -1,4 +1,12 @@
-import { Avatar, VStack, Text, Card, CardBody, Box } from "@chakra-ui/react";
+import {
+  Avatar,
+  VStack,
+  Text,
+  Card,
+  CardBody,
+  Image,
+  Box,
+} from "@chakra-ui/react";
 import {
   Geometry2d,
   HTMLContainer,
@@ -23,6 +31,7 @@ export type IUserDetailShape = TLBaseShape<
     userName: string;
     address: string;
     onClick: () => void;
+    preview: string;
   }
 >;
 
@@ -36,6 +45,7 @@ const cardShapeProps: ShapeProps<IUserDetailShape> = {
   userName: T.string,
   address: T.string,
   onClick: T.any,
+  preview: T.string,
 };
 
 export class UserDetailShapeUtil extends ShapeUtil<IUserDetailShape> {
@@ -45,6 +55,11 @@ export class UserDetailShapeUtil extends ShapeUtil<IUserDetailShape> {
   override onClick?: TLOnClickHandler<IUserDetailShape> = (shape) => {
     shape.props.onClick();
   };
+
+  override hideResizeHandles = () => true;
+  override hideRotateHandle = () => true;
+  override hideSelectionBoundsBg = () => true;
+  override hideSelectionBoundsFg = () => true;
 
   getDefaultProps(): IUserDetailShape["props"] {
     return {
@@ -57,6 +72,7 @@ export class UserDetailShapeUtil extends ShapeUtil<IUserDetailShape> {
       userName: "",
       address: "",
       onClick: () => {},
+      preview: "",
     };
   }
 
@@ -71,7 +87,7 @@ export class UserDetailShapeUtil extends ShapeUtil<IUserDetailShape> {
   component(shape: IUserDetailShape) {
     return (
       <HTMLContainer>
-        <VStack spacing={6} w={shape.props.w} h={shape.props.h}>
+        <VStack spacing={2} w={shape.props.w} h={shape.props.h}>
           <VStack spacing={1} w="full">
             <Avatar
               src={shape.props.pfp ?? ""}
@@ -91,8 +107,17 @@ export class UserDetailShapeUtil extends ShapeUtil<IUserDetailShape> {
           </VStack>
 
           <Card shadow="xl">
-            <CardBody>
-              <Box w={150} h={200} color="red.200" />
+            <CardBody bgColor="#F8FBFC" borderColor="white" borderWidth={4}>
+              {!!shape.props.preview ? (
+                <Image
+                  w={150}
+                  h={200}
+                  src={shape.props.preview}
+                  objectFit="contain"
+                />
+              ) : (
+                <Box w={150} h={200} />
+              )}
             </CardBody>
           </Card>
         </VStack>
