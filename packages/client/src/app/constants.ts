@@ -1,8 +1,8 @@
 import { Address } from "viem";
-import { base, baseSepolia } from "wagmi/chains";
+import { base, zoraSepolia } from "wagmi/chains";
 
 export const defaultChain =
-  process.env.NEXT_PUBLIC_IS_MAINNNET == "true" ? base : baseSepolia;
+  process.env.NEXT_PUBLIC_IS_MAINNNET == "true" ? base : zoraSepolia;
 export const supportedChains = [defaultChain];
 
 export const farcasterHubURL =
