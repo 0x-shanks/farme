@@ -32,8 +32,13 @@ import {
   VStack,
   useDisclosure,
   Image,
+  CardBody,
+  Card,
+  Text,
+  Avatar,
+  SkeletonText,
 } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CiImageOn } from "react-icons/ci";
 import { PiSticker } from "react-icons/pi";
 import { IoIosArrowBack, IoMdClose } from "react-icons/io";
@@ -74,6 +79,8 @@ import { ipfsClient } from "@/utils/ipfs/client";
 import { httpClient } from "@/utils/http/client";
 import { decodeFloat, encodeFloat } from "@/utils/contract/float";
 import { getIPFSPreviewURL } from "@/utils/ipfs/utils";
+import { UserResponse, UserResponseItem } from "@/models/userResponse";
+import { fromUnixTime } from "date-fns";
 
 export default function Home({ params }: { params: { address: Address } }) {
   return (
@@ -109,6 +116,8 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
   const [uploadedFile, setUploadedFile] = useState<File>();
   const [uploadedShapeId, setUploadedShapeId] = useState<string>();
   const [selectedShapeId, setSelectedShapeId] = useState<string>();
+  const [selectedShapeCreator, setSelectedShapeCreator] =
+    useState<UserResponseItem>();
   const [fileName, setFileName] = useState<string>();
   const [tokens, setTokens] = useState<Token[]>();
 
@@ -126,6 +135,14 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     functionName: "getCanvas",
     args: [canvasOwner],
   });
+
+  // Memo
+  const selectedShape = useMemo(() => {
+    if (selectedShapeId == undefined) {
+      return undefined;
+    }
+    return editor.getShape<TLImageShape>(selectedShapeId as TLShapeId);
+  }, [selectedShapeId]);
 
   // Load canvas
   useEffect(() => {
@@ -214,7 +231,12 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       return;
     }
     (async () => {
-      await fetchTokens();
+      try {
+        await fetchTokens();
+      } catch (e) {
+        // TODO: handle
+        console.error(e);
+      }
     })();
   }, [address]);
 
@@ -234,7 +256,6 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       }
     }
   });
-
   useEffect(() => {
     if (uploadedFile) {
       return;
@@ -264,6 +285,19 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         })),
       );
     }
+  }, [selectedShapeId]);
+
+  // Fetch creator of the shape
+  useEffect(() => {
+    if (selectedShapeId == undefined) {
+      return;
+    }
+    (async () => {
+      const res = await httpClient.get<UserResponse>(
+        `/farcaster/${session?.user?.id}`,
+      );
+      setSelectedShapeCreator(res.data.user);
+    })();
   }, [selectedShapeId]);
 
   //
@@ -677,6 +711,46 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       left={0}
       right={0}
     >
+      <VStack
+        pos="absolute"
+        bottom={100}
+        left={0}
+        right={0}
+        px={6}
+        py={4}
+        justify="center"
+      >
+        {!!selectedShapeId && (
+          <Card shadow="lg">
+            <CardBody>
+              <VStack spacing={1}>
+                <Avatar
+                  size="sm"
+                  src={selectedShapeCreator?.pfp}
+                  borderWidth={1}
+                  borderColor="white"
+                  shadow="lg"
+                />
+                {selectedShapeCreator && selectedShape ? (
+                  <>
+                    <Text>{`Made by ${selectedShapeCreator?.displayName}`}</Text>
+                    <Text>
+                      {fromUnixTime(
+                        selectedShape?.meta.createdAt as number,
+                      ).toLocaleDateString()}
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <SkeletonText noOfLines={1} w={20} />
+                    <SkeletonText noOfLines={1} w={10} />
+                  </>
+                )}
+              </VStack>
+            </CardBody>
+          </Card>
+        )}
+      </VStack>
       <HStack
         pos="absolute"
         bottom={0}
