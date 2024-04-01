@@ -10,6 +10,6 @@ const args = {
       chain: "ZORA_SEPOLIA" as Chain,
     },
   ],
-  // apiKey: process.env.API_KEY,
+  apiKey: process.env.ZORA_API_KEY,
 };
 export const zdk = new ZDK(args);
