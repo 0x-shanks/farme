@@ -5,6 +5,7 @@ import { IZoraCreator1155 } from "@zoralabs/zora-1155-contracts/interfaces/IZora
 import { ZoraCreatorFixedPriceSaleStrategy } from "@zoralabs/zora-1155-contracts/minters/fixed-price/ZoraCreatorFixedPriceSaleStrategy.sol";
 
 error Forbidden();
+error InvalidCanvasOwner();
 error InvalidCreateReferral();
 
 contract Canvas {
@@ -45,7 +46,16 @@ contract Canvas {
 
   event CreateSticker(address creator, uint256 id);
 
-  function getCanvas(address canvasOwner) external view returns (Shape[] memory, Asset[] memory, string memory) {
+  modifier requiredCanvasOwner(address canvasOwner) {
+    if (canvasOwner == address(0)) {
+      revert InvalidCanvasOwner();
+    }
+    _;
+  }
+
+  function getCanvas(
+    address canvasOwner
+  ) external view requiredCanvasOwner(canvasOwner) returns (Shape[] memory, Asset[] memory, string memory) {
     uint256 length = shapeIDs[canvasOwner].length;
     Shape[] memory shapes = new Shape[](length);
     Asset[] memory assets_ = new Asset[](length);
@@ -63,20 +73,15 @@ contract Canvas {
     Shape[] memory shapes,
     Asset[] memory assets_,
     string memory previewURI
-  ) external {
+  ) external requiredCanvasOwner(canvasOwner) {
     uint256[] memory shapeIds_ = new uint256[](shapes.length);
     for (uint256 i = 0; i < shapes.length; i++) {
       Shape memory shape = shapeMap[canvasOwner][shapes[i].id];
-      bool hasAuthorization = msg.sender == canvasOwner;
+      bool isCanvasOwner = msg.sender == canvasOwner;
+      bool isNewSticker = shape.creator == address(0);
+      bool isCreator = msg.sender == shape.creator;
 
-      if (shape.creator == address(0)) {
-        // when creating new shape
-        hasAuthorization == true;
-      } else if (msg.sender == shape.creator) {
-        hasAuthorization = true;
-      }
-
-      if (!hasAuthorization) {
+      if (!isCanvasOwner && !isNewSticker && !isCreator) {
         revert Forbidden();
       }
 
@@ -100,14 +105,16 @@ contract Canvas {
   }
 
   function createSticker(
+    address canvasOwner,
     string calldata newURI,
     Asset calldata asset,
     Shape calldata shape,
     uint256 maxSupply,
     address fixedPriceMinterAddress,
     ZoraCreatorFixedPriceSaleStrategy.SalesConfig memory salesConfig,
-    address createReferral
-  ) external {
+    address createReferral,
+    string memory previewURI
+  ) external requiredCanvasOwner(canvasOwner) {
     if (createReferral == address(0)) {
       revert InvalidCreateReferral();
     }
@@ -142,8 +149,8 @@ contract Canvas {
       h: asset.h
     });
 
-    shapeIDs[msg.sender].push(shape.id);
-    shapeMap[msg.sender][shape.id] = Shape({
+    shapeIDs[canvasOwner].push(shape.id);
+    shapeMap[canvasOwner][shape.id] = Shape({
       id: shape.id,
       x: shape.x,
       y: shape.y,
@@ -156,6 +163,8 @@ contract Canvas {
       h: shape.h,
       index: shape.index
     });
+
+    canvasPreviewURI[canvasOwner] = previewURI;
 
     emit CreateSticker(msg.sender, tokenID);
   }
