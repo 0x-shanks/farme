@@ -1,7 +1,12 @@
 import { zdk } from "@/utils/zora";
 import { cache } from "react";
 import { Address, zeroAddress } from "viem";
-import { Chain, Token } from "@zoralabs/zdk/dist/queries/queries-sdk";
+import {
+  Chain,
+  SortDirection,
+  Token,
+  TokenSortKey,
+} from "@zoralabs/zdk/dist/queries/queries-sdk";
 import { getIPFSPreviewURL } from "@/utils/ipfs/utils";
 import { TokensResponse } from "@/models/tokensResponse";
 import { ZDKChain, ZDKNetwork } from "@zoralabs/zdk";
@@ -35,6 +40,10 @@ export async function GET(
             chain: "ZORA_SEPOLIA" as Chain,
           },
         ],
+        sort: {
+          sortDirection: SortDirection.Desc,
+          sortKey: TokenSortKey.Minted,
+        },
       }),
   );
 

@@ -46,6 +46,7 @@ export const canvasAbi = [
     stateMutability: "nonpayable",
     type: "function",
     inputs: [
+      { name: "canvasOwner", internalType: "address", type: "address" },
       { name: "newURI", internalType: "string", type: "string" },
       {
         name: "asset",
@@ -159,6 +160,7 @@ export const canvasAbi = [
         ],
       },
       { name: "createReferral", internalType: "address", type: "address" },
+      { name: "previewURI", internalType: "string", type: "string" },
     ],
     name: "createSticker",
     outputs: [],
@@ -458,6 +460,7 @@ export const canvasAbi = [
     name: "CreateSticker",
   },
   { type: "error", inputs: [], name: "Forbidden" },
+  { type: "error", inputs: [], name: "InvalidCanvasOwner" },
   { type: "error", inputs: [], name: "InvalidCreateReferral" },
 ] as const;
 

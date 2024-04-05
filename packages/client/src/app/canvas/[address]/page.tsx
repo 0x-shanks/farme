@@ -38,6 +38,8 @@ import {
   Text,
   Avatar,
   SkeletonText,
+  background,
+  DrawerBody,
 } from "@chakra-ui/react";
 import { useEffect, useMemo, useState } from "react";
 import { CiImageOn } from "react-icons/ci";
@@ -85,6 +87,7 @@ import { GoTrash } from "react-icons/go";
 import { FaCheck } from "react-icons/fa";
 import { createReferral } from "@/app/constants";
 import { MobileSelectTool } from "@/components/MobileSelectTool";
+import imageCompression from "browser-image-compression";
 
 export default function Home({ params }: { params: { address: Address } }) {
   const customTools = [MobileSelectTool];
@@ -158,15 +161,12 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
   useEffect(() => {
     if (isCanvasFetched && canvasData != undefined) {
       canvasData[1].forEach((asset) => {
-        const assetId = fromHex(
-          keccak256(
-            encodePacked(
-              ["uint256", "address", "uint256"],
-              [asset.tokenID, asset.contractAddress, asset.chainID],
-            ),
-          ),
-          "bigint",
+        const assetId = getAssetId(
+          asset.tokenID.toString(),
+          asset.contractAddress,
+          asset.chainID,
         );
+        console.log("assetId", assetId);
         const assets: TLAsset[] = [
           {
             meta: {
@@ -179,6 +179,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
                 chain: Number(asset.chainID),
               },
               tokenId: Number(asset.tokenID),
+              onchainAssetId: assetId.toString(),
             },
             id: `asset:${assetId}` as TLAssetId,
             type: "image",
@@ -198,6 +199,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       });
 
       canvasData[0].forEach((shape) => {
+        console.log("shape", shape.id, `asset:${shape.assetID}`);
         editor.createShape({
           x: decodeFloat(shape.x),
           y: decodeFloat(shape.y),
@@ -207,6 +209,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
           meta: {
             creator: shape.creator,
             createdAt: Number(shape.createdAt),
+            onchainShapeId: shape.id.toString(),
           },
           id: `shape:${shape.id}` as TLShapeId,
           type: "image",
@@ -324,6 +327,64 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
   }, [isSavedSuccess]);
 
   //
+  // Util
+  //
+
+  const getPreviewURL = async () => {
+    let previewURI = "";
+
+    if (Array.from(editor.getCurrentPageShapeIds()).length > 0) {
+      const image = await exportToBlob({
+        editor,
+        ids: Array.from(editor.getCurrentPageShapeIds()),
+        format: "png",
+        opts: { background: false },
+      });
+
+      const imageFile = new File([image], "", {
+        type: "image/png",
+      });
+      const compressedImage = await imageCompression(imageFile, {
+        maxWidthOrHeight: 500,
+      });
+
+      const res = await ipfsClient.add({
+        content: compressedImage,
+        path: canvasOwner,
+      });
+
+      previewURI = getIPFSPreviewURL(res.cid.toString());
+    }
+    return previewURI;
+  };
+
+  const getAssetId = (
+    tokenId: string,
+    collectionAddress: Address,
+    chain: bigint,
+  ) => {
+    const rawAssetId = fromHex(
+      keccak256(
+        encodePacked(
+          ["uint256", "address", "uint256"],
+          [BigInt(tokenId), collectionAddress, BigInt(chain)],
+        ),
+      ),
+      "bigint",
+    );
+    return rawAssetId;
+  };
+
+  const getShapeId = (creator: Address, createdAt: bigint) => {
+    const rawShapeId = fromHex(
+      keccak256(encodePacked(["address", "uint256"], [creator, createdAt])),
+      "bigint",
+    );
+
+    return rawShapeId;
+  };
+
+  //
   // Handler
   //
 
@@ -333,6 +394,10 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     image: TokenContentMedia | null | undefined,
     name: string | null | undefined,
   ) => {
+    if (!address) {
+      throw new Error("address is not found");
+    }
+
     if (!tokenContract) {
       throw new Error("tokenContract is not found");
     }
@@ -382,11 +447,21 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       throw new Error("asset is not found");
     }
 
+    const rawAssetId = getAssetId(
+      tokenId,
+      tokenContract.collectionAddress as Address,
+      BigInt(tokenContract.chain),
+    );
+
+    const now = getUnixTime(new Date());
+    const rawShapeId = getShapeId(address, BigInt(now));
+
     editor.updateShape({
       ...shape,
       meta: {
         creator: address,
-        createdAt: getUnixTime(new Date()),
+        createdAt: now,
+        onchainShapeId: rawShapeId.toString(),
       },
     });
 
@@ -397,6 +472,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         meta: {
           tokenContract,
           tokenId,
+          onchainAssetId: rawAssetId.toString(),
         },
       },
     ]);
@@ -407,6 +483,10 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
   const handleInsertImage = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
+    if (!address) {
+      throw new Error("address is not found");
+    }
+
     const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
     editor.updateShapes(
       allShapeIds.map((s) => ({
@@ -429,6 +509,36 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       files: [file],
       point: editor.getViewportPageBounds().center,
       ignoreParent: false,
+    });
+
+    const shape = editor.getShape<TLImageShape>(
+      editor.getSelectedShapeIds()[0],
+    );
+
+    if (!shape) {
+      throw new Error("shape is not found");
+    }
+
+    const assetId = shape.props.assetId;
+    if (!assetId) {
+      throw new Error("assetId is not found");
+    }
+
+    const asset = editor.getAsset(assetId);
+    if (!asset) {
+      throw new Error("asset is not found");
+    }
+
+    const now = getUnixTime(new Date());
+    const rawShapeId = getShapeId(address, BigInt(now));
+
+    editor.updateShape({
+      ...shape,
+      meta: {
+        creator: address,
+        createdAt: now,
+        onchainShapeId: rawShapeId.toString(),
+      },
     });
 
     setUploadedShapeId(editor.getSelectedShapeIds()[0]);
@@ -483,12 +593,29 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       throw new Error("fid is not found");
     }
 
+    if (uploadedFile == undefined) {
+      throw new Error("uploadFile is not found");
+    }
+
     setIsDropLoading(true);
+    const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
+    editor.updateShapes(
+      allShapeIds.map((s) => ({
+        id: s,
+        type: "image",
+        opacity: 1,
+        isLocked: false,
+      })),
+    );
 
     try {
+      const compressedImage = await imageCompression(uploadedFile, {
+        maxWidthOrHeight: 1000,
+      });
+
       const res = await ipfsClient.add({
         path: fileName ?? "",
-        content: uploadedFile,
+        content: compressedImage,
       });
 
       const metadata = JSON.stringify({
@@ -504,6 +631,8 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         content: metadata,
       });
 
+      const previewURI = await getPreviewURL();
+
       const salesConfig = {
         saleStart: BigInt(getUnixTime(new Date())),
         saleEnd: BigInt(getUnixTime(addDays(new Date(), 10))),
@@ -517,11 +646,12 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         address: canvasAddress,
         functionName: "createSticker",
         args: [
+          canvasOwner,
           `ipfs://${metaRes.cid.toString()}`,
           {
-            tokenID: BigInt(0),
+            tokenID: BigInt(0), // Calc in contract
             contractAddress: tokenAddress,
-            chainID: BigInt(0),
+            chainID: BigInt(0), // Get in contract
             srcURI: getIPFSPreviewURL(res.cid.toString()),
             srcName: fileName ?? "",
             mineType: asset.props.mimeType ?? "",
@@ -529,7 +659,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
             h: encodeFloat(asset.props.h),
           },
           {
-            id: fromHex(keccak256(toHex(shape.id)), "bigint"),
+            id: BigInt(shape.meta.onchainShapeId as string),
             x: encodeFloat(shape.x),
             y: encodeFloat(shape.y),
             rotation: encodeFloat(shape.rotation),
@@ -545,6 +675,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
           getDefaultFixedPriceMinterAddress(zoraSepolia.id),
           salesConfig,
           createReferral,
+          previewURI,
         ],
       });
 
@@ -594,17 +725,19 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       setUploadedFile(undefined);
       setUploadedShapeId(undefined);
       setFileName("");
-      const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
-      editor.updateShapes(
-        allShapeIds.map((s) => ({
-          id: s,
-          type: "image",
-          opacity: 1,
-          isLocked: false,
-        })),
-      );
       setLastSave(editor.store.history.get());
     } catch (e) {
+      const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
+      editor.updateShapes(
+        allShapeIds
+          .filter((s) => s != selectedShapeId)
+          .map((s) => ({
+            id: s,
+            type: "image",
+            opacity: 0.5,
+            isLocked: false,
+          })),
+      );
       console.error(e);
     } finally {
       setIsDropLoading(false);
@@ -625,24 +758,18 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     }
 
     setIsSaveLoading(true);
+    const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
+    editor.updateShapes(
+      allShapeIds.map((s) => ({
+        id: s,
+        type: "image",
+        opacity: 1,
+        isLocked: false,
+      })),
+    );
 
     try {
-      let previewURI = "";
-
-      if (Array.from(editor.getCurrentPageShapeIds()).length > 0) {
-        const image = await exportToBlob({
-          editor,
-          ids: Array.from(editor.getCurrentPageShapeIds()),
-          format: "png",
-        });
-
-        const res = await ipfsClient.add({
-          path: canvasOwner,
-          content: image,
-        });
-
-        previewURI = getIPFSPreviewURL(res.cid.toString());
-      }
+      const previewURI = await getPreviewURL();
 
       const snapshot = editor.store.getSnapshot();
 
@@ -653,34 +780,9 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         (s) => s.typeName == "shape",
       ) as TLImageShape[];
 
-      type ImageAsset = TLImageAsset & { assetId: bigint };
-
-      const assets = Object.values(snapshot.store)
-        .filter((s) => s.typeName == "asset")
-        .map((asset) => {
-          const a = asset as TLImageAsset;
-          const tokenContract = a.meta.tokenContract as {
-            collectionAddress: Address;
-            chain: number;
-          };
-
-          return {
-            ...a,
-            assetId: fromHex(
-              keccak256(
-                encodePacked(
-                  ["uint256", "address", "uint256"],
-                  [
-                    BigInt((a.meta.tokenId as number) ?? 0),
-                    tokenContract.collectionAddress,
-                    BigInt(tokenContract.chain),
-                  ],
-                ),
-              ),
-              "bigint",
-            ),
-          };
-        }) as ImageAsset[];
+      const assets = Object.values(snapshot.store).filter(
+        (s) => s.typeName == "asset",
+      ) as TLImageAsset[];
 
       const formattedAssets = assets.map((a) => {
         const tokenContract = a.meta.tokenContract as {
@@ -688,7 +790,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
           chain: number;
         };
         return {
-          tokenID: BigInt((a.meta.tokenId as number) ?? 0),
+          tokenID: BigInt(a.meta.tokenId?.toString() ?? 0),
           contractAddress: tokenContract.collectionAddress,
           chainID: BigInt(tokenContract.chain),
           srcURI: a.props.src ?? "",
@@ -706,14 +808,14 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         }
 
         return {
-          id: fromHex(keccak256(toHex(s.id)), "bigint"),
+          id: BigInt(s.meta.onchainShapeId as string),
           x: encodeFloat(s.x),
           y: encodeFloat(s.y),
           rotation: encodeFloat(s.rotation),
           creator: s.meta.creator as Address,
           createdAt: BigInt(s.meta.createdAt as number),
           fid: BigInt(session.user!.id),
-          assetID: asset.assetId,
+          assetID: BigInt(asset.meta.onchainAssetId as string),
           w: encodeFloat(s.props.w),
           h: encodeFloat(s.props.h),
           index: s.index,
@@ -948,29 +1050,34 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
               <Spinner />
             </Center>
           )}
-          <SimpleGrid columns={3} spacing={6} px={6}>
-            {tokens?.map((token) => (
-              <GridItem
-                key={token.tokenContract?.collectionAddress + token.tokenId}
-              >
-                <Button
-                  w="full"
-                  h="full"
-                  variant="unstyled"
-                  onClick={() =>
-                    handleInsertSticker(
-                      token.tokenContract,
-                      token.tokenId,
-                      token.image,
-                      token.name,
-                    )
-                  }
+          <DrawerBody>
+            <SimpleGrid columns={3} spacing={6} px={6}>
+              {tokens?.map((token) => (
+                <GridItem
+                  key={token.tokenContract?.collectionAddress + token.tokenId}
                 >
-                  <Image src={token.image?.url ?? ""} alt={token.name ?? ""} />
-                </Button>
-              </GridItem>
-            ))}
-          </SimpleGrid>
+                  <Button
+                    w="full"
+                    h="full"
+                    variant="unstyled"
+                    onClick={() =>
+                      handleInsertSticker(
+                        token.tokenContract,
+                        token.tokenId,
+                        token.image,
+                        token.name,
+                      )
+                    }
+                  >
+                    <Image
+                      src={token.image?.url ?? ""}
+                      alt={token.name ?? ""}
+                    />
+                  </Button>
+                </GridItem>
+              ))}
+            </SimpleGrid>
+          </DrawerBody>
         </DrawerContent>
       </Drawer>
     </Box>
