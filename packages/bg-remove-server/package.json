@@ -1,0 +1,24 @@
+{
+  "name": "bg-remove-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "devl": "vercel dev --listen 8001",
+    "format": "prettier --write './**/*.{ts,tsx,yaml,json}'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@imgly/background-removal-node": "^1.4.5",
+    "@vercel/node": "^3.0.26",
+    "formidable": "^3.5.1"
+  },
+  "devDependencies": {
+    "@types/formidable": "^3.4.5",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.4",
+    "vercel": "^33.6.3"
+  }
+}
