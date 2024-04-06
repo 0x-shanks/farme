@@ -20,6 +20,7 @@
     "@farcaster/auth-client": "^0.1.0",
     "@farcaster/auth-kit": "^0.2.1",
     "@farcaster/hub-nodejs": "^0.11.8",
+    "@imgly/background-removal": "^1.4.5",
     "@privy-io/react-auth": "^1.58.0",
     "@privy-io/wagmi": "^0.2.1",
     "@privy-io/wagmi-connector": "^0.1.12",
