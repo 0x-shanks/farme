@@ -40,7 +40,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
         reject(new Error("invalid image"));
       });
-    },
+    }
   );
 
   const { mineType, err } = await getFile;
@@ -60,7 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const publicPath =
     process.env.NODE_ENV == "production"
-      ? "https://bg-remove-server.vercel.app/@imgly/background-removal-node/dist/"
+      ? `${process.env.BG_REMOVE_URL}/@imgly/background-removal-node/dist/`
       : "http://localhost:8001/@imgly/background-removal-node/dist/";
 
   const config: Config = {
@@ -70,7 +70,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       format: "image/png",
     },
     publicPath,
-    model: "medium",
+    model: "small",
   };
 
   const blob = new Blob([endBuffers[0]], { type: mineType });
