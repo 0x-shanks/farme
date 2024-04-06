@@ -1,8 +1,8 @@
 import { Config, removeBackground } from "@imgly/background-removal-node";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import formidable from "formidable";
-import { Writable } from "node:stream";
-import { Buffer } from "node:buffer";
+import { Writable } from "stream";
+import { Buffer } from "buffer";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const endBuffers: Buffer[] = [];
@@ -58,12 +58,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
+  const publicPath =
+    process.env.NODE_ENV == "production"
+      ? "https://bg-remove-server.vercel.app/@imgly/background-removal-node/dist/"
+      : "http://localhost:8001/@imgly/background-removal-node/dist/";
+
   const config: Config = {
     debug: false,
     output: {
       quality: 0.8,
       format: "image/png",
     },
+    publicPath,
+    model: "medium",
   };
 
   const blob = new Blob([endBuffers[0]], { type: mineType });
