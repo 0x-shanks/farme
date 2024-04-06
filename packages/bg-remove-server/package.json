@@ -19,6 +19,7 @@
     "@types/formidable": "^3.4.5",
     "prettier": "^3.2.5",
     "typescript": "^5.4.4",
-    "vercel": "^33.6.3"
+    "vercel": "^33.6.3",
+    "@types/node": "~20.3.1"
   }
 }
