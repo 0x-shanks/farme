@@ -1,14 +1,11 @@
 export const getImageWithEdge = async (
   file: File,
-  s: number,
   color: string,
 ): Promise<string> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
-    const x = 50;
-    const y = 50;
 
     img.onload = () => {
       const size = {
@@ -16,8 +13,12 @@ export const getImageWithEdge = async (
         height: img.naturalHeight,
       };
 
-      canvas.width = size.width + 100;
-      canvas.height = size.height + 100;
+      const x = size.width / 10;
+      const y = x;
+      const s = x / 2;
+
+      canvas.width = size.width + x * 2;
+      canvas.height = size.height + x * 2;
 
       if (ctx == null) {
         throw new Error("ctx not found");
@@ -28,10 +29,10 @@ export const getImageWithEdge = async (
 
       ctx.globalCompositeOperation = "source-in";
       ctx.fillStyle = color;
-      ctx.fillRect(50, 50, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       ctx.globalCompositeOperation = "source-over";
-      ctx.drawImage(img, 50, 50, img.width, img.height);
+      ctx.drawImage(img, x, x, img.width, img.height);
 
       const dataURL = canvas.toDataURL("image/png");
       resolve(dataURL);

@@ -40,6 +40,7 @@ import {
   SkeletonText,
   background,
   DrawerBody,
+  useOutsideClick,
 } from "@chakra-ui/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CiImageOn } from "react-icons/ci";
@@ -89,6 +90,10 @@ import { createReferral } from "@/app/constants";
 import { MobileSelectTool } from "@/components/MobileSelectTool";
 import imageCompression from "browser-image-compression";
 import { getImageWithEdge } from "@/utils/image/getImageWithEdge";
+import EmojiPicker from "emoji-picker-react";
+import { toBase64 } from "@/utils/image/toBase64";
+import { getImageWithFrame } from "@/utils/image/getImageWithFrame";
+import { getImageRounded } from "@/utils/image/getImageRounded";
 
 export default function Home({ params }: { params: { address: Address } }) {
   const customTools = [MobileSelectTool];
@@ -141,6 +146,13 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     onOpen: onStickerOpen,
     onClose: onStickerClose,
   } = useDisclosure();
+
+  const emojiPickerRef = useRef(null);
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  useOutsideClick({
+    ref: emojiPickerRef,
+    handler: () => setIsEmojiPickerOpen(false),
+  });
 
   // Contract
   const { writeContractAsync } = useWriteContract();
@@ -503,11 +515,15 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       return;
     }
 
-    setUploadedFile(file);
+    const compressedImage = await imageCompression(file, {
+      maxWidthOrHeight: 1000,
+    });
+
+    setUploadedFile(compressedImage);
 
     await editor.putExternalContent({
       type: "files",
-      files: [file],
+      files: [compressedImage],
       point: editor.getViewportPageBounds().center,
       ignoreParent: false,
     });
@@ -516,6 +532,46 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       editor.getSelectedShapeIds()[0],
     );
 
+    if (!shape) {
+      throw new Error("shape is not found");
+    }
+
+    const now = getUnixTime(new Date());
+    const rawShapeId = getShapeId(address, BigInt(now));
+
+    editor.updateShape({
+      ...shape,
+      meta: {
+        creator: address,
+        createdAt: now,
+        onchainShapeId: rawShapeId.toString(),
+      },
+    });
+
+    setUploadedShapeId(editor.getSelectedShapeIds()[0]);
+    setFileName("😃");
+
+    const formData = new FormData();
+    formData.append("file", compressedImage);
+    const res = await httpClient.post<ArrayBuffer>("/bg-remove", formData, {
+      responseType: "arraybuffer",
+      headers: {
+        "Content-Type": "image/png",
+      },
+    });
+
+    const bgRemovedFile = new File([res.data], file.name);
+    setBgRemovedFile(bgRemovedFile);
+  };
+
+  const handleMakeSticker = async (
+    type: "white" | "black" | "no-bg" | "insta" | "rounded",
+  ) => {
+    if (!bgRemovedFile || !uploadedFile || !uploadedShapeId) {
+      return;
+    }
+
+    const shape = editor.getShape<TLImageShape>(uploadedShapeId);
     if (!shape) {
       throw new Error("shape is not found");
     }
@@ -531,48 +587,46 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     }
     const asset = a as TLImageAsset;
 
-    const now = getUnixTime(new Date());
-    const rawShapeId = getShapeId(address, BigInt(now));
-
-    editor.updateShape({
-      ...shape,
-      meta: {
-        creator: address,
-        createdAt: now,
-        onchainShapeId: rawShapeId.toString(),
-      },
-    });
-
-    setUploadedShapeId(editor.getSelectedShapeIds()[0]);
-    setFileName(file.name);
-
-    const compressedImage = await imageCompression(file, {
-      maxWidthOrHeight: 1000,
-    });
-    const formData = new FormData();
-    formData.append("file", compressedImage);
-    const res = await httpClient.post<ArrayBuffer>("/bg-remove", formData, {
-      responseType: "arraybuffer",
-      headers: {
-        "Content-Type": "image/png",
-      },
-    });
-
-    const bgRemovedFile = new File([res.data], file.name);
-    setBgRemovedFile(bgRemovedFile);
-
-    const dataURL = await getImageWithEdge(bgRemovedFile, 20, "white");
-
-    // TODO: remove
+    let src = "";
+    let w = 0;
+    let h = 0;
+    switch (type) {
+      case "white":
+        src = await getImageWithEdge(bgRemovedFile, "white");
+        w = asset.props.w;
+        h = asset.props.h;
+        break;
+      case "black":
+        src = await getImageWithEdge(bgRemovedFile, "black");
+        w = asset.props.w;
+        h = asset.props.h;
+        break;
+      case "no-bg":
+        src = await toBase64(bgRemovedFile);
+        w = asset.props.w;
+        h = asset.props.h;
+        break;
+      case "insta":
+        const result = await getImageWithFrame(uploadedFile, "white");
+        src = result.src;
+        w = result.w;
+        h = result.h;
+        break;
+      case "rounded":
+        src = await getImageRounded(uploadedFile);
+        w = asset.props.w;
+        h = asset.props.h;
+        break;
+    }
 
     editor.updateAssets([
       {
         ...asset,
         props: {
           ...asset.props,
-          src: dataURL,
-          w: asset.props.w + 100,
-          h: asset.props.h + 100,
+          src,
+          w,
+          h,
         },
       },
     ]);
@@ -585,6 +639,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     editor.deleteShapes([uploadedShapeId]);
     setUploadedFile(undefined);
     setUploadedShapeId(undefined);
+    setBgRemovedFile(undefined);
     setFileName("");
     const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
     editor.updateShapes(
@@ -962,12 +1017,73 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         {uploadedFile ? (
           <>
             <Spacer />
-            <VStack>
-              <Input
-                onChange={(e) => setFileName(e.target.value)}
-                value={fileName}
-                pointerEvents="all"
-              />
+            <VStack spacing={6}>
+              {isEmojiPickerOpen && (
+                <Box pointerEvents="all" ref={emojiPickerRef}>
+                  <EmojiPicker onEmojiClick={(s) => setFileName(s.emoji)} />
+                </Box>
+              )}
+
+              {!!bgRemovedFile && (
+                <HStack w="full" spacing={0} pointerEvents="all">
+                  <Button
+                    variant="unstyled"
+                    w="20%"
+                    h="full"
+                    onClick={() => handleMakeSticker("white")}
+                  >
+                    <ChakraImage
+                      alt="white-sticker"
+                      src="/images/stickers/white-sticker.png"
+                    />
+                  </Button>
+                  <Button
+                    variant="unstyled"
+                    w="20%"
+                    h="full"
+                    onClick={() => handleMakeSticker("black")}
+                  >
+                    <ChakraImage
+                      alt="black-sticker"
+                      src="/images/stickers/black-sticker.png"
+                    />
+                  </Button>
+                  <Button
+                    variant="unstyled"
+                    w="20%"
+                    h="full"
+                    onClick={() => handleMakeSticker("no-bg")}
+                  >
+                    <ChakraImage
+                      alt="no-background"
+                      src="/images/stickers/no-background.png"
+                    />
+                  </Button>
+                  <Button
+                    variant="unstyled"
+                    w="20%"
+                    h="full"
+                    onClick={() => handleMakeSticker("insta")}
+                  >
+                    <ChakraImage
+                      alt="instant-camera"
+                      src="/images/stickers/instant-camera.png"
+                    />
+                  </Button>
+                  <Button
+                    variant="unstyled"
+                    w="20%"
+                    h="full"
+                    onClick={() => handleMakeSticker("rounded")}
+                  >
+                    <ChakraImage
+                      alt="rounded"
+                      src="/images/stickers/rounded.png"
+                    />
+                  </Button>
+                </HStack>
+              )}
+
               <HStack>
                 <IconButton
                   aria-label="close image"
@@ -990,6 +1106,14 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
                 >
                   Drop
                 </Button>
+                <Input
+                  value={fileName}
+                  pointerEvents="all"
+                  isReadOnly={true}
+                  w={16}
+                  onClick={() => setIsEmojiPickerOpen(true)}
+                  textAlign="center"
+                />
               </HStack>
             </VStack>
             <Spacer />
