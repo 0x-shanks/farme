@@ -147,6 +147,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     useState<UserResponseItem>();
   const [fileName, setFileName] = useState<string>();
   const [tokens, setTokens] = useState<Token[]>();
+  const [shouldShowDrop, setShouldShowDrop] = useState<boolean>(false);
 
   const {
     isOpen: isStickerOpen,
@@ -291,6 +292,14 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
   useEffect(() => {
     if (uploadedFile) {
       return;
+    }
+
+    if (selectedShapeId == undefined) {
+      setUploadedFile(undefined);
+      setUploadedShapeId(undefined);
+      setBgRemovedFile(undefined);
+      setEditedFile(undefined);
+      setFileName("");
     }
 
     const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
@@ -441,16 +450,20 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     const blob = await res.blob();
     const file = new File([blob], name ?? "", { type: image.mimeType });
 
+    const compressedImage = await imageCompression(file, {
+      maxWidthOrHeight: 1000,
+    });
+    setUploadedFile(compressedImage);
+
     await editor.putExternalContent({
       type: "files",
-      files: [file],
+      files: [compressedImage],
       point: editor.getViewportPageBounds().center,
       ignoreParent: false,
     });
 
-    const shape = editor.getShape<TLImageShape>(
-      editor.getSelectedShapeIds()[0],
-    );
+    const shapeId = editor.getSelectedShapeIds()[0];
+    const shape = editor.getShape<TLImageShape>(shapeId);
 
     if (!shape) {
       throw new Error("shape is not found");
@@ -496,7 +509,26 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       },
     ]);
 
+    setUploadedShapeId(shapeId);
+    setFileName("😃");
+
     onStickerClose();
+
+    const formData = new FormData();
+    formData.append("file", file);
+    const bgRemovedRes = await httpClient.post<ArrayBuffer>(
+      "/bg-remove",
+      formData,
+      {
+        responseType: "arraybuffer",
+        headers: {
+          "Content-Type": "image/png",
+        },
+      },
+    );
+
+    const bgRemovedFile = new File([bgRemovedRes.data], file.name);
+    setBgRemovedFile(bgRemovedFile);
   };
 
   const handleInsertImage = async (
@@ -527,6 +559,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
 
     setUploadedFile(compressedImage);
     setEditedFile(compressedImage);
+    setShouldShowDrop(true);
 
     await editor.putExternalContent({
       type: "files",
@@ -535,9 +568,8 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       ignoreParent: false,
     });
 
-    const shape = editor.getShape<TLImageShape>(
-      editor.getSelectedShapeIds()[0],
-    );
+    const shapeId = editor.getSelectedShapeIds()[0];
+    const shape = editor.getShape<TLImageShape>(shapeId);
 
     if (!shape) {
       throw new Error("shape is not found");
@@ -555,7 +587,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       },
     });
 
-    setUploadedShapeId(editor.getSelectedShapeIds()[0]);
+    setUploadedShapeId(shapeId);
     setFileName("😃");
 
     const formData = new FormData();
@@ -641,18 +673,21 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         },
       },
     ]);
+    setShouldShowDrop(true);
   };
 
-  const handleDeleteImage = () => {
+  const handleDeleteInsertedImage = () => {
     if (uploadedShapeId == undefined) {
       throw new Error("uploadedShapeId is not found");
     }
-    editor.deleteShapes([uploadedShapeId]);
+    editor.deleteShape(uploadedShapeId);
     setUploadedFile(undefined);
     setUploadedShapeId(undefined);
     setBgRemovedFile(undefined);
     setEditedFile(undefined);
+    setSelectedShapeId(undefined);
     setFileName("");
+    setShouldShowDrop(false);
     const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
     editor.updateShapes(
       allShapeIds.map((s) => ({
@@ -956,12 +991,29 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     router.back();
   };
 
-  const handleDelete = () => {
+  const handleDeleteImage = () => {
     if (selectedShapeId == undefined) {
       return;
     }
 
     editor.deleteShape(selectedShapeId as TLShapeId);
+    setUploadedFile(undefined);
+    setUploadedShapeId(undefined);
+    setBgRemovedFile(undefined);
+    setEditedFile(undefined);
+    setSelectedShapeId(undefined);
+    setFileName("");
+    setShouldShowDrop(false);
+    const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
+    editor.updateShapes(
+      allShapeIds.map((s) => ({
+        id: s,
+        type: "image",
+        opacity: 1,
+        isLocked: false,
+      })),
+    );
+    editor.selectNone();
   };
 
   const handleBringForward = () => {
@@ -1011,12 +1063,11 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         <VStack
           pos="absolute"
           top={0}
-          bottom={0}
           right={0}
           px={6}
           py={4}
           justify="center"
-          spacing={6}
+          spacing={4}
           pointerEvents="all"
         >
           <IconButton
@@ -1054,236 +1105,220 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         </VStack>
       )}
 
-      <VStack
-        pos="absolute"
-        bottom={100}
-        left={0}
-        right={0}
-        px={6}
-        py={4}
-        justify="center"
-      >
-        {!!selectedShapeId && !uploadedFile && (
-          <Card shadow="lg">
-            <CardBody>
-              <VStack spacing={1}>
-                <Avatar
-                  size="sm"
-                  src={selectedShapeCreator?.pfp}
-                  borderWidth={1}
-                  borderColor="white"
-                  shadow="lg"
+      <VStack pos="absolute" bottom={0} left={0} right={0} w="full">
+        <VStack px={6} py={4} justify="center" w="full">
+          {!!selectedShapeId && !editedFile && (
+            <Card shadow="lg">
+              <CardBody>
+                <VStack spacing={1}>
+                  <Avatar
+                    size="sm"
+                    src={selectedShapeCreator?.pfp}
+                    borderWidth={1}
+                    borderColor="white"
+                    shadow="lg"
+                  />
+                  {selectedShapeCreator && selectedShape ? (
+                    <>
+                      <Text>{`Made by ${selectedShapeCreator?.displayName}`}</Text>
+                      <Text>
+                        {fromUnixTime(
+                          selectedShape?.meta.createdAt as number,
+                        ).toLocaleDateString()}
+                      </Text>
+                    </>
+                  ) : (
+                    <>
+                      <SkeletonText noOfLines={1} w={32} my={2} />
+                      <SkeletonText noOfLines={1} w={20} />
+                    </>
+                  )}
+                </VStack>
+              </CardBody>
+            </Card>
+          )}
+        </VStack>
+        {!!bgRemovedFile &&
+          !!selectedShapeId &&
+          uploadedShapeId == selectedShapeId && (
+            <HStack w="full" spacing={0} pointerEvents="all">
+              <Button
+                variant="unstyled"
+                w="20%"
+                h="full"
+                onClick={() => handleMakeSticker("white")}
+              >
+                <ChakraImage
+                  alt="white-sticker"
+                  src="/images/stickers/white-sticker.png"
                 />
-                {selectedShapeCreator && selectedShape ? (
-                  <>
-                    <Text>{`Made by ${selectedShapeCreator?.displayName}`}</Text>
-                    <Text>
-                      {fromUnixTime(
-                        selectedShape?.meta.createdAt as number,
-                      ).toLocaleDateString()}
-                    </Text>
-                  </>
-                ) : (
-                  <>
-                    <SkeletonText noOfLines={1} w={32} my={2} />
-                    <SkeletonText noOfLines={1} w={20} />
-                  </>
+              </Button>
+              <Button
+                variant="unstyled"
+                w="20%"
+                h="full"
+                onClick={() => handleMakeSticker("black")}
+              >
+                <ChakraImage
+                  alt="black-sticker"
+                  src="/images/stickers/black-sticker.png"
+                />
+              </Button>
+              <Button
+                variant="unstyled"
+                w="20%"
+                h="full"
+                onClick={() => handleMakeSticker("no-bg")}
+              >
+                <ChakraImage
+                  alt="no-background"
+                  src="/images/stickers/no-background.png"
+                />
+              </Button>
+              <Button
+                variant="unstyled"
+                w="20%"
+                h="full"
+                onClick={() => handleMakeSticker("insta")}
+              >
+                <ChakraImage
+                  alt="instant-camera"
+                  src="/images/stickers/instant-camera.png"
+                />
+              </Button>
+              <Button
+                variant="unstyled"
+                w="20%"
+                h="full"
+                onClick={() => handleMakeSticker("rounded")}
+              >
+                <ChakraImage alt="rounded" src="/images/stickers/rounded.png" />
+              </Button>
+            </HStack>
+          )}
+        <HStack px={6} py={4} justify="space-between" w="full">
+          {shouldShowDrop ? (
+            <>
+              <Spacer />
+              <VStack spacing={6}>
+                {isEmojiPickerOpen && (
+                  <Box pointerEvents="all" ref={emojiPickerRef}>
+                    <EmojiPicker onEmojiClick={(s) => setFileName(s.emoji)} />
+                  </Box>
                 )}
-              </VStack>
-            </CardBody>
-          </Card>
-        )}
-      </VStack>
-      <HStack
-        pos="absolute"
-        bottom={0}
-        left={0}
-        right={0}
-        px={6}
-        py={4}
-        justify="space-between"
-      >
-        {uploadedFile ? (
-          <>
-            <Spacer />
-            <VStack spacing={6}>
-              {isEmojiPickerOpen && (
-                <Box pointerEvents="all" ref={emojiPickerRef}>
-                  <EmojiPicker onEmojiClick={(s) => setFileName(s.emoji)} />
-                </Box>
-              )}
 
-              {!!bgRemovedFile && (
-                <HStack w="full" spacing={0} pointerEvents="all">
+                <HStack>
+                  <IconButton
+                    aria-label="close image"
+                    icon={<Icon as={IoMdClose} />}
+                    colorScheme="gray"
+                    rounded="full"
+                    shadow="xl"
+                    pointerEvents="all"
+                    onClick={handleDeleteInsertedImage}
+                    size="lg"
+                  />
                   <Button
-                    variant="unstyled"
-                    w="20%"
-                    h="full"
-                    onClick={() => handleMakeSticker("white")}
+                    pointerEvents="all"
+                    colorScheme="blue"
+                    shadow="xl"
+                    rounded="full"
+                    size="lg"
+                    onClick={handleDrop}
+                    isLoading={isDropLoading}
                   >
-                    <ChakraImage
-                      alt="white-sticker"
-                      src="/images/stickers/white-sticker.png"
-                    />
+                    Drop
                   </Button>
-                  <Button
-                    variant="unstyled"
-                    w="20%"
-                    h="full"
-                    onClick={() => handleMakeSticker("black")}
-                  >
-                    <ChakraImage
-                      alt="black-sticker"
-                      src="/images/stickers/black-sticker.png"
-                    />
-                  </Button>
-                  <Button
-                    variant="unstyled"
-                    w="20%"
-                    h="full"
-                    onClick={() => handleMakeSticker("no-bg")}
-                  >
-                    <ChakraImage
-                      alt="no-background"
-                      src="/images/stickers/no-background.png"
-                    />
-                  </Button>
-                  <Button
-                    variant="unstyled"
-                    w="20%"
-                    h="full"
-                    onClick={() => handleMakeSticker("insta")}
-                  >
-                    <ChakraImage
-                      alt="instant-camera"
-                      src="/images/stickers/instant-camera.png"
-                    />
-                  </Button>
-                  <Button
-                    variant="unstyled"
-                    w="20%"
-                    h="full"
-                    onClick={() => handleMakeSticker("rounded")}
-                  >
-                    <ChakraImage
-                      alt="rounded"
-                      src="/images/stickers/rounded.png"
-                    />
-                  </Button>
+                  <Input
+                    value={fileName}
+                    pointerEvents="all"
+                    isReadOnly={true}
+                    w={16}
+                    onClick={() => setIsEmojiPickerOpen(true)}
+                    textAlign="center"
+                  />
                 </HStack>
-              )}
-
+              </VStack>
+              <Spacer />
+            </>
+          ) : (
+            <>
               <HStack>
                 <IconButton
-                  aria-label="close image"
-                  icon={<Icon as={IoMdClose} />}
-                  colorScheme="gray"
-                  rounded="full"
-                  shadow="xl"
-                  pointerEvents="all"
-                  onClick={handleDeleteImage}
-                  size="lg"
-                />
-                <Button
-                  pointerEvents="all"
+                  aria-label="insert image"
+                  icon={<Icon as={PiSticker} />}
                   colorScheme="blue"
-                  shadow="xl"
                   rounded="full"
-                  size="lg"
-                  onClick={handleDrop}
-                  isLoading={isDropLoading}
-                >
-                  Drop
-                </Button>
-                <Input
-                  value={fileName}
+                  shadow="xl"
                   pointerEvents="all"
-                  isReadOnly={true}
-                  w={16}
-                  onClick={() => setIsEmojiPickerOpen(true)}
-                  textAlign="center"
+                  size="lg"
+                  onClick={handleStickerOpen}
+                />
+
+                <Box pos="relative" pointerEvents="all">
+                  <IconButton
+                    aria-label="insert image"
+                    icon={<Icon as={CiImageOn} />}
+                    colorScheme="blue"
+                    rounded="full"
+                    shadow="xl"
+                    size="lg"
+                  />
+                  <Box>
+                    <Input
+                      type="file"
+                      position="absolute"
+                      top="0"
+                      left="0"
+                      opacity="0"
+                      aria-hidden="true"
+                      accept="image/*"
+                      multiple={false}
+                      onChange={handleInsertImage}
+                    />
+                  </Box>
+                </Box>
+
+                {selectedShapeId && (
+                  <IconButton
+                    aria-label="delete"
+                    icon={<Icon as={GoTrash} />}
+                    colorScheme="blue"
+                    rounded="full"
+                    shadow="xl"
+                    pointerEvents="all"
+                    size="lg"
+                    onClick={handleDeleteImage}
+                  />
+                )}
+              </HStack>
+              <HStack>
+                <IconButton
+                  aria-label="save"
+                  icon={<Icon as={isSavedSuccess ? FaCheck : LuSave} />}
+                  colorScheme="blue"
+                  rounded="full"
+                  shadow="xl"
+                  pointerEvents="all"
+                  size="lg"
+                  onClick={handleSave}
+                  isLoading={isSaveLoading}
+                />
+                <IconButton
+                  aria-label="save"
+                  icon={<Icon as={IoIosArrowBack} />}
+                  colorScheme="blue"
+                  rounded="full"
+                  shadow="xl"
+                  pointerEvents="all"
+                  size="lg"
+                  onClick={handleBack}
                 />
               </HStack>
-            </VStack>
-            <Spacer />
-          </>
-        ) : (
-          <>
-            <HStack>
-              <IconButton
-                aria-label="insert image"
-                icon={<Icon as={PiSticker} />}
-                colorScheme="blue"
-                rounded="full"
-                shadow="xl"
-                pointerEvents="all"
-                size="lg"
-                onClick={handleStickerOpen}
-              />
-
-              <Box pos="relative" pointerEvents="all">
-                <IconButton
-                  aria-label="insert image"
-                  icon={<Icon as={CiImageOn} />}
-                  colorScheme="blue"
-                  rounded="full"
-                  shadow="xl"
-                  size="lg"
-                />
-                <Box>
-                  <Input
-                    type="file"
-                    position="absolute"
-                    top="0"
-                    left="0"
-                    opacity="0"
-                    aria-hidden="true"
-                    accept="image/*"
-                    multiple={false}
-                    onChange={handleInsertImage}
-                  />
-                </Box>
-              </Box>
-
-              {selectedShapeId && (
-                <IconButton
-                  aria-label="delete"
-                  icon={<Icon as={GoTrash} />}
-                  colorScheme="blue"
-                  rounded="full"
-                  shadow="xl"
-                  pointerEvents="all"
-                  size="lg"
-                  onClick={handleDelete}
-                />
-              )}
-            </HStack>
-            <HStack>
-              <IconButton
-                aria-label="save"
-                icon={<Icon as={isSavedSuccess ? FaCheck : LuSave} />}
-                colorScheme="blue"
-                rounded="full"
-                shadow="xl"
-                pointerEvents="all"
-                size="lg"
-                onClick={handleSave}
-                isLoading={isSaveLoading}
-              />
-              <IconButton
-                aria-label="save"
-                icon={<Icon as={IoIosArrowBack} />}
-                colorScheme="blue"
-                rounded="full"
-                shadow="xl"
-                pointerEvents="all"
-                size="lg"
-                onClick={handleBack}
-              />
-            </HStack>
-          </>
-        )}
-      </HStack>
+            </>
+          )}
+        </HStack>
+      </VStack>
 
       <Drawer
         placement="bottom"
