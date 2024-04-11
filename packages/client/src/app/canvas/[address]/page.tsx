@@ -181,7 +181,6 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
           asset.contractAddress,
           asset.chainID
         );
-        console.log("assetId", assetId);
         const assets: TLAsset[] = [
           {
             meta: {
@@ -621,7 +620,8 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         break;
     }
 
-    const decodedFile = Buffer.from(src, "base64");
+    const fileData = src.replace(/^data:\w+\/\w+;base64,/, "");
+    const decodedFile = Buffer.from(fileData, "base64");
     setEditedFile(new File([decodedFile], "", { type: "image/png" }));
 
     editor.updateAssets([
@@ -818,6 +818,8 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
 
       setUploadedFile(undefined);
       setUploadedShapeId(undefined);
+      setBgRemovedFile(undefined);
+      setEditedFile(undefined);
       setFileName("");
       setLastSave(editor.store.history.get());
     } catch (e) {
