@@ -32,7 +32,7 @@ import {
   Spinner,
   VStack,
   useDisclosure,
-  Image,
+  Image as ChakraImage,
   CardBody,
   Card,
   Text,
@@ -40,8 +40,9 @@ import {
   SkeletonText,
   background,
   DrawerBody,
+  useOutsideClick,
 } from "@chakra-ui/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CiImageOn } from "react-icons/ci";
 import { PiSticker } from "react-icons/pi";
 import { IoIosArrowBack, IoMdClose } from "react-icons/io";
@@ -88,6 +89,11 @@ import { FaCheck } from "react-icons/fa";
 import { createReferral } from "@/app/constants";
 import { MobileSelectTool } from "@/components/MobileSelectTool";
 import imageCompression from "browser-image-compression";
+import { getImageWithEdge } from "@/utils/image/getImageWithEdge";
+import EmojiPicker from "emoji-picker-react";
+import { toBase64 } from "@/utils/image/toBase64";
+import { getImageWithFrame } from "@/utils/image/getImageWithFrame";
+import { getImageRounded } from "@/utils/image/getImageRounded";
 
 export default function Home({ params }: { params: { address: Address } }) {
   const customTools = [MobileSelectTool];
@@ -128,8 +134,9 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
   const [isSavedSuccess, setIsSavedSuccess] = useState<boolean>(false);
   const [uploadedFile, setUploadedFile] = useState<File>();
   const [bgRemovedFile, setBgRemovedFile] = useState<File>();
-  const [uploadedShapeId, setUploadedShapeId] = useState<string>();
-  const [selectedShapeId, setSelectedShapeId] = useState<string>();
+  const [editedFile, setEditedFile] = useState<File>();
+  const [uploadedShapeId, setUploadedShapeId] = useState<TLShapeId>();
+  const [selectedShapeId, setSelectedShapeId] = useState<TLShapeId>();
   const [selectedShapeCreator, setSelectedShapeCreator] =
     useState<UserResponseItem>();
   const [fileName, setFileName] = useState<string>();
@@ -140,6 +147,13 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     onOpen: onStickerOpen,
     onClose: onStickerClose,
   } = useDisclosure();
+
+  const emojiPickerRef = useRef(null);
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  useOutsideClick({
+    ref: emojiPickerRef,
+    handler: () => setIsEmojiPickerOpen(false),
+  });
 
   // Contract
   const { writeContractAsync } = useWriteContract();
@@ -155,7 +169,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     if (selectedShapeId == undefined) {
       return undefined;
     }
-    return editor.getShape<TLImageShape>(selectedShapeId as TLShapeId);
+    return editor.getShape<TLImageShape>(selectedShapeId);
   }, [selectedShapeId]);
 
   // Load canvas
@@ -165,9 +179,8 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         const assetId = getAssetId(
           asset.tokenID.toString(),
           asset.contractAddress,
-          asset.chainID,
+          asset.chainID
         );
-        console.log("assetId", assetId);
         const assets: TLAsset[] = [
           {
             meta: {
@@ -200,7 +213,6 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       });
 
       canvasData[0].forEach((shape) => {
-        console.log("shape", shape.id, `asset:${shape.assetID}`);
         editor.createShape({
           x: decodeFloat(shape.x),
           y: decodeFloat(shape.y),
@@ -279,7 +291,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
 
     if (selectedShapeId) {
       const filtered = allShapeIds.filter(
-        (s) => s.toString() != selectedShapeId,
+        (s) => s.toString() != selectedShapeId
       );
       editor.updateShapes(
         filtered.map((s) => ({
@@ -287,7 +299,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
           type: "image",
           opacity: 0.5,
           isLocked: true,
-        })),
+        }))
       );
     } else {
       editor.updateShapes(
@@ -296,7 +308,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
           type: "image",
           opacity: 1,
           isLocked: false,
-        })),
+        }))
       );
     }
   }, [selectedShapeId]);
@@ -311,7 +323,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     }
     (async () => {
       const res = await httpClient.get<UserResponse>(
-        `/farcaster/${session?.user?.id}`,
+        `/farcaster/${session?.user?.id}`
       );
       setSelectedShapeCreator(res.data.user);
     })();
@@ -362,16 +374,16 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
   const getAssetId = (
     tokenId: string,
     collectionAddress: Address,
-    chain: bigint,
+    chain: bigint
   ) => {
     const rawAssetId = fromHex(
       keccak256(
         encodePacked(
           ["uint256", "address", "uint256"],
-          [BigInt(tokenId), collectionAddress, BigInt(chain)],
-        ),
+          [BigInt(tokenId), collectionAddress, BigInt(chain)]
+        )
       ),
-      "bigint",
+      "bigint"
     );
     return rawAssetId;
   };
@@ -379,7 +391,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
   const getShapeId = (creator: Address, createdAt: bigint) => {
     const rawShapeId = fromHex(
       keccak256(encodePacked(["address", "uint256"], [creator, createdAt])),
-      "bigint",
+      "bigint"
     );
 
     return rawShapeId;
@@ -393,7 +405,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     tokenContract: TokenContract | null | undefined,
     tokenId: string,
     image: TokenContentMedia | null | undefined,
-    name: string | null | undefined,
+    name: string | null | undefined
   ) => {
     if (!address) {
       throw new Error("address is not found");
@@ -431,7 +443,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     });
 
     const shape = editor.getShape<TLImageShape>(
-      editor.getSelectedShapeIds()[0],
+      editor.getSelectedShapeIds()[0]
     );
 
     if (!shape) {
@@ -451,7 +463,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     const rawAssetId = getAssetId(
       tokenId,
       tokenContract.collectionAddress as Address,
-      BigInt(tokenContract.chain),
+      BigInt(tokenContract.chain)
     );
 
     const now = getUnixTime(new Date());
@@ -482,7 +494,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
   };
 
   const handleInsertImage = async (
-    event: React.ChangeEvent<HTMLInputElement>,
+    event: React.ChangeEvent<HTMLInputElement>
   ) => {
     if (!address) {
       throw new Error("address is not found");
@@ -495,7 +507,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         type: "image",
         opacity: 0.5,
         isLocked: true,
-      })),
+      }))
     );
 
     const file = event.target.files?.[0];
@@ -503,31 +515,26 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       return;
     }
 
-    setUploadedFile(file);
+    const compressedImage = await imageCompression(file, {
+      maxWidthOrHeight: 1000,
+    });
+
+    setUploadedFile(compressedImage);
+    setEditedFile(compressedImage);
 
     await editor.putExternalContent({
       type: "files",
-      files: [file],
+      files: [compressedImage],
       point: editor.getViewportPageBounds().center,
       ignoreParent: false,
     });
 
     const shape = editor.getShape<TLImageShape>(
-      editor.getSelectedShapeIds()[0],
+      editor.getSelectedShapeIds()[0]
     );
 
     if (!shape) {
       throw new Error("shape is not found");
-    }
-
-    const assetId = shape.props.assetId;
-    if (!assetId) {
-      throw new Error("assetId is not found");
-    }
-
-    const asset = editor.getAsset(assetId);
-    if (!asset) {
-      throw new Error("asset is not found");
     }
 
     const now = getUnixTime(new Date());
@@ -543,11 +550,8 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     });
 
     setUploadedShapeId(editor.getSelectedShapeIds()[0]);
-    setFileName(file.name);
+    setFileName("😃");
 
-    const compressedImage = await imageCompression(file, {
-      maxWidthOrHeight: 1000,
-    });
     const formData = new FormData();
     formData.append("file", compressedImage);
     const res = await httpClient.post<ArrayBuffer>("/bg-remove", formData, {
@@ -559,24 +563,89 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
 
     const bgRemovedFile = new File([res.data], file.name);
     setBgRemovedFile(bgRemovedFile);
-    const base64Image = await toBase64(bgRemovedFile);
+  };
+
+  const handleMakeSticker = async (
+    type: "white" | "black" | "no-bg" | "insta" | "rounded"
+  ) => {
+    if (!bgRemovedFile || !uploadedFile || !uploadedShapeId) {
+      return;
+    }
+
+    const shape = editor.getShape<TLImageShape>(uploadedShapeId);
+    if (!shape) {
+      throw new Error("shape is not found");
+    }
+
+    const assetId = shape.props.assetId;
+    if (!assetId) {
+      throw new Error("assetId is not found");
+    }
+
+    const a = editor.getAsset(assetId);
+    if (!a) {
+      throw new Error("asset is not found");
+    }
+    const asset = a as TLImageAsset;
+
+    let src = "";
+    let w = 0;
+    let h = 0;
+    switch (type) {
+      case "white":
+        src = await getImageWithEdge(bgRemovedFile, "white");
+        w = asset.props.w;
+        h = asset.props.h;
+        break;
+      case "black":
+        src = await getImageWithEdge(bgRemovedFile, "black");
+        w = asset.props.w;
+        h = asset.props.h;
+        break;
+      case "no-bg":
+        src = await toBase64(bgRemovedFile);
+        w = asset.props.w;
+        h = asset.props.h;
+        break;
+      case "insta":
+        const result = await getImageWithFrame(uploadedFile, "white");
+        src = result.src;
+        w = result.w;
+        h = result.h;
+        break;
+      case "rounded":
+        src = await getImageRounded(uploadedFile);
+        w = asset.props.w;
+        h = asset.props.h;
+        break;
+    }
+
+    const fileData = src.replace(/^data:\w+\/\w+;base64,/, "");
+    const decodedFile = Buffer.from(fileData, "base64");
+    setEditedFile(new File([decodedFile], "", { type: "image/png" }));
+
     editor.updateAssets([
-      { ...asset, props: { ...asset.props, src: base64Image?.toString() } },
+      {
+        ...asset,
+        props: {
+          ...asset.props,
+          src,
+          w,
+          h,
+        },
+      },
     ]);
   };
 
-  const toBase64 = (file: File) =>
-    new Promise<string | ArrayBuffer | null>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-    });
-
   const handleDeleteImage = () => {
-    editor.deleteShapes(editor.getSelectedShapeIds());
+    if (uploadedShapeId == undefined) {
+      throw new Error("uploadedShapeId is not found");
+    }
+    editor.deleteShapes([uploadedShapeId]);
     setUploadedFile(undefined);
     setUploadedShapeId(undefined);
+    setBgRemovedFile(undefined);
+    setEditedFile(undefined);
     setFileName("");
     const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
     editor.updateShapes(
@@ -585,8 +654,9 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         type: "image",
         opacity: 1,
         isLocked: false,
-      })),
+      }))
     );
+    editor.selectNone();
   };
 
   const handleDrop = async () => {
@@ -621,8 +691,8 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       throw new Error("fid is not found");
     }
 
-    if (uploadedFile == undefined) {
-      throw new Error("uploadFile is not found");
+    if (editedFile == undefined) {
+      throw new Error("editedFile is not found");
     }
 
     setIsDropLoading(true);
@@ -633,17 +703,13 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         type: "image",
         opacity: 1,
         isLocked: false,
-      })),
+      }))
     );
 
     try {
-      const compressedImage = await imageCompression(uploadedFile, {
-        maxWidthOrHeight: 1000,
-      });
-
       const res = await ipfsClient.add({
         path: fileName ?? "",
-        content: compressedImage,
+        content: editedFile,
       });
 
       const metadata = JSON.stringify({
@@ -712,7 +778,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       });
 
       const event = receipt.logs.filter(
-        (l) => l.address.toLowerCase() == canvasAddress.toLowerCase(),
+        (l) => l.address.toLowerCase() == canvasAddress.toLowerCase()
       )[0];
 
       const decodedLog = decodeEventLog({
@@ -752,6 +818,8 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
 
       setUploadedFile(undefined);
       setUploadedShapeId(undefined);
+      setBgRemovedFile(undefined);
+      setEditedFile(undefined);
       setFileName("");
       setLastSave(editor.store.history.get());
     } catch (e) {
@@ -764,7 +832,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
             type: "image",
             opacity: 0.5,
             isLocked: false,
-          })),
+          }))
       );
       console.error(e);
     } finally {
@@ -793,7 +861,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         type: "image",
         opacity: 1,
         isLocked: false,
-      })),
+      }))
     );
 
     try {
@@ -805,11 +873,11 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       console.log(stringified);
 
       const shapes = Object.values(snapshot.store).filter(
-        (s) => s.typeName == "shape",
+        (s) => s.typeName == "shape"
       ) as TLImageShape[];
 
       const assets = Object.values(snapshot.store).filter(
-        (s) => s.typeName == "asset",
+        (s) => s.typeName == "asset"
       ) as TLImageAsset[];
 
       const formattedAssets = assets.map((a) => {
@@ -910,7 +978,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         py={4}
         justify="center"
       >
-        {!!selectedShapeId && (
+        {!!selectedShapeId && !uploadedFile && (
           <Card shadow="lg">
             <CardBody>
               <VStack spacing={1}>
@@ -926,7 +994,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
                     <Text>{`Made by ${selectedShapeCreator?.displayName}`}</Text>
                     <Text>
                       {fromUnixTime(
-                        selectedShape?.meta.createdAt as number,
+                        selectedShape?.meta.createdAt as number
                       ).toLocaleDateString()}
                     </Text>
                   </>
@@ -953,15 +1021,76 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         {uploadedFile ? (
           <>
             <Spacer />
-            <VStack>
-              <Input
-                onChange={(e) => setFileName(e.target.value)}
-                value={fileName}
-                pointerEvents="all"
-              />
+            <VStack spacing={6}>
+              {isEmojiPickerOpen && (
+                <Box pointerEvents="all" ref={emojiPickerRef}>
+                  <EmojiPicker onEmojiClick={(s) => setFileName(s.emoji)} />
+                </Box>
+              )}
+
+              {!!bgRemovedFile && (
+                <HStack w="full" spacing={0} pointerEvents="all">
+                  <Button
+                    variant="unstyled"
+                    w="20%"
+                    h="full"
+                    onClick={() => handleMakeSticker("white")}
+                  >
+                    <ChakraImage
+                      alt="white-sticker"
+                      src="/images/stickers/white-sticker.png"
+                    />
+                  </Button>
+                  <Button
+                    variant="unstyled"
+                    w="20%"
+                    h="full"
+                    onClick={() => handleMakeSticker("black")}
+                  >
+                    <ChakraImage
+                      alt="black-sticker"
+                      src="/images/stickers/black-sticker.png"
+                    />
+                  </Button>
+                  <Button
+                    variant="unstyled"
+                    w="20%"
+                    h="full"
+                    onClick={() => handleMakeSticker("no-bg")}
+                  >
+                    <ChakraImage
+                      alt="no-background"
+                      src="/images/stickers/no-background.png"
+                    />
+                  </Button>
+                  <Button
+                    variant="unstyled"
+                    w="20%"
+                    h="full"
+                    onClick={() => handleMakeSticker("insta")}
+                  >
+                    <ChakraImage
+                      alt="instant-camera"
+                      src="/images/stickers/instant-camera.png"
+                    />
+                  </Button>
+                  <Button
+                    variant="unstyled"
+                    w="20%"
+                    h="full"
+                    onClick={() => handleMakeSticker("rounded")}
+                  >
+                    <ChakraImage
+                      alt="rounded"
+                      src="/images/stickers/rounded.png"
+                    />
+                  </Button>
+                </HStack>
+              )}
+
               <HStack>
                 <IconButton
-                  aria-label="insert image"
+                  aria-label="close image"
                   icon={<Icon as={IoMdClose} />}
                   colorScheme="gray"
                   rounded="full"
@@ -981,6 +1110,14 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
                 >
                   Drop
                 </Button>
+                <Input
+                  value={fileName}
+                  pointerEvents="all"
+                  isReadOnly={true}
+                  w={16}
+                  onClick={() => setIsEmojiPickerOpen(true)}
+                  textAlign="center"
+                />
               </HStack>
             </VStack>
             <Spacer />
@@ -1093,11 +1230,11 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
                         token.tokenContract,
                         token.tokenId,
                         token.image,
-                        token.name,
+                        token.name
                       )
                     }
                   >
-                    <Image
+                    <ChakraImage
                       src={token.image?.url ?? ""}
                       alt={token.name ?? ""}
                     />

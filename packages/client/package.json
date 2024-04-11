@@ -32,6 +32,7 @@
     "axios": "^1.6.8",
     "browser-image-compression": "^2.0.2",
     "date-fns": "^3.6.0",
+    "emoji-picker-react": "^4.9.2",
     "framer-motion": "^11.0.8",
     "kubo-rpc-client": "^3.0.4",
     "next": "14.1.1",
