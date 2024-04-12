@@ -285,13 +285,21 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       const updatedEntry =
         //@ts-ignore
         entry.changes.updated["instance_page_state:page:page"];
+
+      if (!updatedEntry || updatedEntry.length < 2) {
+        return;
+      }
+
       if (
-        updatedEntry &&
-        updatedEntry.length > 0 &&
         updatedEntry[1].hasOwnProperty("selectedShapeIds") &&
         updatedEntry[1].selectedShapeIds[0] != selectedShapeId
       ) {
         setSelectedShapeId(updatedEntry[1].selectedShapeIds[0]);
+      } else if (
+        updatedEntry[1].hasOwnProperty("hoveredShapeId") &&
+        updatedEntry[1].hoveredShapeId != selectedShapeId
+      ) {
+        setSelectedShapeId(updatedEntry[1].hoveredShapeId ?? undefined);
       }
     }
   });
@@ -315,21 +323,26 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         (s) => s.toString() != selectedShapeId
       );
       editor.updateShapes(
-        filtered.map((s) => ({
-          id: s,
-          type: "image",
-          opacity: 0.5,
-          isLocked: true,
-        }))
+        filtered.map((s) => {
+          return {
+            id: s,
+            type: "image",
+            opacity: 0.5,
+            isLocked: true,
+          };
+        })
       );
     } else {
       editor.updateShapes(
-        allShapeIds.map((s) => ({
-          id: s,
-          type: "image",
-          opacity: 1,
-          isLocked: false,
-        }))
+        allShapeIds.map((s) => {
+          const shape = editor.getShape(s);
+          return {
+            id: s,
+            type: "image",
+            opacity: 1,
+            isLocked: shape?.meta.creator != address && canvasOwner != address,
+          };
+        })
       );
     }
   }, [selectedShapeId]);
@@ -1124,7 +1137,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
           />
         </VStack>
       )}
-      {!!selectedShapeId && (
+      {!!selectedShapeId && !selectedShape?.isLocked && (
         <VStack
           pos="absolute"
           top={0}
@@ -1344,7 +1357,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
                   </Box>
                 </Box>
 
-                {selectedShapeId && (
+                {selectedShapeId && !selectedShape?.isLocked && (
                   <IconButton
                     aria-label="delete"
                     icon={<Icon as={GoTrash} />}
