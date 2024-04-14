@@ -42,6 +42,7 @@ import {
   background,
   DrawerBody,
   useOutsideClick,
+  Tag,
 } from "@chakra-ui/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CiImageOn } from "react-icons/ci";
@@ -54,8 +55,8 @@ import {
   useReadContract,
   useWriteContract,
 } from "wagmi";
-import { ZDKNetwork } from "@zoralabs/zdk";
-import { zoraSepolia } from "viem/chains";
+import { ZDKChain, ZDKNetwork } from "@zoralabs/zdk";
+import { base, baseSepolia, zoraSepolia } from "viem/chains";
 import {
   Token,
   TokenContract,
@@ -103,6 +104,10 @@ import {
   TbStackPop,
   TbStackPush,
 } from "react-icons/tb";
+import { AddStickerIcon } from "@/components/icons/AddStickerIcon";
+import { TokenDetailResponse } from "@/models/tokenDetailResponse";
+import { formatAddress } from "@/utils/address";
+import Countdown from "react-countdown";
 
 export default function Home({ params }: { params: { address: Address } }) {
   const customTools = [MobileSelectTool];
@@ -151,11 +156,18 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
   const [fileName, setFileName] = useState<string>();
   const [tokens, setTokens] = useState<Token[]>();
   const [shouldShowDrop, setShouldShowDrop] = useState<boolean>(false);
+  const [mintTokenDetail, setMintTokenDetail] = useState<TokenDetailResponse>();
 
   const {
     isOpen: isStickerOpen,
     onOpen: onStickerOpen,
     onClose: onStickerClose,
+  } = useDisclosure();
+
+  const {
+    isOpen: isMintStickerOpen,
+    onOpen: onMintStickerOpen,
+    onClose: onMintStickerClose,
   } = useDisclosure();
 
   const emojiPickerRef = useRef(null);
@@ -182,6 +194,22 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     return editor.getShape<TLImageShape>(selectedShapeId);
   }, [selectedShapeId]);
 
+  const OpacityRegex = /"opacity":\s*(\d+(\.\d+)?),/g;
+  const IsLockedRegex = /"isLocked":\s*(true|false),/g;
+
+  const isChangeCanvas = useMemo(() => {
+    if (!address) {
+      return false;
+    }
+    const last = lastSave
+      ?.replaceAll(OpacityRegex, "")
+      .replaceAll(IsLockedRegex, "");
+    const current = JSON.stringify(editor.store.getSnapshot())
+      .replaceAll(OpacityRegex, "")
+      .replaceAll(IsLockedRegex, "");
+
+    return last != current;
+  }, [address, editor.store, lastSave]);
   // Load canvas
   useEffect(() => {
     if (!canvasAddress || !address) {
@@ -192,7 +220,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         const assetId = getAssetId(
           asset.tokenID.toString(),
           asset.contractAddress,
-          asset.chainID
+          asset.chainID,
         );
         const assets: TLAsset[] = [
           {
@@ -320,7 +348,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
 
     if (selectedShapeId) {
       const filtered = allShapeIds.filter(
-        (s) => s.toString() != selectedShapeId
+        (s) => s.toString() != selectedShapeId,
       );
       editor.updateShapes(
         filtered.map((s) => {
@@ -330,7 +358,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
             opacity: 0.5,
             isLocked: true,
           };
-        })
+        }),
       );
     } else {
       editor.updateShapes(
@@ -342,7 +370,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
             opacity: 1,
             isLocked: shape?.meta.creator != address && canvasOwner != address,
           };
-        })
+        }),
       );
     }
   }, [selectedShapeId]);
@@ -357,7 +385,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     }
     (async () => {
       const res = await httpClient.get<UserResponse>(
-        `/farcaster/${session?.user?.id}`
+        `/farcaster/${session?.user?.id}`,
       );
       setSelectedShapeCreator(res.data.user);
     })();
@@ -408,16 +436,16 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
   const getAssetId = (
     tokenId: string,
     collectionAddress: Address,
-    chain: bigint
+    chain: bigint,
   ) => {
     const rawAssetId = fromHex(
       keccak256(
         encodePacked(
           ["uint256", "address", "uint256"],
-          [BigInt(tokenId), collectionAddress, BigInt(chain)]
-        )
+          [BigInt(tokenId), collectionAddress, BigInt(chain)],
+        ),
       ),
-      "bigint"
+      "bigint",
     );
     return rawAssetId;
   };
@@ -425,24 +453,10 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
   const getShapeId = (creator: Address, createdAt: bigint) => {
     const rawShapeId = fromHex(
       keccak256(encodePacked(["address", "uint256"], [creator, createdAt])),
-      "bigint"
+      "bigint",
     );
 
     return rawShapeId;
-  };
-
-  const OpacityRegex = /"opacity":\s*(\d+(\.\d+)?),/g;
-  const IsLockedRegex = /"isLocked":\s*(true|false),/g;
-
-  const getIsChangeCanvas = () => {
-    const last = lastSave
-      ?.replaceAll(OpacityRegex, "")
-      .replaceAll(IsLockedRegex, "");
-    const current = JSON.stringify(editor.store.getSnapshot())
-      .replaceAll(OpacityRegex, "")
-      .replaceAll(IsLockedRegex, "");
-
-    return last != current;
   };
 
   //
@@ -453,7 +467,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     tokenContract: TokenContract | null | undefined,
     tokenId: string,
     image: TokenContentMedia | null | undefined,
-    name: string | null | undefined
+    name: string | null | undefined,
   ) => {
     if (!address) {
       throw new Error("address is not found");
@@ -515,7 +529,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     const rawAssetId = getAssetId(
       tokenId,
       tokenContract.collectionAddress as Address,
-      BigInt(tokenContract.chain)
+      BigInt(tokenContract.chain),
     );
 
     const now = getUnixTime(new Date());
@@ -557,7 +571,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         headers: {
           "Content-Type": "image/png",
         },
-      }
+      },
     );
 
     const bgRemovedFile = new File([bgRemovedRes.data], file.name);
@@ -565,7 +579,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
   };
 
   const handleInsertImage = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     if (!address) {
       throw new Error("address is not found");
@@ -578,7 +592,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         type: "image",
         opacity: 0.5,
         isLocked: true,
-      }))
+      })),
     );
 
     const file = event.target.files?.[0];
@@ -637,7 +651,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
   };
 
   const handleMakeSticker = async (
-    type: "white" | "black" | "no-bg" | "insta" | "rounded"
+    type: "white" | "black" | "no-bg" | "insta" | "rounded",
   ) => {
     if (!bgRemovedFile || !uploadedFile || !uploadedShapeId) {
       return;
@@ -728,7 +742,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         type: "image",
         opacity: 1,
         isLocked: false,
-      }))
+      })),
     );
     editor.selectNone();
   };
@@ -777,7 +791,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         type: "image",
         opacity: 1,
         isLocked: false,
-      }))
+      })),
     );
 
     try {
@@ -852,7 +866,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       });
 
       const event = receipt.logs.filter(
-        (l) => l.address.toLowerCase() == canvasAddress.toLowerCase()
+        (l) => l.address.toLowerCase() == canvasAddress.toLowerCase(),
       )[0];
 
       const decodedLog = decodeEventLog({
@@ -906,7 +920,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
             type: "image",
             opacity: 0.5,
             isLocked: false,
-          }))
+          })),
       );
       console.error(e);
     } finally {
@@ -935,7 +949,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         type: "image",
         opacity: 1,
         isLocked: false,
-      }))
+      })),
     );
 
     try {
@@ -947,11 +961,11 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       console.log(stringified);
 
       const shapes = Object.values(snapshot.store).filter(
-        (s) => s.typeName == "shape"
+        (s) => s.typeName == "shape",
       ) as TLImageShape[];
 
       const assets = Object.values(snapshot.store).filter(
-        (s) => s.typeName == "asset"
+        (s) => s.typeName == "asset",
       ) as TLImageAsset[];
 
       const formattedAssets = assets.map((a) => {
@@ -1044,7 +1058,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         type: "image",
         opacity: 1,
         isLocked: false,
-      }))
+      })),
     );
     editor.selectNone();
   };
@@ -1095,6 +1109,48 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     editor.history.redo();
   };
 
+  const handleOpenMintStickerModal = async () => {
+    onMintStickerOpen();
+
+    if (!selectedShape) {
+      throw new Error("selectedShape is found");
+    }
+
+    const assetId = selectedShape.props.assetId;
+    if (!assetId) {
+      throw new Error("assetId is not found");
+    }
+
+    const a = editor.getAsset(assetId);
+    if (!a) {
+      throw new Error("asset is not found");
+    }
+    const asset = a as TLImageAsset;
+
+    const tokenContract = asset.meta?.tokenContract as
+      | TokenContract
+      | undefined;
+    const contractAddress = tokenContract?.collectionAddress;
+    const chain = tokenContract?.chain;
+    const tokenId = asset.meta?.tokenId;
+
+    if (!contractAddress || !tokenId || !chain) {
+      throw new Error("contractAddress or tokenId or chain is invalid");
+    }
+
+    if (contractAddress && tokenId) {
+      const res = await httpClient.get<TokenDetailResponse>(
+        `/zora/tokens/${contractAddress}/${tokenId}?chain=${chain}`,
+      );
+      setMintTokenDetail(res.data);
+    }
+  };
+
+  const handleCloseMintStickerModal = () => {
+    onMintStickerClose();
+    setMintTokenDetail(undefined);
+  };
+
   return (
     <Box
       pos="absolute"
@@ -1106,7 +1162,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       left={0}
       right={0}
     >
-      {getIsChangeCanvas() && (
+      {isChangeCanvas && (
         <VStack
           pos="absolute"
           bottom={20}
@@ -1201,7 +1257,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
                       <Text>{`Made by ${selectedShapeCreator?.displayName}`}</Text>
                       <Text>
                         {fromUnixTime(
-                          selectedShape?.meta.createdAt as number
+                          selectedShape?.meta.createdAt as number,
                         ).toLocaleDateString()}
                       </Text>
                     </>
@@ -1369,16 +1425,27 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
                     onClick={handleDeleteImage}
                   />
                 )}
+
+                {selectedShapeId && selectedShape?.isLocked && (
+                  <IconButton
+                    aria-label="mint-sticker"
+                    icon={<Icon as={AddStickerIcon} />}
+                    colorScheme="blue"
+                    rounded="full"
+                    shadow="xl"
+                    pointerEvents="all"
+                    size="lg"
+                    onClick={handleOpenMintStickerModal}
+                  />
+                )}
               </HStack>
               <HStack>
                 <IconButton
                   aria-label="save"
                   icon={
-                    <Icon
-                      as={getIsChangeCanvas() ? IoMdClose : IoIosArrowBack}
-                    />
+                    <Icon as={isChangeCanvas ? IoMdClose : IoIosArrowBack} />
                   }
-                  colorScheme={getIsChangeCanvas() ? "gray" : "blue"}
+                  colorScheme={isChangeCanvas ? "gray" : "blue"}
                   rounded="full"
                   shadow="xl"
                   pointerEvents="all"
@@ -1386,7 +1453,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
                   onClick={handleBack}
                 />
 
-                {getIsChangeCanvas() && (
+                {isChangeCanvas && (
                   <IconButton
                     aria-label="save"
                     icon={<Icon as={isSavedSuccess ? FaCheck : LuSave} />}
@@ -1435,7 +1502,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
                         token.tokenContract,
                         token.tokenId,
                         token.image,
-                        token.name
+                        token.name,
                       )
                     }
                   >
@@ -1447,6 +1514,102 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
                 </GridItem>
               ))}
             </SimpleGrid>
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer
+        placement="bottom"
+        onClose={handleCloseMintStickerModal}
+        isOpen={isMintStickerOpen}
+        // size="full"
+      >
+        <DrawerOverlay />
+        <DrawerContent>
+          <DrawerCloseButton />
+          <DrawerBody>
+            <VStack w="full" mt={12} mb={8}>
+              <HStack justify="space-between" w="full">
+                <Text>First minter</Text>
+                {mintTokenDetail == undefined ? (
+                  <SkeletonText noOfLines={1} w={20} />
+                ) : (
+                  <Text>
+                    {mintTokenDetail.contractSummary.first_minter.ens_name ??
+                      formatAddress(
+                        mintTokenDetail.contractSummary.first_minter.address,
+                      )}
+                  </Text>
+                )}
+              </HStack>
+              <HStack justify="space-between" w="full">
+                <Text>Top minter</Text>
+                {mintTokenDetail == undefined ? (
+                  <SkeletonText noOfLines={1} w={20} />
+                ) : (
+                  <HStack>
+                    <Text>
+                      {mintTokenDetail.contractSummary.top_minter.minter
+                        .ens_name ??
+                        formatAddress(
+                          mintTokenDetail.contractSummary.top_minter.minter
+                            .address,
+                        )}
+                    </Text>
+                    <Tag colorScheme="blue">{`x${mintTokenDetail.contractSummary.top_minter.count}`}</Tag>
+                  </HStack>
+                )}
+              </HStack>
+              <HStack justify="space-between" w="full" mb={8}>
+                <Text>Creator earning</Text>
+                {mintTokenDetail == undefined ? (
+                  <SkeletonText noOfLines={1} w={20} />
+                ) : (
+                  <Text>
+                    {`${mintTokenDetail.contractSummary.creator_earnings.decimal}${mintTokenDetail.contractSummary.creator_earnings.currency.name}`}
+                  </Text>
+                )}
+              </HStack>
+              <Button
+                w="full"
+                colorScheme="blue"
+                rounded="full"
+                isDisabled={
+                  mintTokenDetail?.sales.fixedPrice.state != "STARTED"
+                }
+              >
+                Mint
+              </Button>
+              {mintTokenDetail == undefined ? (
+                <SkeletonText noOfLines={1} w={60} />
+              ) : (
+                <HStack>
+                  <Text>{`${mintTokenDetail?.contractSummary.mint_count} minted`}</Text>
+                  <Countdown
+                    date={fromUnixTime(
+                      mintTokenDetail.sales.fixedPrice.end / 1000,
+                    )}
+                    renderer={({
+                      days,
+                      hours,
+                      minutes,
+                      seconds,
+                      completed,
+                    }) => {
+                      if (completed) {
+                        return <Text>・The mintable period has ended</Text>;
+                      } else {
+                        return (
+                          <Text>
+                            ・{days}d {hours}h {minutes}m {seconds}s
+                          </Text>
+                        );
+                      }
+                    }}
+                  />
+                </HStack>
+              )}
+            </VStack>
           </DrawerBody>
         </DrawerContent>
       </Drawer>
