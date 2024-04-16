@@ -20,7 +20,7 @@ contract Canvas {
     uint256 chainID;
     string srcURI;
     string srcName;
-    string mineType;
+    string mimeType;
     Float w;
     Float h;
   }
@@ -144,7 +144,7 @@ contract Canvas {
       chainID: chainID,
       srcURI: asset.srcURI,
       srcName: asset.srcName,
-      mineType: asset.mineType,
+      mimeType: asset.mimeType,
       w: asset.w,
       h: asset.h
     });

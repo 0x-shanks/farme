@@ -38,7 +38,7 @@ contract CanvasTest is Test {
       chainID: 999999999,
       srcURI: "https://ipfs.decentralized-content.com/ipfs/QmRrRWQDCx4xGwgNGmeFAVajfmw9B1tXdyzmmBaqZYjQ8F",
       srcName: "t",
-      mineType: "image/jpeg",
+      mimeType: "image/jpeg",
       w: Canvas.Float({ decimal: 0, value: 400 }),
       h: Canvas.Float({ decimal: 0, value: 400 })
     });
@@ -48,7 +48,7 @@ contract CanvasTest is Test {
       chainID: 999999999,
       srcURI: "https://ipfs.decentralized-content.com/ipfs/QmdHMz5FGiqgkkribBA7z8FjUQrz144AoVrv9xVuDci2Na",
       srcName: "Group 2 1.png",
-      mineType: "image/png",
+      mimeType: "image/png",
       w: Canvas.Float({ decimal: 0, value: 99 }),
       h: Canvas.Float({ decimal: 0, value: 81 })
     });

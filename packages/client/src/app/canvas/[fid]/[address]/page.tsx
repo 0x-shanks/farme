@@ -282,8 +282,8 @@ const Canvas = track(
                 src: asset.srcURI,
                 w: decodeFloat(asset.w),
                 h: decodeFloat(asset.h),
-                mimeType: asset.mineType,
-                isAnimated: asset.mineType == "image/gif",
+                mimeType: asset.mimeType,
+                isAnimated: asset.mimeType == "image/gif",
               },
             },
           ];
@@ -897,7 +897,7 @@ const Canvas = track(
               chainID: BigInt(0), // Get in contract
               srcURI: getIPFSPreviewURL(res.cid.toString()),
               srcName: fileName ?? "",
-              mineType: asset.props.mimeType ?? "",
+              mimeType: asset.props.mimeType ?? "",
               w: encodeFloat(asset.props.w),
               h: encodeFloat(asset.props.h),
             },
@@ -1040,7 +1040,7 @@ const Canvas = track(
             chainID: BigInt(tokenContract.chain),
             srcURI: a.props.src ?? "",
             srcName: a.props.name ?? "",
-            mineType: a.props.mimeType ?? "",
+            mimeType: a.props.mimeType ?? "",
             w: encodeFloat(a.props.w),
             h: encodeFloat(a.props.h),
           };
