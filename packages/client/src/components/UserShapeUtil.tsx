@@ -1,4 +1,4 @@
-import { Avatar, VStack, Text } from "@chakra-ui/react";
+import { Avatar, VStack, Text, SkeletonText } from "@chakra-ui/react";
 import {
   Geometry2d,
   HTMLContainer,
@@ -15,27 +15,27 @@ import runes from "runes";
 export type IUserShape = TLBaseShape<
   "user",
   {
-    w: number;
-    h: number;
-    fid: number;
-    pfp: string;
-    displayName: string;
-    bio: string;
-    userName: string;
-    address: string;
+    w: number | undefined;
+    h: number | undefined;
+    fid: number | undefined;
+    pfp: string | undefined;
+    displayName: string | undefined;
+    bio: string | undefined;
+    userName: string | undefined;
+    address: string | undefined;
     onClick: () => void;
   }
 >;
 
 const cardShapeProps: ShapeProps<IUserShape> = {
-  w: T.number,
-  h: T.number,
-  fid: T.positiveInteger,
-  pfp: T.string,
-  displayName: T.string,
-  bio: T.string,
-  userName: T.string,
-  address: T.string,
+  w: T.number.optional(),
+  h: T.number.optional(),
+  fid: T.positiveInteger.optional(),
+  pfp: T.string.optional(),
+  displayName: T.string.optional(),
+  bio: T.string.optional(),
+  userName: T.string.optional(),
+  address: T.string.optional(),
   onClick: T.any,
 };
 
@@ -68,8 +68,8 @@ export class UserShapeUtil extends ShapeUtil<IUserShape> {
 
   getGeometry(shape: IUserShape): Geometry2d {
     return new Rectangle2d({
-      width: shape.props.w,
-      height: shape.props.h,
+      width: shape.props.w ?? 200,
+      height: shape.props.h ?? 200,
       isFilled: true,
     });
   }
@@ -84,27 +84,34 @@ export class UserShapeUtil extends ShapeUtil<IUserShape> {
             borderWidth={2}
             borderColor="white"
           />
-          <VStack spacing={0}>
-            <Text
-              fontWeight={600}
-              w={20}
-              textOverflow="ellipsis"
-              whiteSpace="nowrap"
-              overflow="hidden"
-              textAlign="center"
-            >
-              {shape.props.displayName}
-            </Text>
-            <Text
-              textColor="gray"
-              fontSize="small"
-              w={20}
-              textOverflow="ellipsis"
-              whiteSpace="nowrap"
-              overflow="hidden"
-              textAlign="center"
-            >{`@${shape.props.userName}`}</Text>
-          </VStack>
+          {shape.props.userName != undefined ? (
+            <VStack spacing={0}>
+              <Text
+                fontWeight={600}
+                w={20}
+                textOverflow="ellipsis"
+                whiteSpace="nowrap"
+                overflow="hidden"
+                textAlign="center"
+              >
+                {shape.props.displayName}
+              </Text>
+              <Text
+                textColor="gray"
+                fontSize="small"
+                w={20}
+                textOverflow="ellipsis"
+                whiteSpace="nowrap"
+                overflow="hidden"
+                textAlign="center"
+              >{`@${shape.props.userName}`}</Text>
+            </VStack>
+          ) : (
+            <VStack spacing={2}>
+              <SkeletonText noOfLines={1} w={20} />
+              <SkeletonText noOfLines={1} w={20} />
+            </VStack>
+          )}
         </VStack>
       </HTMLContainer>
     );
