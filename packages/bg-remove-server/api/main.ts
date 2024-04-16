@@ -28,13 +28,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     },
   });
 
-  const getFile = new Promise<{ mineType: string | null; err: Error }>(
+  const getFile = new Promise<{ mimeType: string | null; err: Error }>(
     (resolve, reject) => {
       form.parse(req, (err, _, files) => {
         const imageFiles = files.file;
         if (imageFiles && imageFiles[0]) {
           resolve({
-            mineType: imageFiles[0].mimetype,
+            mimeType: imageFiles[0].mimetype,
             err,
           });
         }
@@ -43,13 +43,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     },
   );
 
-  const { mineType, err } = await getFile;
+  const { mimeType, err } = await getFile;
   if (err) {
     res.status(500).json({ message: err.message });
     return;
   }
-  if (!mineType) {
-    res.status(500).json({ message: "cannot get mineType" });
+  if (!mimeType) {
+    res.status(500).json({ message: "cannot get mimeType" });
     return;
   }
 
@@ -73,7 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     model: "small",
   };
 
-  const blob = new Blob([endBuffers[0]], { type: mineType });
+  const blob = new Blob([endBuffers[0]], { type: mimeType });
 
   const removedBlob = await removeBackground(blob, config);
 

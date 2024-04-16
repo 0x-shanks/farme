@@ -4,3 +4,4 @@ ds-test/=node_modules/ds-test/src/
 _imagine/=node_modules/@zoralabs/zora-1155-contracts/_imagine/
 @openzeppelin=node_modules/@openzeppelin/
 @zoralabs/openzeppelin-contracts-upgradeable/=node_modules/@zoralabs/openzeppelin-contracts-upgradeable/
+solidity-stringutils/=node_modules/solidity-stringutils/

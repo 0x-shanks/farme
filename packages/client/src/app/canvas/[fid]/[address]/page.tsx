@@ -246,7 +246,7 @@ const Canvas = track(
         .replaceAll(IsLockedRegex, "");
 
       return last != current;
-    }, [address, editor.store, lastSave]);
+    }, [address, editor.store.getSnapshot(), lastSave]);
 
     // Load canvas
     useEffect(() => {
@@ -282,8 +282,8 @@ const Canvas = track(
                 src: asset.srcURI,
                 w: decodeFloat(asset.w),
                 h: decodeFloat(asset.h),
-                mimeType: asset.mineType,
-                isAnimated: asset.mineType == "image/gif",
+                mimeType: asset.mimeType,
+                isAnimated: asset.mimeType == "image/gif",
               },
             },
           ];
@@ -897,7 +897,7 @@ const Canvas = track(
               chainID: BigInt(0), // Get in contract
               srcURI: getIPFSPreviewURL(res.cid.toString()),
               srcName: fileName ?? "",
-              mineType: asset.props.mimeType ?? "",
+              mimeType: asset.props.mimeType ?? "",
               w: encodeFloat(asset.props.w),
               h: encodeFloat(asset.props.h),
             },
@@ -926,22 +926,30 @@ const Canvas = track(
           hash: result,
         });
 
-        const event = receipt.logs.filter(
-          (l) => l.address.toLowerCase() == canvasAddress.toLowerCase(),
-        )[0];
+        let tokenId = 0;
 
-        const decodedLog = decodeEventLog({
-          abi: canvasAbi,
-          data: event.data,
-          topics: event.topics,
+        receipt.logs.forEach((l) => {
+          try {
+            const decoded = decodeEventLog({
+              abi: canvasAbi,
+              data: l.data,
+              topics: l.topics,
+            });
+            if (decoded.eventName == "CreateSticker") {
+              tokenId = Number(decoded.args.id);
+            }
+          } catch (e) {}
         });
+
+        if (tokenId == 0) {
+          throw new Error("tokenId is not found");
+        }
 
         const tokenContract: TokenContract = {
           chain: zoraSepolia.id,
           network: ZDKNetwork.Zora,
           collectionAddress: tokenAddress,
         };
-        const tokenId = Number(decodedLog.args.id);
 
         editor.updateShape({
           ...shape,
@@ -971,6 +979,7 @@ const Canvas = track(
         setEditedFile(undefined);
         setFileName("");
         setLastSave(JSON.stringify(editor.store.getSnapshot()));
+        setShouldShowDrop(false);
       } catch (e) {
         const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
         editor.updateShapes(
@@ -1040,7 +1049,7 @@ const Canvas = track(
             chainID: BigInt(tokenContract.chain),
             srcURI: a.props.src ?? "",
             srcName: a.props.name ?? "",
-            mineType: a.props.mimeType ?? "",
+            mimeType: a.props.mimeType ?? "",
             w: encodeFloat(a.props.w),
             h: encodeFloat(a.props.h),
           };
@@ -1082,6 +1091,7 @@ const Canvas = track(
         });
 
         setIsSavedSuccess(true);
+        setLastSave(JSON.stringify(editor.store.getSnapshot()));
       } catch (e) {
         // TODO: error handle
         console.error(e);
@@ -1259,7 +1269,7 @@ const Canvas = track(
 
     const chainId = useChainId();
     const { switchChain } = useSwitchChain();
-    const shouldSwitchNetwork = useMemo(() => {
+    const shouldSwitchNetworkMint = useMemo(() => {
       if (!selectedAsset) {
         return undefined;
       }
@@ -1267,10 +1277,10 @@ const Canvas = track(
       if (!cid) {
         return undefined;
       }
-      return chainId == cid;
+      return chainId != cid;
     }, [chainId, selectedAsset]);
 
-    const handleSwitchChain = () => {
+    const handleSwitchChainMint = () => {
       if (!selectedAsset) {
         throw new Error("selectedAsset is not found");
       }
@@ -1279,6 +1289,15 @@ const Canvas = track(
         throw new Error("chainId is invalid");
       }
       switchChain({ chainId: cid });
+    };
+
+    const shouldSwitchNetworkDrop = useMemo(() => {
+      // TODO: mainnet
+      return chainId != zoraSepolia.id;
+    }, [chainId]);
+
+    const handleSwitchChainDrop = () => {
+      switchChain({ chainId: zoraSepolia.id });
     };
 
     return (
@@ -1531,17 +1550,34 @@ const Canvas = track(
                       onClick={handleDeleteInsertedImage}
                       size="lg"
                     />
-                    <Button
-                      pointerEvents="all"
-                      colorScheme="blue"
-                      shadow="xl"
-                      rounded="full"
-                      size="lg"
-                      onClick={handleDrop}
-                      isLoading={isDropLoading}
-                    >
-                      Drop
-                    </Button>
+
+                    {shouldSwitchNetworkDrop ? (
+                      <Button
+                        pointerEvents="all"
+                        colorScheme="blue"
+                        shadow="xl"
+                        rounded="full"
+                        size="lg"
+                        w="full"
+                        onClick={handleSwitchChainDrop}
+                      >
+                        Change Network
+                      </Button>
+                    ) : (
+                      <Button
+                        pointerEvents="all"
+                        colorScheme="blue"
+                        shadow="xl"
+                        rounded="full"
+                        size="lg"
+                        w="full"
+                        onClick={handleDrop}
+                        isLoading={isDropLoading}
+                      >
+                        Drop
+                      </Button>
+                    )}
+
                     <Input
                       value={fileName}
                       pointerEvents="all"
@@ -1752,14 +1788,14 @@ const Canvas = track(
                   onChange={(e) => setMintComment(e.target.value)}
                   placeholder="Add a comment..."
                 />
-                {!shouldSwitchNetwork ? (
+                {shouldSwitchNetworkMint ? (
                   <Button
                     w="full"
                     colorScheme="blue"
                     rounded="full"
-                    isDisabled={shouldSwitchNetwork == undefined}
-                    isLoading={shouldSwitchNetwork == undefined}
-                    onClick={handleSwitchChain}
+                    isDisabled={shouldSwitchNetworkMint == undefined}
+                    isLoading={shouldSwitchNetworkMint == undefined}
+                    onClick={handleSwitchChainMint}
                   >
                     Change Network
                   </Button>

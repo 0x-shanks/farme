@@ -6,6 +6,13 @@ export const canvasAbi = [
   {
     stateMutability: "view",
     type: "function",
+    inputs: [],
+    name: "UPGRADE_INTERFACE_VERSION",
+    outputs: [{ name: "", internalType: "string", type: "string" }],
+  },
+  {
+    stateMutability: "view",
+    type: "function",
     inputs: [{ name: "", internalType: "uint256", type: "uint256" }],
     name: "assets",
     outputs: [
@@ -14,7 +21,7 @@ export const canvasAbi = [
       { name: "chainID", internalType: "uint256", type: "uint256" },
       { name: "srcURI", internalType: "string", type: "string" },
       { name: "srcName", internalType: "string", type: "string" },
-      { name: "mineType", internalType: "string", type: "string" },
+      { name: "mimeType", internalType: "string", type: "string" },
       {
         name: "w",
         internalType: "struct Canvas.Float",
@@ -58,7 +65,7 @@ export const canvasAbi = [
           { name: "chainID", internalType: "uint256", type: "uint256" },
           { name: "srcURI", internalType: "string", type: "string" },
           { name: "srcName", internalType: "string", type: "string" },
-          { name: "mineType", internalType: "string", type: "string" },
+          { name: "mimeType", internalType: "string", type: "string" },
           {
             name: "w",
             internalType: "struct Canvas.Float",
@@ -238,7 +245,7 @@ export const canvasAbi = [
           { name: "chainID", internalType: "uint256", type: "uint256" },
           { name: "srcURI", internalType: "string", type: "string" },
           { name: "srcName", internalType: "string", type: "string" },
-          { name: "mineType", internalType: "string", type: "string" },
+          { name: "mimeType", internalType: "string", type: "string" },
           {
             name: "w",
             internalType: "struct Canvas.Float",
@@ -349,7 +356,7 @@ export const canvasAbi = [
           { name: "chainID", internalType: "uint256", type: "uint256" },
           { name: "srcURI", internalType: "string", type: "string" },
           { name: "srcName", internalType: "string", type: "string" },
-          { name: "mineType", internalType: "string", type: "string" },
+          { name: "mimeType", internalType: "string", type: "string" },
           {
             name: "w",
             internalType: "struct Canvas.Float",
@@ -372,6 +379,34 @@ export const canvasAbi = [
       },
       { name: "", internalType: "string", type: "string" },
     ],
+  },
+  {
+    stateMutability: "nonpayable",
+    type: "function",
+    inputs: [{ name: "owner", internalType: "address", type: "address" }],
+    name: "initialize",
+    outputs: [],
+  },
+  {
+    stateMutability: "view",
+    type: "function",
+    inputs: [],
+    name: "owner",
+    outputs: [{ name: "", internalType: "address", type: "address" }],
+  },
+  {
+    stateMutability: "view",
+    type: "function",
+    inputs: [],
+    name: "proxiableUUID",
+    outputs: [{ name: "", internalType: "bytes32", type: "bytes32" }],
+  },
+  {
+    stateMutability: "nonpayable",
+    type: "function",
+    inputs: [],
+    name: "renounceOwnership",
+    outputs: [],
   },
   {
     stateMutability: "view",
@@ -446,6 +481,23 @@ export const canvasAbi = [
     ],
   },
   {
+    stateMutability: "nonpayable",
+    type: "function",
+    inputs: [{ name: "newOwner", internalType: "address", type: "address" }],
+    name: "transferOwnership",
+    outputs: [],
+  },
+  {
+    stateMutability: "payable",
+    type: "function",
+    inputs: [
+      { name: "newImplementation", internalType: "address", type: "address" },
+      { name: "data", internalType: "bytes", type: "bytes" },
+    ],
+    name: "upgradeToAndCall",
+    outputs: [],
+  },
+  {
     type: "event",
     anonymous: false,
     inputs: [
@@ -459,383 +511,84 @@ export const canvasAbi = [
     ],
     name: "CreateSticker",
   },
+  {
+    type: "event",
+    anonymous: false,
+    inputs: [
+      {
+        name: "version",
+        internalType: "uint64",
+        type: "uint64",
+        indexed: false,
+      },
+    ],
+    name: "Initialized",
+  },
+  {
+    type: "event",
+    anonymous: false,
+    inputs: [
+      {
+        name: "previousOwner",
+        internalType: "address",
+        type: "address",
+        indexed: true,
+      },
+      {
+        name: "newOwner",
+        internalType: "address",
+        type: "address",
+        indexed: true,
+      },
+    ],
+    name: "OwnershipTransferred",
+  },
+  {
+    type: "event",
+    anonymous: false,
+    inputs: [
+      {
+        name: "implementation",
+        internalType: "address",
+        type: "address",
+        indexed: true,
+      },
+    ],
+    name: "Upgraded",
+  },
+  {
+    type: "error",
+    inputs: [{ name: "target", internalType: "address", type: "address" }],
+    name: "AddressEmptyCode",
+  },
+  {
+    type: "error",
+    inputs: [
+      { name: "implementation", internalType: "address", type: "address" },
+    ],
+    name: "ERC1967InvalidImplementation",
+  },
+  { type: "error", inputs: [], name: "ERC1967NonPayable" },
+  { type: "error", inputs: [], name: "FailedInnerCall" },
   { type: "error", inputs: [], name: "Forbidden" },
   { type: "error", inputs: [], name: "InvalidCanvasOwner" },
   { type: "error", inputs: [], name: "InvalidCreateReferral" },
-] as const;
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// CounterTest
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-export const counterTestAbi = [
+  { type: "error", inputs: [], name: "InvalidInitialization" },
+  { type: "error", inputs: [], name: "NotInitializing" },
   {
-    stateMutability: "view",
-    type: "function",
-    inputs: [],
-    name: "IS_TEST",
-    outputs: [{ name: "", internalType: "bool", type: "bool" }],
+    type: "error",
+    inputs: [{ name: "owner", internalType: "address", type: "address" }],
+    name: "OwnableInvalidOwner",
   },
   {
-    stateMutability: "view",
-    type: "function",
-    inputs: [],
-    name: "canvas",
-    outputs: [{ name: "", internalType: "contract Canvas", type: "address" }],
+    type: "error",
+    inputs: [{ name: "account", internalType: "address", type: "address" }],
+    name: "OwnableUnauthorizedAccount",
   },
+  { type: "error", inputs: [], name: "UUPSUnauthorizedCallContext" },
   {
-    stateMutability: "view",
-    type: "function",
-    inputs: [],
-    name: "excludeArtifacts",
-    outputs: [
-      {
-        name: "excludedArtifacts_",
-        internalType: "string[]",
-        type: "string[]",
-      },
-    ],
-  },
-  {
-    stateMutability: "view",
-    type: "function",
-    inputs: [],
-    name: "excludeContracts",
-    outputs: [
-      {
-        name: "excludedContracts_",
-        internalType: "address[]",
-        type: "address[]",
-      },
-    ],
-  },
-  {
-    stateMutability: "view",
-    type: "function",
-    inputs: [],
-    name: "excludeSenders",
-    outputs: [
-      {
-        name: "excludedSenders_",
-        internalType: "address[]",
-        type: "address[]",
-      },
-    ],
-  },
-  {
-    stateMutability: "nonpayable",
-    type: "function",
-    inputs: [],
-    name: "failed",
-    outputs: [{ name: "", internalType: "bool", type: "bool" }],
-  },
-  {
-    stateMutability: "nonpayable",
-    type: "function",
-    inputs: [],
-    name: "setUp",
-    outputs: [],
-  },
-  {
-    stateMutability: "view",
-    type: "function",
-    inputs: [],
-    name: "targetArtifactSelectors",
-    outputs: [
-      {
-        name: "targetedArtifactSelectors_",
-        internalType: "struct StdInvariant.FuzzSelector[]",
-        type: "tuple[]",
-        components: [
-          { name: "addr", internalType: "address", type: "address" },
-          { name: "selectors", internalType: "bytes4[]", type: "bytes4[]" },
-        ],
-      },
-    ],
-  },
-  {
-    stateMutability: "view",
-    type: "function",
-    inputs: [],
-    name: "targetArtifacts",
-    outputs: [
-      {
-        name: "targetedArtifacts_",
-        internalType: "string[]",
-        type: "string[]",
-      },
-    ],
-  },
-  {
-    stateMutability: "view",
-    type: "function",
-    inputs: [],
-    name: "targetContracts",
-    outputs: [
-      {
-        name: "targetedContracts_",
-        internalType: "address[]",
-        type: "address[]",
-      },
-    ],
-  },
-  {
-    stateMutability: "view",
-    type: "function",
-    inputs: [],
-    name: "targetSelectors",
-    outputs: [
-      {
-        name: "targetedSelectors_",
-        internalType: "struct StdInvariant.FuzzSelector[]",
-        type: "tuple[]",
-        components: [
-          { name: "addr", internalType: "address", type: "address" },
-          { name: "selectors", internalType: "bytes4[]", type: "bytes4[]" },
-        ],
-      },
-    ],
-  },
-  {
-    stateMutability: "view",
-    type: "function",
-    inputs: [],
-    name: "targetSenders",
-    outputs: [
-      {
-        name: "targetedSenders_",
-        internalType: "address[]",
-        type: "address[]",
-      },
-    ],
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "", internalType: "string", type: "string", indexed: false },
-    ],
-    name: "log",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "", internalType: "address", type: "address", indexed: false },
-    ],
-    name: "log_address",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      {
-        name: "val",
-        internalType: "uint256[]",
-        type: "uint256[]",
-        indexed: false,
-      },
-    ],
-    name: "log_array",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      {
-        name: "val",
-        internalType: "int256[]",
-        type: "int256[]",
-        indexed: false,
-      },
-    ],
-    name: "log_array",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      {
-        name: "val",
-        internalType: "address[]",
-        type: "address[]",
-        indexed: false,
-      },
-    ],
-    name: "log_array",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "", internalType: "bytes", type: "bytes", indexed: false },
-    ],
-    name: "log_bytes",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "", internalType: "bytes32", type: "bytes32", indexed: false },
-    ],
-    name: "log_bytes32",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "", internalType: "int256", type: "int256", indexed: false },
-    ],
-    name: "log_int",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "key", internalType: "string", type: "string", indexed: false },
-      { name: "val", internalType: "address", type: "address", indexed: false },
-    ],
-    name: "log_named_address",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "key", internalType: "string", type: "string", indexed: false },
-      {
-        name: "val",
-        internalType: "uint256[]",
-        type: "uint256[]",
-        indexed: false,
-      },
-    ],
-    name: "log_named_array",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "key", internalType: "string", type: "string", indexed: false },
-      {
-        name: "val",
-        internalType: "int256[]",
-        type: "int256[]",
-        indexed: false,
-      },
-    ],
-    name: "log_named_array",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "key", internalType: "string", type: "string", indexed: false },
-      {
-        name: "val",
-        internalType: "address[]",
-        type: "address[]",
-        indexed: false,
-      },
-    ],
-    name: "log_named_array",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "key", internalType: "string", type: "string", indexed: false },
-      { name: "val", internalType: "bytes", type: "bytes", indexed: false },
-    ],
-    name: "log_named_bytes",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "key", internalType: "string", type: "string", indexed: false },
-      { name: "val", internalType: "bytes32", type: "bytes32", indexed: false },
-    ],
-    name: "log_named_bytes32",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "key", internalType: "string", type: "string", indexed: false },
-      { name: "val", internalType: "int256", type: "int256", indexed: false },
-      {
-        name: "decimals",
-        internalType: "uint256",
-        type: "uint256",
-        indexed: false,
-      },
-    ],
-    name: "log_named_decimal_int",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "key", internalType: "string", type: "string", indexed: false },
-      { name: "val", internalType: "uint256", type: "uint256", indexed: false },
-      {
-        name: "decimals",
-        internalType: "uint256",
-        type: "uint256",
-        indexed: false,
-      },
-    ],
-    name: "log_named_decimal_uint",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "key", internalType: "string", type: "string", indexed: false },
-      { name: "val", internalType: "int256", type: "int256", indexed: false },
-    ],
-    name: "log_named_int",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "key", internalType: "string", type: "string", indexed: false },
-      { name: "val", internalType: "string", type: "string", indexed: false },
-    ],
-    name: "log_named_string",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "key", internalType: "string", type: "string", indexed: false },
-      { name: "val", internalType: "uint256", type: "uint256", indexed: false },
-    ],
-    name: "log_named_uint",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "", internalType: "string", type: "string", indexed: false },
-    ],
-    name: "log_string",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "", internalType: "uint256", type: "uint256", indexed: false },
-    ],
-    name: "log_uint",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "", internalType: "bytes", type: "bytes", indexed: false },
-    ],
-    name: "logs",
+    type: "error",
+    inputs: [{ name: "slot", internalType: "bytes32", type: "bytes32" }],
+    name: "UUPSUnsupportedProxiableUUID",
   },
 ] as const;
