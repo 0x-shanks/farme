@@ -10,12 +10,14 @@ import {
 import { Tldraw, TLGeoShape, track, useEditor } from "tldraw";
 import { httpClient } from "@/utils/http/client";
 import { useRouter } from "next/navigation";
-import { Box, Button, HStack, Icon } from "@chakra-ui/react";
+import { Box, Button, HStack, Icon, IconButton } from "@chakra-ui/react";
 import { IoIosArrowBack } from "react-icons/io";
 import { canvasAbi } from "@/utils/contract/generated";
 import { canvasAddress } from "@/utils/contract/address";
 import { useReadContract } from "wagmi";
 import { MobileTool } from "./MobileTool";
+import { CiSettings } from "react-icons/ci";
+import { usePrivy } from "@privy-io/react-auth";
 
 export const Network: FC<{
   user: UserResponseItem;
@@ -41,6 +43,7 @@ const Content = track(
     const [isNetworkReady, setNetworkReady] = useState<boolean>(false);
     const onceFetch = useRef<boolean>(false);
     const router = useRouter();
+    const { logout } = usePrivy();
 
     const { data: canvasData, isFetched: isCanvasFetched } = useReadContract({
       abi: canvasAbi,
@@ -195,6 +198,18 @@ const Content = track(
         left={0}
         right={0}
       >
+        <Box pointerEvents="all" pos="absolute" top={0} right={0} px={6} py={4}>
+          <IconButton
+            aria-label=""
+            colorScheme="gray"
+            shadow="xl"
+            size="lg"
+            icon={<Icon as={CiSettings} />}
+            // TODO: fix
+            onClick={logout}
+          />
+        </Box>
+
         <HStack
           pos="absolute"
           bottom={0}

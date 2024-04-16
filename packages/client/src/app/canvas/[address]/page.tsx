@@ -8,6 +8,7 @@ import {
   TLImageShape,
   TLParentId,
   TLShapeId,
+  TLStore,
   Tldraw,
   exportToBlob,
   track,
@@ -41,6 +42,7 @@ import {
   background,
   DrawerBody,
   useOutsideClick,
+  Tag,
 } from "@chakra-ui/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CiImageOn } from "react-icons/ci";
@@ -49,12 +51,14 @@ import { IoIosArrowBack, IoMdClose } from "react-icons/io";
 import { LuSave } from "react-icons/lu";
 import {
   useAccount,
+  useChainId,
   useConfig,
   useReadContract,
+  useSwitchChain,
   useWriteContract,
 } from "wagmi";
-import { ZDKNetwork } from "@zoralabs/zdk";
-import { zoraSepolia } from "viem/chains";
+import { ZDKChain, ZDKNetwork } from "@zoralabs/zdk";
+import { base, baseSepolia, zoraSepolia } from "viem/chains";
 import {
   Token,
   TokenContract,
@@ -63,17 +67,27 @@ import {
 import { addDays, getUnixTime } from "date-fns";
 import { canvasAbi } from "@/utils/contract/generated";
 import { canvasAddress, tokenAddress } from "@/utils/contract/address";
-import { waitForTransactionReceipt } from "@wagmi/core";
+import {
+  getClient,
+  getWalletClient,
+  waitForTransactionReceipt,
+} from "@wagmi/core";
 import {
   Address,
+  Chain,
+  createPublicClient,
   decodeEventLog,
   encodePacked,
   fromHex,
+  http,
   keccak256,
   toHex,
   zeroAddress,
 } from "viem";
-import { getDefaultFixedPriceMinterAddress } from "@zoralabs/protocol-sdk";
+import {
+  createMintClient,
+  getDefaultFixedPriceMinterAddress,
+} from "@zoralabs/protocol-sdk";
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -86,6 +100,8 @@ import { UserResponse, UserResponseItem } from "@/models/userResponse";
 import { fromUnixTime } from "date-fns";
 import { GoTrash } from "react-icons/go";
 import { FaCheck } from "react-icons/fa";
+import { LiaUndoAltSolid, LiaRedoAltSolid } from "react-icons/lia";
+
 import { createReferral } from "@/app/constants";
 import { MobileSelectTool } from "@/components/MobileSelectTool";
 import imageCompression from "browser-image-compression";
@@ -100,6 +116,12 @@ import {
   TbStackPop,
   TbStackPush,
 } from "react-icons/tb";
+import { AddStickerIcon } from "@/components/icons/AddStickerIcon";
+import { TokenDetailResponse } from "@/models/tokenDetailResponse";
+import { formatAddress } from "@/utils/address";
+import Countdown from "react-countdown";
+import { getChain } from "@/utils/chain";
+import { wagmiConfig } from "@/app/provider";
 
 export default function Home({ params }: { params: { address: Address } }) {
   const customTools = [MobileSelectTool];
@@ -134,7 +156,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
   editor.setCurrentTool("mobileSelect");
 
   // States
-  const [lastSave, setLastSave] = useState<number>(0);
+  const [lastSave, setLastSave] = useState<string>();
   const [isDropLoading, setIsDropLoading] = useState<boolean>(false);
   const [isSaveLoading, setIsSaveLoading] = useState<boolean>(false);
   const [isSavedSuccess, setIsSavedSuccess] = useState<boolean>(false);
@@ -147,11 +169,19 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     useState<UserResponseItem>();
   const [fileName, setFileName] = useState<string>();
   const [tokens, setTokens] = useState<Token[]>();
+  const [shouldShowDrop, setShouldShowDrop] = useState<boolean>(false);
+  const [mintTokenDetail, setMintTokenDetail] = useState<TokenDetailResponse>();
 
   const {
     isOpen: isStickerOpen,
     onOpen: onStickerOpen,
     onClose: onStickerClose,
+  } = useDisclosure();
+
+  const {
+    isOpen: isMintStickerOpen,
+    onOpen: onMintStickerOpen,
+    onClose: onMintStickerClose,
   } = useDisclosure();
 
   const emojiPickerRef = useRef(null);
@@ -178,8 +208,42 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     return editor.getShape<TLImageShape>(selectedShapeId);
   }, [selectedShapeId]);
 
+  const selectedAsset = useMemo(() => {
+    const assetId = selectedShape?.props.assetId;
+    if (!assetId) {
+      return undefined;
+    }
+
+    const a = editor.getAsset(assetId);
+    if (!a) {
+      return undefined;
+    }
+    const asset = a as TLImageAsset;
+    return asset;
+  }, [selectedShape?.props.assetId]);
+
+  const OpacityRegex = /"opacity":\s*(\d+(\.\d+)?),/g;
+  const IsLockedRegex = /"isLocked":\s*(true|false),/g;
+
+  const isChangeCanvas = useMemo(() => {
+    if (!address) {
+      return false;
+    }
+    const last = lastSave
+      ?.replaceAll(OpacityRegex, "")
+      .replaceAll(IsLockedRegex, "");
+    const current = JSON.stringify(editor.store.getSnapshot())
+      .replaceAll(OpacityRegex, "")
+      .replaceAll(IsLockedRegex, "");
+
+    return last != current;
+  }, [address, editor.store, lastSave]);
+
   // Load canvas
   useEffect(() => {
+    if (!canvasAddress || !address) {
+      return;
+    }
     if (isCanvasFetched && canvasData != undefined) {
       canvasData[1].forEach((asset) => {
         const assetId = getAssetId(
@@ -249,9 +313,9 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       editor.zoomToContent();
       editor.zoomOut();
 
-      setLastSave(editor.store.history.get());
+      setLastSave(JSON.stringify(editor.store.getSnapshot()));
     }
-  }, [canvasData, isCanvasFetched]);
+  }, [canvasData, isCanvasFetched, canvasOwner, address]);
 
   // Fetch zora tokens
   const fetchTokens = async () => {
@@ -278,19 +342,35 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       const updatedEntry =
         //@ts-ignore
         entry.changes.updated["instance_page_state:page:page"];
+
+      if (!updatedEntry || updatedEntry.length < 2) {
+        return;
+      }
+
       if (
-        updatedEntry &&
-        updatedEntry.length > 0 &&
         updatedEntry[1].hasOwnProperty("selectedShapeIds") &&
         updatedEntry[1].selectedShapeIds[0] != selectedShapeId
       ) {
         setSelectedShapeId(updatedEntry[1].selectedShapeIds[0]);
+      } else if (
+        updatedEntry[1].hasOwnProperty("hoveredShapeId") &&
+        updatedEntry[1].hoveredShapeId != selectedShapeId
+      ) {
+        setSelectedShapeId(updatedEntry[1].hoveredShapeId ?? undefined);
       }
     }
   });
   useEffect(() => {
     if (uploadedFile) {
       return;
+    }
+
+    if (selectedShapeId == undefined) {
+      setUploadedFile(undefined);
+      setUploadedShapeId(undefined);
+      setBgRemovedFile(undefined);
+      setEditedFile(undefined);
+      setFileName("");
     }
 
     const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
@@ -300,21 +380,26 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         (s) => s.toString() != selectedShapeId,
       );
       editor.updateShapes(
-        filtered.map((s) => ({
-          id: s,
-          type: "image",
-          opacity: 0.5,
-          isLocked: true,
-        })),
+        filtered.map((s) => {
+          return {
+            id: s,
+            type: "image",
+            opacity: 0.5,
+            isLocked: true,
+          };
+        }),
       );
     } else {
       editor.updateShapes(
-        allShapeIds.map((s) => ({
-          id: s,
-          type: "image",
-          opacity: 1,
-          isLocked: false,
-        })),
+        allShapeIds.map((s) => {
+          const shape = editor.getShape(s);
+          return {
+            id: s,
+            type: "image",
+            opacity: 1,
+            isLocked: shape?.meta.creator != address && canvasOwner != address,
+          };
+        }),
       );
     }
   }, [selectedShapeId]);
@@ -403,6 +488,16 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     return rawShapeId;
   };
 
+  const getAssetToken = (asset: TLAsset) => {
+    const tokenContract = asset.meta?.tokenContract as
+      | TokenContract
+      | undefined;
+    const contractAddress = tokenContract?.collectionAddress;
+    const chainId = tokenContract?.chain;
+    const tokenId = asset.meta?.tokenId;
+    return { contractAddress, chainId, tokenId };
+  };
+
   //
   // Handler
   //
@@ -441,16 +536,20 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     const blob = await res.blob();
     const file = new File([blob], name ?? "", { type: image.mimeType });
 
+    const compressedImage = await imageCompression(file, {
+      maxWidthOrHeight: 1000,
+    });
+    setUploadedFile(compressedImage);
+
     await editor.putExternalContent({
       type: "files",
-      files: [file],
+      files: [compressedImage],
       point: editor.getViewportPageBounds().center,
       ignoreParent: false,
     });
 
-    const shape = editor.getShape<TLImageShape>(
-      editor.getSelectedShapeIds()[0],
-    );
+    const shapeId = editor.getSelectedShapeIds()[0];
+    const shape = editor.getShape<TLImageShape>(shapeId);
 
     if (!shape) {
       throw new Error("shape is not found");
@@ -496,7 +595,26 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       },
     ]);
 
+    setUploadedShapeId(shapeId);
+    setFileName("😃");
+
     onStickerClose();
+
+    const formData = new FormData();
+    formData.append("file", file);
+    const bgRemovedRes = await httpClient.post<ArrayBuffer>(
+      "/bg-remove",
+      formData,
+      {
+        responseType: "arraybuffer",
+        headers: {
+          "Content-Type": "image/png",
+        },
+      },
+    );
+
+    const bgRemovedFile = new File([bgRemovedRes.data], file.name);
+    setBgRemovedFile(bgRemovedFile);
   };
 
   const handleInsertImage = async (
@@ -527,6 +645,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
 
     setUploadedFile(compressedImage);
     setEditedFile(compressedImage);
+    setShouldShowDrop(true);
 
     await editor.putExternalContent({
       type: "files",
@@ -535,9 +654,8 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       ignoreParent: false,
     });
 
-    const shape = editor.getShape<TLImageShape>(
-      editor.getSelectedShapeIds()[0],
-    );
+    const shapeId = editor.getSelectedShapeIds()[0];
+    const shape = editor.getShape<TLImageShape>(shapeId);
 
     if (!shape) {
       throw new Error("shape is not found");
@@ -555,7 +673,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       },
     });
 
-    setUploadedShapeId(editor.getSelectedShapeIds()[0]);
+    setUploadedShapeId(shapeId);
     setFileName("😃");
 
     const formData = new FormData();
@@ -641,18 +759,21 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         },
       },
     ]);
+    setShouldShowDrop(true);
   };
 
-  const handleDeleteImage = () => {
+  const handleDeleteInsertedImage = () => {
     if (uploadedShapeId == undefined) {
       throw new Error("uploadedShapeId is not found");
     }
-    editor.deleteShapes([uploadedShapeId]);
+    editor.deleteShape(uploadedShapeId);
     setUploadedFile(undefined);
     setUploadedShapeId(undefined);
     setBgRemovedFile(undefined);
     setEditedFile(undefined);
+    setSelectedShapeId(undefined);
     setFileName("");
+    setShouldShowDrop(false);
     const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
     editor.updateShapes(
       allShapeIds.map((s) => ({
@@ -827,7 +948,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       setBgRemovedFile(undefined);
       setEditedFile(undefined);
       setFileName("");
-      setLastSave(editor.store.history.get());
+      setLastSave(JSON.stringify(editor.store.getSnapshot()));
     } catch (e) {
       const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
       editor.updateShapes(
@@ -956,12 +1077,29 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     router.back();
   };
 
-  const handleDelete = () => {
+  const handleDeleteImage = () => {
     if (selectedShapeId == undefined) {
       return;
     }
 
     editor.deleteShape(selectedShapeId as TLShapeId);
+    setUploadedFile(undefined);
+    setUploadedShapeId(undefined);
+    setBgRemovedFile(undefined);
+    setEditedFile(undefined);
+    setSelectedShapeId(undefined);
+    setFileName("");
+    setShouldShowDrop(false);
+    const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
+    editor.updateShapes(
+      allShapeIds.map((s) => ({
+        id: s,
+        type: "image",
+        opacity: 1,
+        isLocked: false,
+      })),
+    );
+    editor.selectNone();
   };
 
   const handleBringForward = () => {
@@ -996,6 +1134,129 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     editor.sendToBack([selectedShapeId]);
   };
 
+  const handleUndo = () => {
+    if (editor.history.getNumUndos() == 0) {
+      return;
+    }
+    editor.history.undo();
+  };
+
+  const handleRedo = () => {
+    if (editor.history.getNumRedos() == 0) {
+      return;
+    }
+    editor.history.redo();
+  };
+
+  const handleOpenMintStickerModal = async () => {
+    onMintStickerOpen();
+
+    if (!selectedAsset) {
+      throw new Error("selectedAsset is not found");
+    }
+    const { contractAddress, chainId, tokenId } = getAssetToken(selectedAsset);
+
+    if (!contractAddress || !tokenId || !chainId) {
+      throw new Error("contractAddress or tokenId or chainId is invalid");
+    }
+
+    if (contractAddress && tokenId) {
+      const res = await httpClient.get<TokenDetailResponse>(
+        `/zora/tokens/${contractAddress}/${tokenId}?chain=${chainId}`,
+      );
+      setMintTokenDetail(res.data);
+    }
+  };
+
+  const handleCloseMintStickerModal = () => {
+    onMintStickerClose();
+    setMintTokenDetail(undefined);
+  };
+
+  const [isMintingSticker, setIsMintingSticker] = useState<boolean>(false);
+  const [mintComment, setMintComment] = useState<string>("");
+
+  const handleMintSticker = async () => {
+    if (!address) {
+      throw new Error("address is not found");
+    }
+    if (!selectedAsset) {
+      throw new Error("selectedAsset is not found");
+    }
+    const { contractAddress, chainId, tokenId } = getAssetToken(selectedAsset);
+    if (!contractAddress || !tokenId || !chainId) {
+      throw new Error("contractAddress or tokenId or chain is invalid");
+    }
+    const chain = getChain(chainId);
+    if (chain == undefined) {
+      throw new Error("chain is invalid");
+    }
+
+    setIsMintingSticker(true);
+
+    try {
+      const mintClient = createMintClient({ chain: chain });
+
+      const prepared = await mintClient.makePrepareMintTokenParams({
+        tokenAddress: contractAddress as Address,
+        tokenId,
+        mintArguments: {
+          mintToAddress: address,
+          quantityToMint: 1,
+          mintComment,
+          mintReferral: canvasOwner,
+        },
+        minterAccount: address,
+      });
+
+      const publicClient = createPublicClient({
+        chain,
+        transport: http(),
+      });
+
+      const walletClient = await getWalletClient(wagmiConfig, {
+        chainId,
+      });
+
+      const { request } = await publicClient.simulateContract(prepared);
+
+      const txHash = await walletClient.writeContract(request);
+
+      await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+      setMintComment("");
+    } catch (e) {
+      // TODO: handle error
+      console.error(e);
+    } finally {
+      setIsMintingSticker(false);
+    }
+  };
+
+  const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
+  const shouldSwitchNetwork = useMemo(() => {
+    if (!selectedAsset) {
+      return undefined;
+    }
+    const { chainId: cid } = getAssetToken(selectedAsset);
+    if (!cid) {
+      return undefined;
+    }
+    return chainId == cid;
+  }, [chainId, selectedAsset]);
+
+  const handleSwitchChain = () => {
+    if (!selectedAsset) {
+      throw new Error("selectedAsset is not found");
+    }
+    const { chainId: cid } = getAssetToken(selectedAsset);
+    if (!cid) {
+      throw new Error("chainId is invalid");
+    }
+    switchChain({ chainId: cid });
+  };
+
   return (
     <Box
       pos="absolute"
@@ -1007,16 +1268,46 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
       left={0}
       right={0}
     >
-      {!!selectedShapeId && (
+      {isChangeCanvas && (
         <VStack
           pos="absolute"
-          top={0}
-          bottom={0}
+          bottom={20}
           right={0}
           px={6}
           py={4}
           justify="center"
-          spacing={6}
+          spacing={4}
+          pointerEvents="all"
+        >
+          <IconButton
+            aria-label=""
+            colorScheme="blue"
+            rounded="full"
+            shadow="xl"
+            icon={<Icon as={LiaUndoAltSolid} />}
+            onClick={handleUndo}
+            isDisabled={editor.history.getNumUndos() == 0}
+          />
+          <IconButton
+            aria-label=""
+            colorScheme="blue"
+            rounded="full"
+            shadow="xl"
+            icon={<Icon as={LiaRedoAltSolid} />}
+            onClick={handleRedo}
+            isDisabled={editor.history.getNumRedos() == 0}
+          />
+        </VStack>
+      )}
+      {!!selectedShapeId && !selectedShape?.isLocked && (
+        <VStack
+          pos="absolute"
+          top={0}
+          right={0}
+          px={6}
+          py={4}
+          justify="center"
+          spacing={4}
           pointerEvents="all"
         >
           <IconButton
@@ -1054,236 +1345,238 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         </VStack>
       )}
 
-      <VStack
-        pos="absolute"
-        bottom={100}
-        left={0}
-        right={0}
-        px={6}
-        py={4}
-        justify="center"
-      >
-        {!!selectedShapeId && !uploadedFile && (
-          <Card shadow="lg">
-            <CardBody>
-              <VStack spacing={1}>
-                <Avatar
-                  size="sm"
-                  src={selectedShapeCreator?.pfp}
-                  borderWidth={1}
-                  borderColor="white"
-                  shadow="lg"
+      <VStack pos="absolute" bottom={0} left={0} right={0} w="full">
+        <VStack px={6} py={4} justify="center" w="full">
+          {!!selectedShapeId && !editedFile && (
+            <Card shadow="lg">
+              <CardBody>
+                <VStack spacing={1}>
+                  <Avatar
+                    size="sm"
+                    src={selectedShapeCreator?.pfp}
+                    borderWidth={1}
+                    borderColor="white"
+                    shadow="lg"
+                  />
+                  {selectedShapeCreator && selectedShape ? (
+                    <>
+                      <Text>{`Made by ${selectedShapeCreator?.displayName}`}</Text>
+                      <Text>
+                        {fromUnixTime(
+                          selectedShape?.meta.createdAt as number,
+                        ).toLocaleDateString()}
+                      </Text>
+                    </>
+                  ) : (
+                    <>
+                      <SkeletonText noOfLines={1} w={32} my={2} />
+                      <SkeletonText noOfLines={1} w={20} />
+                    </>
+                  )}
+                </VStack>
+              </CardBody>
+            </Card>
+          )}
+        </VStack>
+        {!!bgRemovedFile &&
+          !!selectedShapeId &&
+          uploadedShapeId == selectedShapeId && (
+            <HStack w="full" spacing={0} pointerEvents="all">
+              <Button
+                variant="unstyled"
+                w="20%"
+                h="full"
+                onClick={() => handleMakeSticker("white")}
+              >
+                <ChakraImage
+                  alt="white-sticker"
+                  src="/images/stickers/white-sticker.png"
                 />
-                {selectedShapeCreator && selectedShape ? (
-                  <>
-                    <Text>{`Made by ${selectedShapeCreator?.displayName}`}</Text>
-                    <Text>
-                      {fromUnixTime(
-                        selectedShape?.meta.createdAt as number,
-                      ).toLocaleDateString()}
-                    </Text>
-                  </>
-                ) : (
-                  <>
-                    <SkeletonText noOfLines={1} w={32} my={2} />
-                    <SkeletonText noOfLines={1} w={20} />
-                  </>
+              </Button>
+              <Button
+                variant="unstyled"
+                w="20%"
+                h="full"
+                onClick={() => handleMakeSticker("black")}
+              >
+                <ChakraImage
+                  alt="black-sticker"
+                  src="/images/stickers/black-sticker.png"
+                />
+              </Button>
+              <Button
+                variant="unstyled"
+                w="20%"
+                h="full"
+                onClick={() => handleMakeSticker("no-bg")}
+              >
+                <ChakraImage
+                  alt="no-background"
+                  src="/images/stickers/no-background.png"
+                />
+              </Button>
+              <Button
+                variant="unstyled"
+                w="20%"
+                h="full"
+                onClick={() => handleMakeSticker("insta")}
+              >
+                <ChakraImage
+                  alt="instant-camera"
+                  src="/images/stickers/instant-camera.png"
+                />
+              </Button>
+              <Button
+                variant="unstyled"
+                w="20%"
+                h="full"
+                onClick={() => handleMakeSticker("rounded")}
+              >
+                <ChakraImage alt="rounded" src="/images/stickers/rounded.png" />
+              </Button>
+            </HStack>
+          )}
+        <HStack px={6} py={4} justify="space-between" w="full">
+          {shouldShowDrop ? (
+            <>
+              <Spacer />
+              <VStack spacing={6}>
+                {isEmojiPickerOpen && (
+                  <Box pointerEvents="all" ref={emojiPickerRef}>
+                    <EmojiPicker onEmojiClick={(s) => setFileName(s.emoji)} />
+                  </Box>
                 )}
-              </VStack>
-            </CardBody>
-          </Card>
-        )}
-      </VStack>
-      <HStack
-        pos="absolute"
-        bottom={0}
-        left={0}
-        right={0}
-        px={6}
-        py={4}
-        justify="space-between"
-      >
-        {uploadedFile ? (
-          <>
-            <Spacer />
-            <VStack spacing={6}>
-              {isEmojiPickerOpen && (
-                <Box pointerEvents="all" ref={emojiPickerRef}>
-                  <EmojiPicker onEmojiClick={(s) => setFileName(s.emoji)} />
-                </Box>
-              )}
 
-              {!!bgRemovedFile && (
-                <HStack w="full" spacing={0} pointerEvents="all">
+                <HStack>
+                  <IconButton
+                    aria-label="close image"
+                    icon={<Icon as={IoMdClose} />}
+                    colorScheme="gray"
+                    rounded="full"
+                    shadow="xl"
+                    pointerEvents="all"
+                    onClick={handleDeleteInsertedImage}
+                    size="lg"
+                  />
                   <Button
-                    variant="unstyled"
-                    w="20%"
-                    h="full"
-                    onClick={() => handleMakeSticker("white")}
+                    pointerEvents="all"
+                    colorScheme="blue"
+                    shadow="xl"
+                    rounded="full"
+                    size="lg"
+                    onClick={handleDrop}
+                    isLoading={isDropLoading}
                   >
-                    <ChakraImage
-                      alt="white-sticker"
-                      src="/images/stickers/white-sticker.png"
-                    />
+                    Drop
                   </Button>
-                  <Button
-                    variant="unstyled"
-                    w="20%"
-                    h="full"
-                    onClick={() => handleMakeSticker("black")}
-                  >
-                    <ChakraImage
-                      alt="black-sticker"
-                      src="/images/stickers/black-sticker.png"
-                    />
-                  </Button>
-                  <Button
-                    variant="unstyled"
-                    w="20%"
-                    h="full"
-                    onClick={() => handleMakeSticker("no-bg")}
-                  >
-                    <ChakraImage
-                      alt="no-background"
-                      src="/images/stickers/no-background.png"
-                    />
-                  </Button>
-                  <Button
-                    variant="unstyled"
-                    w="20%"
-                    h="full"
-                    onClick={() => handleMakeSticker("insta")}
-                  >
-                    <ChakraImage
-                      alt="instant-camera"
-                      src="/images/stickers/instant-camera.png"
-                    />
-                  </Button>
-                  <Button
-                    variant="unstyled"
-                    w="20%"
-                    h="full"
-                    onClick={() => handleMakeSticker("rounded")}
-                  >
-                    <ChakraImage
-                      alt="rounded"
-                      src="/images/stickers/rounded.png"
-                    />
-                  </Button>
+                  <Input
+                    value={fileName}
+                    pointerEvents="all"
+                    isReadOnly={true}
+                    w={16}
+                    onClick={() => setIsEmojiPickerOpen(true)}
+                    textAlign="center"
+                  />
                 </HStack>
-              )}
-
+              </VStack>
+              <Spacer />
+            </>
+          ) : (
+            <>
               <HStack>
                 <IconButton
-                  aria-label="close image"
-                  icon={<Icon as={IoMdClose} />}
-                  colorScheme="gray"
-                  rounded="full"
-                  shadow="xl"
-                  pointerEvents="all"
-                  onClick={handleDeleteImage}
-                  size="lg"
-                />
-                <Button
-                  pointerEvents="all"
-                  colorScheme="blue"
-                  shadow="xl"
-                  rounded="full"
-                  size="lg"
-                  onClick={handleDrop}
-                  isLoading={isDropLoading}
-                >
-                  Drop
-                </Button>
-                <Input
-                  value={fileName}
-                  pointerEvents="all"
-                  isReadOnly={true}
-                  w={16}
-                  onClick={() => setIsEmojiPickerOpen(true)}
-                  textAlign="center"
-                />
-              </HStack>
-            </VStack>
-            <Spacer />
-          </>
-        ) : (
-          <>
-            <HStack>
-              <IconButton
-                aria-label="insert image"
-                icon={<Icon as={PiSticker} />}
-                colorScheme="blue"
-                rounded="full"
-                shadow="xl"
-                pointerEvents="all"
-                size="lg"
-                onClick={handleStickerOpen}
-              />
-
-              <Box pos="relative" pointerEvents="all">
-                <IconButton
                   aria-label="insert image"
-                  icon={<Icon as={CiImageOn} />}
-                  colorScheme="blue"
-                  rounded="full"
-                  shadow="xl"
-                  size="lg"
-                />
-                <Box>
-                  <Input
-                    type="file"
-                    position="absolute"
-                    top="0"
-                    left="0"
-                    opacity="0"
-                    aria-hidden="true"
-                    accept="image/*"
-                    multiple={false}
-                    onChange={handleInsertImage}
-                  />
-                </Box>
-              </Box>
-
-              {selectedShapeId && (
-                <IconButton
-                  aria-label="delete"
-                  icon={<Icon as={GoTrash} />}
+                  icon={<Icon as={PiSticker} />}
                   colorScheme="blue"
                   rounded="full"
                   shadow="xl"
                   pointerEvents="all"
                   size="lg"
-                  onClick={handleDelete}
+                  onClick={handleStickerOpen}
                 />
-              )}
-            </HStack>
-            <HStack>
-              <IconButton
-                aria-label="save"
-                icon={<Icon as={isSavedSuccess ? FaCheck : LuSave} />}
-                colorScheme="blue"
-                rounded="full"
-                shadow="xl"
-                pointerEvents="all"
-                size="lg"
-                onClick={handleSave}
-                isLoading={isSaveLoading}
-              />
-              <IconButton
-                aria-label="save"
-                icon={<Icon as={IoIosArrowBack} />}
-                colorScheme="blue"
-                rounded="full"
-                shadow="xl"
-                pointerEvents="all"
-                size="lg"
-                onClick={handleBack}
-              />
-            </HStack>
-          </>
-        )}
-      </HStack>
+
+                <Box pos="relative" pointerEvents="all">
+                  <IconButton
+                    aria-label="insert image"
+                    icon={<Icon as={CiImageOn} />}
+                    colorScheme="blue"
+                    rounded="full"
+                    shadow="xl"
+                    size="lg"
+                  />
+                  <Box>
+                    <Input
+                      type="file"
+                      position="absolute"
+                      top="0"
+                      left="0"
+                      opacity="0"
+                      aria-hidden="true"
+                      accept="image/*"
+                      multiple={false}
+                      onChange={handleInsertImage}
+                    />
+                  </Box>
+                </Box>
+
+                {selectedShapeId && !selectedShape?.isLocked && (
+                  <IconButton
+                    aria-label="delete"
+                    icon={<Icon as={GoTrash} />}
+                    colorScheme="blue"
+                    rounded="full"
+                    shadow="xl"
+                    pointerEvents="all"
+                    size="lg"
+                    onClick={handleDeleteImage}
+                  />
+                )}
+
+                {selectedShapeId && selectedShape?.isLocked && (
+                  <IconButton
+                    aria-label="mint-sticker"
+                    icon={<Icon as={AddStickerIcon} />}
+                    colorScheme="blue"
+                    rounded="full"
+                    shadow="xl"
+                    pointerEvents="all"
+                    size="lg"
+                    onClick={handleOpenMintStickerModal}
+                  />
+                )}
+              </HStack>
+              <HStack>
+                <IconButton
+                  aria-label="save"
+                  icon={
+                    <Icon as={isChangeCanvas ? IoMdClose : IoIosArrowBack} />
+                  }
+                  colorScheme={isChangeCanvas ? "gray" : "blue"}
+                  rounded="full"
+                  shadow="xl"
+                  pointerEvents="all"
+                  size="lg"
+                  onClick={handleBack}
+                />
+
+                {isChangeCanvas && (
+                  <IconButton
+                    aria-label="save"
+                    icon={<Icon as={isSavedSuccess ? FaCheck : LuSave} />}
+                    colorScheme="blue"
+                    rounded="full"
+                    shadow="xl"
+                    pointerEvents="all"
+                    size="lg"
+                    onClick={handleSave}
+                    isLoading={isSaveLoading}
+                  />
+                )}
+              </HStack>
+            </>
+          )}
+        </HStack>
+      </VStack>
 
       <Drawer
         placement="bottom"
@@ -1327,6 +1620,121 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
                 </GridItem>
               ))}
             </SimpleGrid>
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer
+        placement="bottom"
+        onClose={handleCloseMintStickerModal}
+        isOpen={isMintStickerOpen}
+      >
+        <DrawerOverlay />
+        <DrawerContent>
+          <DrawerCloseButton />
+          <DrawerBody>
+            <VStack w="full" mt={12} mb={8}>
+              <HStack justify="space-between" w="full">
+                <Text>First minter</Text>
+                {mintTokenDetail == undefined ? (
+                  <SkeletonText noOfLines={1} w={20} />
+                ) : (
+                  <Text>
+                    {mintTokenDetail.contractSummary.first_minter.ens_name ??
+                      formatAddress(
+                        mintTokenDetail.contractSummary.first_minter.address,
+                      )}
+                  </Text>
+                )}
+              </HStack>
+              <HStack justify="space-between" w="full">
+                <Text>Top minter</Text>
+                {mintTokenDetail == undefined ? (
+                  <SkeletonText noOfLines={1} w={20} />
+                ) : (
+                  <HStack>
+                    <Text>
+                      {mintTokenDetail.contractSummary.top_minter.minter
+                        .ens_name ??
+                        formatAddress(
+                          mintTokenDetail.contractSummary.top_minter.minter
+                            .address,
+                        )}
+                    </Text>
+                    <Tag colorScheme="blue">{`x${mintTokenDetail.contractSummary.top_minter.count}`}</Tag>
+                  </HStack>
+                )}
+              </HStack>
+              <HStack justify="space-between" w="full" mb={8}>
+                <Text>Creator earning</Text>
+                {mintTokenDetail == undefined ? (
+                  <SkeletonText noOfLines={1} w={20} />
+                ) : (
+                  <Text>
+                    {`${mintTokenDetail.contractSummary.creator_earnings.decimal}${mintTokenDetail.contractSummary.creator_earnings.currency.name}`}
+                  </Text>
+                )}
+              </HStack>
+              <Input
+                onChange={(e) => setMintComment(e.target.value)}
+                placeholder="Add a comment..."
+              />
+              {!shouldSwitchNetwork ? (
+                <Button
+                  w="full"
+                  colorScheme="blue"
+                  rounded="full"
+                  isDisabled={shouldSwitchNetwork == undefined}
+                  isLoading={shouldSwitchNetwork == undefined}
+                  onClick={handleSwitchChain}
+                >
+                  Change Network
+                </Button>
+              ) : (
+                <Button
+                  w="full"
+                  colorScheme="blue"
+                  rounded="full"
+                  isDisabled={
+                    mintTokenDetail?.sales.fixedPrice.state != "STARTED"
+                  }
+                  isLoading={isMintingSticker}
+                  onClick={handleMintSticker}
+                >
+                  Mint
+                </Button>
+              )}
+
+              {mintTokenDetail == undefined ? (
+                <SkeletonText noOfLines={1} w={60} />
+              ) : (
+                <HStack>
+                  <Text>{`${mintTokenDetail?.contractSummary.mint_count} minted`}</Text>
+                  <Countdown
+                    date={fromUnixTime(
+                      mintTokenDetail.sales.fixedPrice.end / 1000,
+                    )}
+                    renderer={({
+                      days,
+                      hours,
+                      minutes,
+                      seconds,
+                      completed,
+                    }) => {
+                      if (completed) {
+                        return <Text>・The mintable period has ended</Text>;
+                      } else {
+                        return (
+                          <Text>
+                            ・{days}d {hours}h {minutes}m {seconds}s
+                          </Text>
+                        );
+                      }
+                    }}
+                  />
+                </HStack>
+              )}
+            </VStack>
           </DrawerBody>
         </DrawerContent>
       </Drawer>

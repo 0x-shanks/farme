@@ -40,7 +40,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
         reject(new Error("invalid image"));
       });
-    }
+    },
   );
 
   const { mineType, err } = await getFile;

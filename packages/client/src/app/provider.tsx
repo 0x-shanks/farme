@@ -12,7 +12,7 @@ import getIsPWA from "@/utils/getIsPWA";
 
 import { defaultChain, supportedChains } from "./constants";
 import { fallback, http } from "viem";
-import { zoraSepolia } from "wagmi/chains";
+import { base, mainnet, optimism, zora, zoraSepolia } from "wagmi/chains";
 import { SessionProvider } from "next-auth/react";
 
 import { AuthKitProvider } from "@farcaster/auth-kit";
@@ -28,18 +28,22 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
   return <PWAContext.Provider value={isPWA}>{children}</PWAContext.Provider>;
 };
 
+export const wagmiConfig = createConfig({
+  chains: [zoraSepolia, mainnet, base, optimism, zora],
+  transports: {
+    [zoraSepolia.id]: fallback([http()]),
+    [mainnet.id]: fallback([http()]),
+    [base.id]: fallback([http()]),
+    [optimism.id]: fallback([http()]),
+    [zora.id]: fallback([http()]),
+  },
+});
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
   const ref = useRef();
 
   const queryClient = new QueryClient();
-
-  const wagmiConfig = createConfig({
-    chains: [zoraSepolia],
-    transports: {
-      [zoraSepolia.id]: fallback([http()]),
-    },
-  });
 
   useEffect(() => {
     setMounted(true);
