@@ -2,6 +2,10 @@
 solc = "0.8.24"
 src = "src"
 out = "out"
+ast = true
+ffi = true
+build_info = true
+extra_output = ["storageLayout"]
 via_ir = true
 libs = ["lib"]
 allow_paths = [

@@ -3,12 +3,14 @@ pragma solidity >=0.8.24;
 
 import { IZoraCreator1155 } from "@zoralabs/zora-1155-contracts/interfaces/IZoraCreator1155.sol";
 import { ZoraCreatorFixedPriceSaleStrategy } from "@zoralabs/zora-1155-contracts/minters/fixed-price/ZoraCreatorFixedPriceSaleStrategy.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 error Forbidden();
 error InvalidCanvasOwner();
 error InvalidCreateReferral();
 
-contract Canvas {
+contract Canvas is UUPSUpgradeable, OwnableUpgradeable {
   struct Float {
     uint16 decimal;
     int256 value;
@@ -51,6 +53,10 @@ contract Canvas {
       revert InvalidCanvasOwner();
     }
     _;
+  }
+
+  function initialize(address owner) public initializer {
+    __Ownable_init(owner);
   }
 
   function getCanvas(
@@ -172,4 +178,6 @@ contract Canvas {
   function getAssetId(uint256 tokenId, address contractAddress, uint256 chainId) public pure returns (uint256) {
     return uint256(keccak256(abi.encodePacked(tokenId, contractAddress, chainId)));
   }
+
+  function _authorizeUpgrade(address newImplementation) internal virtual override onlyOwner {}
 }
