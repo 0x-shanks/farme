@@ -51,8 +51,10 @@ import { IoIosArrowBack, IoMdClose } from "react-icons/io";
 import { LuSave } from "react-icons/lu";
 import {
   useAccount,
+  useChainId,
   useConfig,
   useReadContract,
+  useSwitchChain,
   useWriteContract,
 } from "wagmi";
 import { ZDKChain, ZDKNetwork } from "@zoralabs/zdk";
@@ -65,17 +67,27 @@ import {
 import { addDays, getUnixTime } from "date-fns";
 import { canvasAbi } from "@/utils/contract/generated";
 import { canvasAddress, tokenAddress } from "@/utils/contract/address";
-import { waitForTransactionReceipt } from "@wagmi/core";
+import {
+  getClient,
+  getWalletClient,
+  waitForTransactionReceipt,
+} from "@wagmi/core";
 import {
   Address,
+  Chain,
+  createPublicClient,
   decodeEventLog,
   encodePacked,
   fromHex,
+  http,
   keccak256,
   toHex,
   zeroAddress,
 } from "viem";
-import { getDefaultFixedPriceMinterAddress } from "@zoralabs/protocol-sdk";
+import {
+  createMintClient,
+  getDefaultFixedPriceMinterAddress,
+} from "@zoralabs/protocol-sdk";
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -108,6 +120,8 @@ import { AddStickerIcon } from "@/components/icons/AddStickerIcon";
 import { TokenDetailResponse } from "@/models/tokenDetailResponse";
 import { formatAddress } from "@/utils/address";
 import Countdown from "react-countdown";
+import { getChain } from "@/utils/chain";
+import { wagmiConfig } from "@/app/provider";
 
 export default function Home({ params }: { params: { address: Address } }) {
   const customTools = [MobileSelectTool];
@@ -194,6 +208,20 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     return editor.getShape<TLImageShape>(selectedShapeId);
   }, [selectedShapeId]);
 
+  const selectedAsset = useMemo(() => {
+    const assetId = selectedShape?.props.assetId;
+    if (!assetId) {
+      return undefined;
+    }
+
+    const a = editor.getAsset(assetId);
+    if (!a) {
+      return undefined;
+    }
+    const asset = a as TLImageAsset;
+    return asset;
+  }, [selectedShape?.props.assetId]);
+
   const OpacityRegex = /"opacity":\s*(\d+(\.\d+)?),/g;
   const IsLockedRegex = /"isLocked":\s*(true|false),/g;
 
@@ -210,6 +238,7 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
 
     return last != current;
   }, [address, editor.store, lastSave]);
+
   // Load canvas
   useEffect(() => {
     if (!canvasAddress || !address) {
@@ -457,6 +486,16 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
     );
 
     return rawShapeId;
+  };
+
+  const getAssetToken = (asset: TLAsset) => {
+    const tokenContract = asset.meta?.tokenContract as
+      | TokenContract
+      | undefined;
+    const contractAddress = tokenContract?.collectionAddress;
+    const chainId = tokenContract?.chain;
+    const tokenId = asset.meta?.tokenId;
+    return { contractAddress, chainId, tokenId };
   };
 
   //
@@ -1112,35 +1151,18 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
   const handleOpenMintStickerModal = async () => {
     onMintStickerOpen();
 
-    if (!selectedShape) {
-      throw new Error("selectedShape is found");
+    if (!selectedAsset) {
+      throw new Error("selectedAsset is not found");
     }
+    const { contractAddress, chainId, tokenId } = getAssetToken(selectedAsset);
 
-    const assetId = selectedShape.props.assetId;
-    if (!assetId) {
-      throw new Error("assetId is not found");
-    }
-
-    const a = editor.getAsset(assetId);
-    if (!a) {
-      throw new Error("asset is not found");
-    }
-    const asset = a as TLImageAsset;
-
-    const tokenContract = asset.meta?.tokenContract as
-      | TokenContract
-      | undefined;
-    const contractAddress = tokenContract?.collectionAddress;
-    const chain = tokenContract?.chain;
-    const tokenId = asset.meta?.tokenId;
-
-    if (!contractAddress || !tokenId || !chain) {
-      throw new Error("contractAddress or tokenId or chain is invalid");
+    if (!contractAddress || !tokenId || !chainId) {
+      throw new Error("contractAddress or tokenId or chainId is invalid");
     }
 
     if (contractAddress && tokenId) {
       const res = await httpClient.get<TokenDetailResponse>(
-        `/zora/tokens/${contractAddress}/${tokenId}?chain=${chain}`,
+        `/zora/tokens/${contractAddress}/${tokenId}?chain=${chainId}`,
       );
       setMintTokenDetail(res.data);
     }
@@ -1149,6 +1171,90 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
   const handleCloseMintStickerModal = () => {
     onMintStickerClose();
     setMintTokenDetail(undefined);
+  };
+
+  const [isMintingSticker, setIsMintingSticker] = useState<boolean>(false);
+  const [mintComment, setMintComment] = useState<string>("");
+
+  const handleMintSticker = async () => {
+    if (!address) {
+      throw new Error("address is not found");
+    }
+    if (!selectedAsset) {
+      throw new Error("selectedAsset is not found");
+    }
+    const { contractAddress, chainId, tokenId } = getAssetToken(selectedAsset);
+    if (!contractAddress || !tokenId || !chainId) {
+      throw new Error("contractAddress or tokenId or chain is invalid");
+    }
+    const chain = getChain(chainId);
+    if (chain == undefined) {
+      throw new Error("chain is invalid");
+    }
+
+    setIsMintingSticker(true);
+
+    try {
+      const mintClient = createMintClient({ chain: chain });
+
+      const prepared = await mintClient.makePrepareMintTokenParams({
+        tokenAddress: contractAddress as Address,
+        tokenId,
+        mintArguments: {
+          mintToAddress: address,
+          quantityToMint: 1,
+          mintComment,
+          mintReferral: canvasOwner,
+        },
+        minterAccount: address,
+      });
+
+      const publicClient = createPublicClient({
+        chain,
+        transport: http(),
+      });
+
+      const walletClient = await getWalletClient(wagmiConfig, {
+        chainId,
+      });
+
+      const { request } = await publicClient.simulateContract(prepared);
+
+      const txHash = await walletClient.writeContract(request);
+
+      await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+      setMintComment("");
+    } catch (e) {
+      // TODO: handle error
+      console.error(e);
+    } finally {
+      setIsMintingSticker(false);
+    }
+  };
+
+  const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
+  const shouldSwitchNetwork = useMemo(() => {
+    if (!selectedAsset) {
+      return undefined;
+    }
+    const { chainId: cid } = getAssetToken(selectedAsset);
+    if (!cid) {
+      return undefined;
+    }
+    return chainId == cid;
+  }, [chainId, selectedAsset]);
+
+  const handleSwitchChain = () => {
+    if (!selectedAsset) {
+      throw new Error("selectedAsset is not found");
+    }
+    const { chainId: cid } = getAssetToken(selectedAsset);
+    if (!cid) {
+      throw new Error("chainId is invalid");
+    }
+    switchChain({ chainId: cid });
   };
 
   return (
@@ -1522,7 +1628,6 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
         placement="bottom"
         onClose={handleCloseMintStickerModal}
         isOpen={isMintStickerOpen}
-        // size="full"
       >
         <DrawerOverlay />
         <DrawerContent>
@@ -1570,16 +1675,36 @@ const Canvas = track(({ canvasOwner }: { canvasOwner: Address }) => {
                   </Text>
                 )}
               </HStack>
-              <Button
-                w="full"
-                colorScheme="blue"
-                rounded="full"
-                isDisabled={
-                  mintTokenDetail?.sales.fixedPrice.state != "STARTED"
-                }
-              >
-                Mint
-              </Button>
+              <Input
+                onChange={(e) => setMintComment(e.target.value)}
+                placeholder="Add a comment..."
+              />
+              {!shouldSwitchNetwork ? (
+                <Button
+                  w="full"
+                  colorScheme="blue"
+                  rounded="full"
+                  isDisabled={shouldSwitchNetwork == undefined}
+                  isLoading={shouldSwitchNetwork == undefined}
+                  onClick={handleSwitchChain}
+                >
+                  Change Network
+                </Button>
+              ) : (
+                <Button
+                  w="full"
+                  colorScheme="blue"
+                  rounded="full"
+                  isDisabled={
+                    mintTokenDetail?.sales.fixedPrice.state != "STARTED"
+                  }
+                  isLoading={isMintingSticker}
+                  onClick={handleMintSticker}
+                >
+                  Mint
+                </Button>
+              )}
+
               {mintTokenDetail == undefined ? (
                 <SkeletonText noOfLines={1} w={60} />
               ) : (
