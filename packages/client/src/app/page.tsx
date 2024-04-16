@@ -31,6 +31,7 @@ export default function Home() {
         `/farcaster/${session?.user?.id}`,
       );
       setFarcasterUser(res.data.user);
+      onceUserFetch.current = true;
     })();
   }, [session?.user?.id]);
 

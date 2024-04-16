@@ -85,12 +85,24 @@ export class UserShapeUtil extends ShapeUtil<IUserShape> {
             borderColor="white"
           />
           <VStack spacing={0}>
-            <Text fontWeight={600}>
-              {`${!!shape.props.displayName ? runes.substr(shape.props.displayName, 0, 8) : ""}${!!shape.props.displayName?.length && shape.props.displayName?.length > 8 ? "..." : ""}`}
+            <Text
+              fontWeight={600}
+              w={20}
+              textOverflow="ellipsis"
+              whiteSpace="nowrap"
+              overflow="hidden"
+              textAlign="center"
+            >
+              {shape.props.displayName}
             </Text>
             <Text
               textColor="gray"
               fontSize="small"
+              w={20}
+              textOverflow="ellipsis"
+              whiteSpace="nowrap"
+              overflow="hidden"
+              textAlign="center"
             >{`@${shape.props.userName}`}</Text>
           </VStack>
         </VStack>

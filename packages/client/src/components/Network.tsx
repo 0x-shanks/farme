@@ -89,7 +89,7 @@ const Content = track(
           userName: user?.userName ?? "",
           address: user.address,
           onClick: () => {
-            router.push(`/canvas/${user.address}`);
+            router.push(`/canvas/${user.fid}/${user.address}`);
           },
           preview: canvasData?.[2],
         },
