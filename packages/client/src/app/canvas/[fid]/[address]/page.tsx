@@ -2,11 +2,13 @@
 
 import {
   IndexKey,
+  StoreSnapshot,
   TLAsset,
   TLAssetId,
   TLImageAsset,
   TLImageShape,
   TLParentId,
+  TLRecord,
   TLShapeId,
   TLStore,
   Tldraw,
@@ -122,7 +124,9 @@ import { formatAddress } from "@/utils/address";
 import Countdown from "react-countdown";
 import { getChain } from "@/utils/chain";
 import { wagmiConfig } from "@/app/provider";
-import runes from "runes";
+import { kv } from "@vercel/kv";
+import { CreateBgRemovedCidRequest } from "@/models/createBgRemovedCidRequest";
+import { BgRemovedCidResponse } from "@/models/bgRemovedCidResponse";
 
 export default function Home({
   params,
@@ -233,15 +237,43 @@ const Canvas = track(
 
     const OpacityRegex = /"opacity":\s*(\d+(\.\d+)?),/g;
     const IsLockedRegex = /"isLocked":\s*(true|false),/g;
+    const assetKeyRegex = /asset:\d+/g;
+    const shapeKeyRegex = /shape:\d+/g;
+    const removeUnusedAssets = (data: string) => {
+      const parsedData = JSON.parse(data) as StoreSnapshot<TLRecord>;
+      const assetKeys = Object.keys(parsedData.store).filter(
+        (k) => k.match(assetKeyRegex) as string[],
+      );
+      const shapeKeys = Object.keys(parsedData.store).filter((k) =>
+        k.match(shapeKeyRegex),
+      ) as string[];
+      const unusedAssetKey = assetKeys.filter(
+        (ak) => shapeKeys.indexOf(ak) == -1,
+      );
+
+      const dataWithoutAssetValues = { ...parsedData };
+      unusedAssetKey.forEach((key) => {
+        delete dataWithoutAssetValues.store[key as any];
+      });
+      return dataWithoutAssetValues;
+    };
 
     const isChangeCanvas = useMemo(() => {
       if (!address) {
         return false;
       }
-      const last = lastSave
-        ?.replaceAll(OpacityRegex, "")
+
+      if (!lastSave) {
+        return false;
+      }
+
+      const last = JSON.stringify(removeUnusedAssets(lastSave))
+        .replaceAll(OpacityRegex, "")
         .replaceAll(IsLockedRegex, "");
-      const current = JSON.stringify(editor.store.getSnapshot())
+
+      const current = JSON.stringify(
+        removeUnusedAssets(JSON.stringify(editor.store.getSnapshot())),
+      )
         .replaceAll(OpacityRegex, "")
         .replaceAll(IsLockedRegex, "");
 
@@ -474,10 +506,13 @@ const Canvas = track(
           maxWidthOrHeight: 500,
         });
 
-        const res = await ipfsClient.add({
-          content: compressedImage,
-          path: canvasOwner,
-        });
+        const res = await ipfsClient.add(
+          {
+            content: compressedImage,
+            path: canvasOwner,
+          },
+          { cidVersion: 1 },
+        );
 
         previewURI = getIPFSPreviewURL(res.cid.toString());
       }
@@ -518,6 +553,68 @@ const Canvas = track(
       const chainId = tokenContract?.chain;
       const tokenId = asset.meta?.tokenId;
       return { contractAddress, chainId, tokenId };
+    };
+
+    const updateBgRemoveFile = async (file: File, compressed: File) => {
+      const cidRes = await ipfsClient.add(
+        {
+          content: file,
+          path: "",
+        },
+        { cidVersion: 1, onlyHash: true },
+      );
+
+      console.log(cidRes.cid.toString());
+
+      const cacheRes = await httpClient.get<BgRemovedCidResponse>(
+        `/cache/bg-remove/${cidRes.cid.toString()}`,
+      );
+      if (cacheRes.data.cid != "") {
+        console.log("cache hit");
+        const url = getIPFSPreviewURL(cacheRes.data.cid);
+        try {
+          const imageRes = await fetch(url);
+          console.log(imageRes);
+          const imageData = await imageRes.arrayBuffer();
+
+          const bgRemovedFile = new File([imageData], file.name);
+          setBgRemovedFile(bgRemovedFile);
+        } catch (e) {}
+      } else {
+        console.log("no cache");
+        const formData = new FormData();
+        formData.append("file", compressed);
+        const bgRemovedRes = await httpClient.post<ArrayBuffer>(
+          "/bg-remove",
+          formData,
+          {
+            responseType: "arraybuffer",
+            headers: {
+              "Content-Type": "image/png",
+            },
+          },
+        );
+
+        const bgRemovedFile = new File([bgRemovedRes.data], file.name);
+        setBgRemovedFile(bgRemovedFile);
+
+        const bgRemovedIPFSRes = await ipfsClient.add(
+          {
+            content: bgRemovedFile,
+            path: "",
+          },
+          { cidVersion: 1 },
+        );
+
+        const cacheReq: CreateBgRemovedCidRequest = {
+          bgRemovedCid: bgRemovedIPFSRes.cid.toString(),
+        };
+        await httpClient.post(
+          `/cache/bg-remove/${cidRes.cid.toString()}`,
+          cacheReq,
+        );
+        console.log(cidRes.cid.toString(), bgRemovedIPFSRes.cid.toString());
+      }
     };
 
     //
@@ -621,22 +718,7 @@ const Canvas = track(
       setFileName("😃");
 
       onStickerClose();
-
-      const formData = new FormData();
-      formData.append("file", file);
-      const bgRemovedRes = await httpClient.post<ArrayBuffer>(
-        "/bg-remove",
-        formData,
-        {
-          responseType: "arraybuffer",
-          headers: {
-            "Content-Type": "image/png",
-          },
-        },
-      );
-
-      const bgRemovedFile = new File([bgRemovedRes.data], file.name);
-      setBgRemovedFile(bgRemovedFile);
+      await updateBgRemoveFile(file, compressedImage);
     };
 
     const handleInsertImage = async (
@@ -698,17 +780,7 @@ const Canvas = track(
       setUploadedShapeId(shapeId);
       setFileName("😃");
 
-      const formData = new FormData();
-      formData.append("file", compressedImage);
-      const res = await httpClient.post<ArrayBuffer>("/bg-remove", formData, {
-        responseType: "arraybuffer",
-        headers: {
-          "Content-Type": "image/png",
-        },
-      });
-
-      const bgRemovedFile = new File([res.data], file.name);
-      setBgRemovedFile(bgRemovedFile);
+      await updateBgRemoveFile(file, compressedImage);
     };
 
     const handleMakeSticker = async (
@@ -856,10 +928,13 @@ const Canvas = track(
       );
 
       try {
-        const res = await ipfsClient.add({
-          path: fileName ?? "",
-          content: editedFile,
-        });
+        const res = await ipfsClient.add(
+          {
+            path: fileName ?? "",
+            content: editedFile,
+          },
+          { cidVersion: 1 },
+        );
 
         const metadata = JSON.stringify({
           name: fileName,
@@ -1314,7 +1389,7 @@ const Canvas = track(
         {isChangeCanvas && (
           <VStack
             pos="absolute"
-            bottom={20}
+            bottom={40}
             right={0}
             px={6}
             py={4}
