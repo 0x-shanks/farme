@@ -25,6 +25,7 @@
     "@privy-io/wagmi-connector": "^0.1.12",
     "@tanstack/react-query": "^5.24.6",
     "@tldraw/editor": "^2.0.1",
+    "@vercel/kv": "^1.0.1",
     "@wagmi/core": "^2.6.9",
     "@zoralabs/1155-deployments": "^0.0.13",
     "@zoralabs/protocol-sdk": "^0.5.7",
@@ -33,6 +34,7 @@
     "browser-image-compression": "^2.0.2",
     "date-fns": "^3.6.0",
     "emoji-picker-react": "^4.9.2",
+    "formidable": "^3.5.1",
     "framer-motion": "^11.0.8",
     "kubo-rpc-client": "^3.0.4",
     "next": "14.1.1",
@@ -49,6 +51,7 @@
     "wagmi": "^2.5.12"
   },
   "devDependencies": {
+    "@types/formidable": "^3.4.5",
     "@types/node": "^20",
     "@types/react": "^18.2.72",
     "@types/react-dom": "^18.2.22",
@@ -63,7 +66,8 @@
     "eslint-plugin-unused-imports": "^3.1.0",
     "plugins": "link:@wagmi/cli/plugins",
     "prettier": "^3.2.5",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vercel": "^34.0.0"
   },
   "pnpm": {
     "patchedDependencies": {
