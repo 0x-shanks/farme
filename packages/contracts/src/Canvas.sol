@@ -129,6 +129,7 @@ contract Canvas is UUPSUpgradeable, OwnableUpgradeable {
     uint256 tokenID = token.setupNewTokenWithCreateReferral(newURI, maxSupply, createReferral);
 
     token.addPermission(0, fixedPriceMinterAddress, token.PERMISSION_BIT_MINTER());
+    token.addPermission(tokenID, msg.sender, token.PERMISSION_BIT_ADMIN());
     token.callSale(
       tokenID,
       ZoraCreatorFixedPriceSaleStrategy(fixedPriceMinterAddress),
