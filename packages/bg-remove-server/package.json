@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "devl": "vercel dev --listen 8001",
+    "dev": "ts-node api/main.ts --listen 8001",
     "format": "prettier --write './**/*.{ts,tsx,yaml,json}'"
   },
   "keywords": [],
@@ -13,12 +14,14 @@
   "dependencies": {
     "@imgly/background-removal-node": "^1.4.5",
     "@vercel/node": "^3.0.26",
+    "express": "^4.19.2",
     "formidable": "^3.5.1"
   },
   "devDependencies": {
     "@types/formidable": "^3.4.5",
     "@types/node": "~20.3.1",
     "prettier": "^3.2.5",
+    "ts-node": "^10.9.2",
     "typescript": "^5.4.4",
     "vercel": "^33.6.3"
   }

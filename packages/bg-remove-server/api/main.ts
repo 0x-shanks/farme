@@ -1,10 +1,12 @@
+import express from 'express';
 import { Config, removeBackground } from "@imgly/background-removal-node";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
 import formidable from "formidable";
 import { Writable } from "stream";
 import { Buffer } from "buffer";
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+const app = express();
+
+app.post('/api/remove-background', async (req, res) => {
   const endBuffers: Buffer[] = [];
   const form = formidable({
     fileWriteStreamHandler: (file) => {
@@ -58,10 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const publicPath =
-    process.env.NODE_ENV == "production"
-      ? `${process.env.BG_REMOVE_URL}/@imgly/background-removal-node/dist/`
-      : "http://localhost:8001/@imgly/background-removal-node/dist/";
+  const publicPath = `http://localhost:8001/public/`
 
   const config: Config = {
     debug: false,
@@ -80,4 +79,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const buffer = await removedBlob.arrayBuffer();
   const nodeBuffer = Buffer.from(buffer);
   res.status(200).send(nodeBuffer);
-}
+});
+
+app.use('/public', express.static('public'));
+
+app.listen(8001, () => {
+  console.log("サーバー起動中");
+});
