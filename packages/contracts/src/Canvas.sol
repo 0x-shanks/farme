@@ -83,12 +83,15 @@ contract Canvas is UUPSUpgradeable, OwnableUpgradeable {
     uint256[] memory shapeIds_ = new uint256[](shapes.length);
     for (uint256 i = 0; i < shapes.length; i++) {
       Shape memory shape = shapeMap[canvasOwner][shapes[i].id];
+      Asset memory asset = assets[shape.assetID];
       bool isCanvasOwner = msg.sender == canvasOwner;
       bool isNewSticker = shape.creator == address(0);
       bool isCreator = msg.sender == shape.creator;
 
       if (!isCanvasOwner && !isNewSticker && !isCreator) {
-        revert Forbidden();
+        if (_getIsChange(shape, shapes[i], asset, assets_[i])) {
+          revert Forbidden();
+        }
       }
 
       shapeMap[canvasOwner][shapes[i].id] = shapes[i];
@@ -108,6 +111,83 @@ contract Canvas is UUPSUpgradeable, OwnableUpgradeable {
 
     // Set preview
     canvasPreviewURI[canvasOwner] = previewURI;
+  }
+
+  function _getIsChange(
+    Shape memory bs,
+    Shape memory as_,
+    Asset memory ba,
+    Asset memory aa
+  ) internal pure returns (bool) {
+    bytes32 beforeS = keccak256(
+      abi.encodePacked(
+        bs.x.value,
+        bs.x.decimal,
+        bs.y.value,
+        bs.y.decimal,
+        bs.rotation.value,
+        bs.rotation.decimal,
+        bs.w.value,
+        bs.w.decimal,
+        bs.h.value,
+        bs.h.decimal,
+        bs.index,
+        bs.assetID
+      )
+    );
+
+    bytes32 afterS = keccak256(
+      abi.encodePacked(
+        as_.x.value,
+        as_.x.decimal,
+        as_.y.value,
+        as_.y.decimal,
+        as_.rotation.value,
+        as_.rotation.decimal,
+        as_.w.value,
+        as_.w.decimal,
+        as_.h.value,
+        as_.h.decimal,
+        as_.index,
+        as_.assetID
+      )
+    );
+
+    if (beforeS != afterS) {
+      return true;
+    }
+
+    bytes32 beforeA = keccak256(
+      abi.encodePacked(
+        ba.tokenID,
+        ba.contractAddress,
+        ba.chainID,
+        ba.srcURI,
+        ba.srcName,
+        ba.mimeType,
+        ba.w.value,
+        ba.w.decimal,
+        ba.h.value,
+        ba.h.decimal
+      )
+    );
+
+    bytes32 afterA = keccak256(
+      abi.encodePacked(
+        aa.tokenID,
+        aa.contractAddress,
+        aa.chainID,
+        aa.srcURI,
+        aa.srcName,
+        aa.mimeType,
+        aa.w.value,
+        aa.w.decimal,
+        aa.h.value,
+        aa.h.decimal
+      )
+    );
+
+    return beforeA != afterA;
   }
 
   function createSticker(
