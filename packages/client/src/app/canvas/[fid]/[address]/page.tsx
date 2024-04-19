@@ -1397,7 +1397,7 @@ const Canvas = track(
         {isChangeCanvas && (
           <VStack
             pos="absolute"
-            bottom={40}
+            bottom={56}
             right={0}
             px={6}
             py={4}
@@ -1517,7 +1517,7 @@ const Canvas = track(
           </Box>
         </HStack>
 
-        <VStack pos="absolute" bottom={0} left={0} right={0} w="full">
+        <VStack pos="absolute" bottom={8} left={0} right={0} w="full">
           <VStack px={6} py={4} justify="center" w="full">
             {!!selectedShapeId && !editedFile && (
               <Card shadow="lg">
@@ -1550,79 +1550,80 @@ const Canvas = track(
               </Card>
             )}
           </VStack>
-          {!!bgRemovedFile &&
-            !!selectedShapeId &&
-            uploadedShapeId == selectedShapeId && (
-              <HStack w="full" spacing={0} pointerEvents="all">
-                <Button
-                  variant="unstyled"
-                  w="20%"
-                  h="full"
-                  onClick={() => handleMakeSticker("white")}
-                >
-                  <ChakraImage
-                    alt="white-sticker"
-                    src="/images/stickers/white-sticker.png"
-                  />
-                </Button>
-                <Button
-                  variant="unstyled"
-                  w="20%"
-                  h="full"
-                  onClick={() => handleMakeSticker("black")}
-                >
-                  <ChakraImage
-                    alt="black-sticker"
-                    src="/images/stickers/black-sticker.png"
-                  />
-                </Button>
-                <Button
-                  variant="unstyled"
-                  w="20%"
-                  h="full"
-                  onClick={() => handleMakeSticker("no-bg")}
-                >
-                  <ChakraImage
-                    alt="no-background"
-                    src="/images/stickers/no-background.png"
-                  />
-                </Button>
-                <Button
-                  variant="unstyled"
-                  w="20%"
-                  h="full"
-                  onClick={() => handleMakeSticker("insta")}
-                >
-                  <ChakraImage
-                    alt="instant-camera"
-                    src="/images/stickers/instant-camera.png"
-                  />
-                </Button>
-                <Button
-                  variant="unstyled"
-                  w="20%"
-                  h="full"
-                  onClick={() => handleMakeSticker("rounded")}
-                >
-                  <ChakraImage
-                    alt="rounded"
-                    src="/images/stickers/rounded.png"
-                  />
-                </Button>
-              </HStack>
-            )}
+
+          {isEmojiPickerOpen && (
+            <Box pointerEvents="all" ref={emojiPickerRef}>
+              <EmojiPicker onEmojiClick={(s) => setFileName(s.emoji)} />
+            </Box>
+          )}
+
+          {!!selectedShapeId && uploadedShapeId == selectedShapeId && (
+            <HStack w="full" spacing={3} pointerEvents="all" justify="center">
+              <Button
+                variant="unstyled"
+                w="15%"
+                h="full"
+                onClick={() => handleMakeSticker("white")}
+                isDisabled={!bgRemovedFile}
+              >
+                <ChakraImage
+                  alt="white-sticker"
+                  src="/images/stickers/white-sticker.png"
+                />
+              </Button>
+              <Button
+                variant="unstyled"
+                w="15%"
+                h="full"
+                onClick={() => handleMakeSticker("black")}
+                isDisabled={!bgRemovedFile}
+              >
+                <ChakraImage
+                  alt="black-sticker"
+                  src="/images/stickers/black-sticker.png"
+                />
+              </Button>
+              <Button
+                variant="unstyled"
+                w="15%"
+                h="full"
+                onClick={() => handleMakeSticker("no-bg")}
+                isDisabled={!bgRemovedFile}
+              >
+                <ChakraImage
+                  alt="no-background"
+                  src="/images/stickers/no-background.png"
+                />
+              </Button>
+              <Button
+                variant="unstyled"
+                w="15%"
+                h="full"
+                onClick={() => handleMakeSticker("insta")}
+                isDisabled={!bgRemovedFile}
+              >
+                <ChakraImage
+                  alt="instant-camera"
+                  src="/images/stickers/instant-camera.png"
+                />
+              </Button>
+              <Button
+                variant="unstyled"
+                w="15%"
+                h="full"
+                onClick={() => handleMakeSticker("rounded")}
+                isDisabled={!bgRemovedFile}
+              >
+                <ChakraImage alt="rounded" src="/images/stickers/rounded.png" />
+              </Button>
+            </HStack>
+          )}
           <HStack px={6} py={4} justify="space-between" w="full">
             {shouldShowDrop ? (
               <>
                 <Spacer />
-                <VStack spacing={6}>
-                  {isEmojiPickerOpen && (
-                    <Box pointerEvents="all" ref={emojiPickerRef}>
-                      <EmojiPicker onEmojiClick={(s) => setFileName(s.emoji)} />
-                    </Box>
-                  )}
-
-                  <HStack>
+                <VStack spacing={6} w="full">
+                  <HStack w="full" alignItems="end">
                     <IconButton
                       aria-label="close image"
                       icon={<Icon as={IoMdClose} />}
@@ -1661,14 +1662,18 @@ const Canvas = track(
                       </Button>
                     )}
 
-                    <Input
-                      value={fileName}
-                      pointerEvents="all"
-                      isReadOnly={true}
-                      w={16}
-                      onClick={() => setIsEmojiPickerOpen(true)}
-                      textAlign="center"
-                    />
+                    <VStack spacing={1}>
+                      <Text fontSize="xs">Symbol</Text>
+                      <Button
+                        pointerEvents="all"
+                        onClick={() => setIsEmojiPickerOpen(true)}
+                        textAlign="center"
+                        rounded="full"
+                        colorScheme="primary"
+                      >
+                        {fileName}
+                      </Button>
+                    </VStack>
                   </HStack>
                 </VStack>
                 <Spacer />
