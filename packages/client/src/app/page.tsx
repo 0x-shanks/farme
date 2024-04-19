@@ -69,7 +69,7 @@ export default function Home() {
   if (!ready || sessionStatus == "loading") {
     return (
       <main>
-        <Center w="full" h="100dvh">
+        <Center w="full" h="100dvh" pos="fixed" top={0} left={0}>
           <Spinner />
         </Center>
       </main>

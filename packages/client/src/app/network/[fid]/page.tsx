@@ -16,7 +16,7 @@ export default function Home({ params }: { params: { fid: number } }) {
     }
     (async () => {
       const res = await httpClient.get<UserResponse>(
-        `/farcaster/${params.fid}`
+        `/farcaster/${params.fid}`,
       );
       setUser(res.data.user);
     })();
@@ -25,7 +25,7 @@ export default function Home({ params }: { params: { fid: number } }) {
   if (user == undefined) {
     return (
       <main>
-        <Center w="full" h="100dvh">
+        <Center w="full" h="100dvh" pos="fixed" top={0} left={0}>
           <Spinner />
         </Center>
       </main>
@@ -34,7 +34,7 @@ export default function Home({ params }: { params: { fid: number } }) {
 
   return (
     <main>
-      <Box w="full" h="100dvh">
+      <Box w="full" h="100dvh" pos="fixed" top={0} left={0}>
         <Box
           pos="absolute"
           top={0}

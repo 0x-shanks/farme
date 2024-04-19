@@ -140,7 +140,7 @@ export default function Home({
 
   return (
     <main>
-      <Box w="full" h="100dvh">
+      <Box w="full" h="100dvh" pos="fixed" top={0} left={0}>
         <Box
           pos="absolute"
           top={0}
