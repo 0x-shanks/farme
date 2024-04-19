@@ -1,7 +1,7 @@
 // export const revalidate = 1; // A whole day
 
 import { UserResponse } from "@/models/userResponse";
-import { farcasterHubClient } from "@/utils/farcaster";
+import { farcasterHubClient } from "@/utils/farcaster/client";
 import { UserDataType } from "@farcaster/hub-nodejs";
 import { NextResponse } from "next/server";
 import { cache } from "react";

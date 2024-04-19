@@ -1,5 +1,5 @@
 import { UsersResponse } from "@/models/userResponse";
-import { farcasterHubClient } from "@/utils/farcaster";
+import { farcasterHubClient } from "@/utils/farcaster/client";
 import { CastAddBody, ReactionBody, UserDataType } from "@farcaster/hub-nodejs";
 import { NextResponse } from "next/server";
 
