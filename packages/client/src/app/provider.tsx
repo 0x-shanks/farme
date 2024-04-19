@@ -66,8 +66,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
             config={{
               loginMethods: ["wallet"],
               appearance: {
-                accentColor: "#D5EE5A",
-                logo: "images/logo-privy.png",
+                accentColor: "#2141FB",
+                logo: "images/logo.png",
               },
               embeddedWallets: {
                 createOnLogin: "users-without-wallets",
