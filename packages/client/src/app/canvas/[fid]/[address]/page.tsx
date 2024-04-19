@@ -1519,7 +1519,7 @@ const Canvas = track(
 
         <VStack pos="absolute" bottom={8} left={0} right={0} w="full">
           <VStack px={6} py={4} justify="center" w="full">
-            {!!selectedShape?.isLocked && !editedFile && (
+            {!!selectedShapeId && !editedFile && (
               <Card shadow="lg">
                 <CardBody>
                   <VStack spacing={1}>

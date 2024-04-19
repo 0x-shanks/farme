@@ -168,7 +168,7 @@ const Content = track(
       // Get Network
       (async () => {
         const res = await httpClient.get<UsersResponse>(
-          `/farcaster/${user?.fid}/network`
+          `/farcaster/${user?.fid}/network`,
         );
 
         const users = res.data.users;
@@ -188,7 +188,7 @@ const Content = track(
                 router.push(`/network/${user.fid}`);
               },
             },
-          }))
+          })),
         );
 
         for (let i: number = users.length; i < 24; i++) {
@@ -239,7 +239,8 @@ const Content = track(
           py={4}
           justify="center"
         >
-          {pathname != "/" && (
+          {/* TODO: fix */}
+          {/* {pathname != "/" && (
             <IconButton
               aria-label="home"
               colorScheme="gray"
@@ -247,11 +248,11 @@ const Content = track(
               onClick={handleBackHome}
               pointerEvents="all"
             />
-          )}
+          )} */}
 
           {hasPrevious && (
             <Button
-              colorScheme="gray"
+              colorScheme="primary"
               leftIcon={<Icon as={IoIosArrowBack} />}
               onClick={handleBack}
               pointerEvents="all"
@@ -262,5 +263,5 @@ const Content = track(
         </HStack>
       </Box>
     );
-  }
+  },
 );

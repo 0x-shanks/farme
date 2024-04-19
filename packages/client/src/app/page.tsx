@@ -36,7 +36,7 @@ export default function Home() {
     }
     (async () => {
       const res = await httpClient.get<UserResponse>(
-        `/farcaster/${session?.user?.id}`
+        `/farcaster/${session?.user?.id}`,
       );
       setFarcasterUser(res.data.user);
       onceUserFetch.current = true;
@@ -63,7 +63,7 @@ export default function Home() {
         redirect: false,
       });
     },
-    [signIn]
+    [signIn],
   );
 
   if (!ready || sessionStatus == "loading") {
