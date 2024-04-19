@@ -19,7 +19,6 @@ export default function Home({ params }: { params: { fid: number } }) {
         `/farcaster/${params.fid}`,
       );
       setUser(res.data.user);
-      console.log(user);
     })();
   }, []);
 

@@ -5,6 +5,11 @@ import { Address, zeroAddress } from "viem";
 import axios from "axios";
 import { ZDKChain } from "@zoralabs/zdk";
 import { base, mainnet, optimism, zora, zoraSepolia } from "viem/chains";
+import {
+  getChainName,
+  getChainNameShorthand,
+  getDomainFromChain,
+} from "@/utils/zora/chain";
 
 export const revalidate = 600;
 
@@ -25,37 +30,11 @@ export async function GET(
   }
   const chainId = Number(chain);
   // contract summary
-  let chainName = "";
+  const chainName = getChainName(chainId);
 
   //sales
-  let domain = "zora.co";
-  let shortChainName = "";
-
-  switch (chainId) {
-    case mainnet.id:
-      chainName = ZDKChain.Mainnet;
-      shortChainName = "eth";
-      break;
-    case base.id:
-      chainName = ZDKChain.BaseMainnet;
-      shortChainName = "base";
-      break;
-    case optimism.id:
-      chainName = ZDKChain.OptimismMainnet;
-      shortChainName = "oeth";
-      break;
-    case zora.id:
-      chainName = ZDKChain.ZoraMainnet;
-      shortChainName = "zora";
-      break;
-    case zoraSepolia.id:
-      chainName = "ZORA-SEPOLIA";
-      domain = "testnet.zora.co";
-      shortChainName = "zsep";
-      break;
-    default:
-      throw new Error("invalid chain");
-  }
+  const domain = getDomainFromChain(chainId);
+  const shortChainName = getChainNameShorthand(chainId);
 
   console.log(
     `https://api.zora.co/discover/contract_summary/${chainName}/${address}?token_id=${id}`,

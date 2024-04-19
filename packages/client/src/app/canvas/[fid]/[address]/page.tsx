@@ -128,6 +128,8 @@ import { kv } from "@vercel/kv";
 import { CreateBgRemovedCidRequest } from "@/models/createBgRemovedCidRequest";
 import { BgRemovedCidResponse } from "@/models/bgRemovedCidResponse";
 import { vibur } from "@/app/fonts";
+import { getChainNameShorthand, getDomainFromChain } from "@/utils/zora/chain";
+import Link from "next/link";
 
 export default function Home({
   params,
@@ -1259,25 +1261,41 @@ const Canvas = track(
       editor.history.redo();
     };
 
-    const handleOpenMintStickerModal = async () => {
-      onMintStickerOpen();
-
+    const stickerUrl = useMemo(() => {
       if (!selectedAsset) {
-        throw new Error("selectedAsset is not found");
+        return undefined;
       }
+
       const { contractAddress, chainId, tokenId } =
         getAssetToken(selectedAsset);
 
       if (!contractAddress || !tokenId || !chainId) {
-        throw new Error("contractAddress or tokenId or chainId is invalid");
+        return undefined;
       }
 
-      if (contractAddress && tokenId) {
-        const res = await httpClient.get<TokenDetailResponse>(
-          `/zora/tokens/${contractAddress}/${tokenId}?chain=${chainId}`,
-        );
-        setMintTokenDetail(res.data);
-      }
+      const domain = getDomainFromChain(chainId);
+      const shortChainName = getChainNameShorthand(chainId);
+
+      return `https://${domain}/collect/${shortChainName}:${contractAddress.toLowerCase()}/${tokenId}`;
+    }, [selectedAsset]);
+
+    const handleOpenMintStickerModal = async () => {
+      // TODO: fix api
+      // onMintStickerOpen();
+      // if (!selectedAsset) {
+      //   throw new Error("selectedAsset is not found");
+      // }
+      // const { contractAddress, chainId, tokenId } =
+      //   getAssetToken(selectedAsset);
+      // if (!contractAddress || !tokenId || !chainId) {
+      //   throw new Error("contractAddress or tokenId or chainId is invalid");
+      // }
+      // if (contractAddress && tokenId) {
+      //   const res = await httpClient.get<TokenDetailResponse>(
+      //     `/zora/tokens/${contractAddress}/${tokenId}?chain=${chainId}`,
+      //   );
+      //   setMintTokenDetail(res.data);
+      // }
     };
 
     const handleCloseMintStickerModal = () => {
@@ -1730,16 +1748,27 @@ const Canvas = track(
                   )}
 
                   {selectedShapeId && selectedShape?.isLocked && (
-                    <IconButton
-                      aria-label="mint-sticker"
-                      icon={<Icon as={AddStickerIcon} />}
-                      colorScheme="primary"
-                      rounded="full"
-                      shadow="xl"
-                      pointerEvents="all"
-                      size="lg"
-                      onClick={handleOpenMintStickerModal}
-                    />
+                    <Box
+                      pointerEvents={stickerUrl == undefined ? "none" : "all"}
+                    >
+                      <Link
+                        href={stickerUrl ?? ""}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <IconButton
+                          aria-label="mint-sticker"
+                          icon={<Icon as={AddStickerIcon} />}
+                          colorScheme="primary"
+                          rounded="full"
+                          shadow="xl"
+                          pointerEvents="all"
+                          size="lg"
+                          onClick={handleOpenMintStickerModal}
+                          isDisabled={stickerUrl == undefined}
+                        />
+                      </Link>
+                    </Box>
                   )}
                 </HStack>
                 <HStack>
