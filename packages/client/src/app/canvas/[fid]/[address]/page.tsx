@@ -1791,7 +1791,7 @@ const Canvas = track(
           placement="bottom"
           onClose={onStickerClose}
           isOpen={isStickerOpen}
-          size="lg"
+          size="full"
         >
           <DrawerOverlay />
           <DrawerContent>

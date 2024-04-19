@@ -168,7 +168,7 @@ const Content = track(
       // Get Network
       (async () => {
         const res = await httpClient.get<UsersResponse>(
-          `/farcaster/${user?.fid}/network`,
+          `/farcaster/${user?.fid}/network`
         );
 
         const users = res.data.users;
@@ -188,7 +188,7 @@ const Content = track(
                 router.push(`/network/${user.fid}`);
               },
             },
-          })),
+          }))
         );
 
         for (let i: number = users.length; i < 24; i++) {
@@ -232,7 +232,7 @@ const Content = track(
 
         <HStack
           pos="absolute"
-          bottom={0}
+          bottom={8}
           left={0}
           right={0}
           px={6}
@@ -262,5 +262,5 @@ const Content = track(
         </HStack>
       </Box>
     );
-  },
+  }
 );
