@@ -1,6 +1,14 @@
 "use client";
 
-import { Box, Button, Center, Spinner, VStack } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Center,
+  Image,
+  Spinner,
+  VStack,
+  Text,
+} from "@chakra-ui/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { StatusAPIResponse } from "@farcaster/auth-kit";
@@ -58,27 +66,7 @@ export default function Home() {
     [signIn],
   );
 
-  if (!ready) {
-    return (
-      <main>
-        <Center w="full" h="100dvh">
-          <Spinner />
-        </Center>
-      </main>
-    );
-  }
-
-  if (!authenticated) {
-    return (
-      <main>
-        <Center w="full" h="100dvh">
-          <Button onClick={login}>Connect Wallet</Button>
-        </Center>
-      </main>
-    );
-  }
-
-  if (sessionStatus == "loading") {
+  if (!ready || sessionStatus == "loading") {
     return (
       <main>
         <Center w="full" h="100dvh">
@@ -91,9 +79,69 @@ export default function Home() {
   if (!session) {
     return (
       <main>
-        <Center w="full" h="100dvh">
+        <VStack
+          w="full"
+          h="100dvh"
+          pos="fixed"
+          top={0}
+          left={0}
+          justify="center"
+          backgroundImage="/images/sticker-bg.jpg"
+          backgroundPosition="center"
+          backgroundSize="cover"
+        >
+          <Box
+            pos="absolute"
+            top={0}
+            bottom={0}
+            left={0}
+            right={0}
+            bg="black"
+            opacity={0.5}
+            zIndex={-10}
+          ></Box>
+          <Image src="/images/logo-white.png" alt="farme" w="90%" maxW="md" />
           <SignInButton nonce={getNonce} onSuccess={handleSignInSuccess} />
-        </Center>
+        </VStack>
+      </main>
+    );
+  }
+
+  if (!authenticated) {
+    return (
+      <main>
+        <VStack
+          w="full"
+          h="100dvh"
+          pos="fixed"
+          top={0}
+          left={0}
+          justify="center"
+          backgroundImage="/images/sticker-bg.jpg"
+          backgroundPosition="center"
+          backgroundSize="cover"
+          px={4}
+          spacing={8}
+        >
+          <Box
+            pos="absolute"
+            top={0}
+            bottom={0}
+            left={0}
+            right={0}
+            bg="black"
+            opacity={0.5}
+            zIndex={-10}
+          ></Box>
+          <Text textAlign="center" color="white" fontWeight="bold">
+            Is your address tied to your Farcaster account? Please login with
+            your verified address 😎
+          </Text>
+
+          <Button onClick={login} colorScheme="primary" rounded="full">
+            Connect Wallet
+          </Button>
+        </VStack>
       </main>
     );
   }

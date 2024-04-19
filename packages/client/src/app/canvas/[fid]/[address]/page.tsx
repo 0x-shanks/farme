@@ -127,6 +127,7 @@ import { wagmiConfig } from "@/app/provider";
 import { kv } from "@vercel/kv";
 import { CreateBgRemovedCidRequest } from "@/models/createBgRemovedCidRequest";
 import { BgRemovedCidResponse } from "@/models/bgRemovedCidResponse";
+import { vibur } from "@/app/fonts";
 
 export default function Home({
   params,
@@ -242,13 +243,13 @@ const Canvas = track(
     const removeUnusedAssets = (data: string) => {
       const parsedData = JSON.parse(data) as StoreSnapshot<TLRecord>;
       const assetKeys = Object.keys(parsedData.store).filter(
-        (k) => k.match(assetKeyRegex) as string[]
+        (k) => k.match(assetKeyRegex) as string[],
       );
       const shapeKeys = Object.keys(parsedData.store).filter((k) =>
-        k.match(shapeKeyRegex)
+        k.match(shapeKeyRegex),
       ) as string[];
       const unusedAssetKey = assetKeys.filter(
-        (ak) => shapeKeys.indexOf(ak) == -1
+        (ak) => shapeKeys.indexOf(ak) == -1,
       );
 
       const dataWithoutAssetValues = { ...parsedData };
@@ -272,7 +273,7 @@ const Canvas = track(
         .replaceAll(IsLockedRegex, "");
 
       const current = JSON.stringify(
-        removeUnusedAssets(JSON.stringify(editor.store.getSnapshot()))
+        removeUnusedAssets(JSON.stringify(editor.store.getSnapshot())),
       )
         .replaceAll(OpacityRegex, "")
         .replaceAll(IsLockedRegex, "");
@@ -290,7 +291,7 @@ const Canvas = track(
           const assetId = getAssetId(
             asset.tokenID.toString(),
             asset.contractAddress,
-            asset.chainID
+            asset.chainID,
           );
           const assets: TLAsset[] = [
             {
@@ -362,7 +363,7 @@ const Canvas = track(
     // Fetch zora tokens
     const fetchTokens = async () => {
       const res = await httpClient.get<TokensResponse>(
-        `/zora/tokens/${address}`
+        `/zora/tokens/${address}`,
       );
       setTokens(res.data.tokens);
     };
@@ -423,7 +424,7 @@ const Canvas = track(
 
       if (selectedShapeId) {
         const filtered = allShapeIds.filter(
-          (s) => s.toString() != selectedShapeId
+          (s) => s.toString() != selectedShapeId,
         );
         editor.updateShapes(
           filtered.map((s) => {
@@ -433,7 +434,7 @@ const Canvas = track(
               opacity: 0.5,
               isLocked: true,
             };
-          })
+          }),
         );
       } else {
         editor.updateShapes(
@@ -446,7 +447,7 @@ const Canvas = track(
               isLocked:
                 shape?.meta.creator != address && canvasOwner != address,
             };
-          })
+          }),
         );
       }
     }, [selectedShapeId]);
@@ -461,7 +462,7 @@ const Canvas = track(
       }
       (async () => {
         const res = await httpClient.get<UserResponse>(
-          `/farcaster/${session?.user?.id}`
+          `/farcaster/${session?.user?.id}`,
         );
         setSelectedShapeCreator(res.data.user);
       })();
@@ -512,7 +513,7 @@ const Canvas = track(
             content: compressedImage,
             path: canvasOwner,
           },
-          { cidVersion: 1 }
+          { cidVersion: 1 },
         );
 
         previewURI = getIPFSPreviewURL(res.cid.toString());
@@ -523,16 +524,16 @@ const Canvas = track(
     const getAssetId = (
       tokenId: string,
       collectionAddress: Address,
-      chain: bigint
+      chain: bigint,
     ) => {
       const rawAssetId = fromHex(
         keccak256(
           encodePacked(
             ["uint256", "address", "uint256"],
-            [BigInt(tokenId), collectionAddress, BigInt(chain)]
-          )
+            [BigInt(tokenId), collectionAddress, BigInt(chain)],
+          ),
         ),
-        "bigint"
+        "bigint",
       );
       return rawAssetId;
     };
@@ -540,7 +541,7 @@ const Canvas = track(
     const getShapeId = (creator: Address, createdAt: bigint) => {
       const rawShapeId = fromHex(
         keccak256(encodePacked(["address", "uint256"], [creator, createdAt])),
-        "bigint"
+        "bigint",
       );
 
       return rawShapeId;
@@ -562,13 +563,13 @@ const Canvas = track(
           content: file,
           path: "",
         },
-        { cidVersion: 1, onlyHash: true }
+        { cidVersion: 1, onlyHash: true },
       );
 
       console.log(cidRes.cid.toString());
 
       const cacheRes = await httpClient.get<BgRemovedCidResponse>(
-        `/cache/bg-remove/${cidRes.cid.toString()}`
+        `/cache/bg-remove/${cidRes.cid.toString()}`,
       );
       if (cacheRes.data.cid != "") {
         console.log("cache hit");
@@ -593,7 +594,7 @@ const Canvas = track(
             headers: {
               "Content-Type": "image/png",
             },
-          }
+          },
         );
 
         const bgRemovedFile = new File([bgRemovedRes.data], file.name);
@@ -604,7 +605,7 @@ const Canvas = track(
             content: bgRemovedFile,
             path: "",
           },
-          { cidVersion: 1 }
+          { cidVersion: 1 },
         );
 
         const cacheReq: CreateBgRemovedCidRequest = {
@@ -612,7 +613,7 @@ const Canvas = track(
         };
         await httpClient.post(
           `/cache/bg-remove/${cidRes.cid.toString()}`,
-          cacheReq
+          cacheReq,
         );
         console.log(cidRes.cid.toString(), bgRemovedIPFSRes.cid.toString());
       }
@@ -626,7 +627,7 @@ const Canvas = track(
       tokenContract: TokenContract | null | undefined,
       tokenId: string,
       image: TokenContentMedia | null | undefined,
-      name: string | null | undefined
+      name: string | null | undefined,
     ) => {
       if (!address) {
         throw new Error("address is not found");
@@ -688,7 +689,7 @@ const Canvas = track(
       const rawAssetId = getAssetId(
         tokenId,
         tokenContract.collectionAddress as Address,
-        BigInt(tokenContract.chain)
+        BigInt(tokenContract.chain),
       );
 
       const now = getUnixTime(new Date());
@@ -723,7 +724,7 @@ const Canvas = track(
     };
 
     const handleInsertImage = async (
-      event: React.ChangeEvent<HTMLInputElement>
+      event: React.ChangeEvent<HTMLInputElement>,
     ) => {
       if (!address) {
         throw new Error("address is not found");
@@ -736,7 +737,7 @@ const Canvas = track(
           type: "image",
           opacity: 0.5,
           isLocked: true,
-        }))
+        })),
       );
 
       const file = event.target.files?.[0];
@@ -785,7 +786,7 @@ const Canvas = track(
     };
 
     const handleMakeSticker = async (
-      type: "white" | "black" | "no-bg" | "insta" | "rounded"
+      type: "white" | "black" | "no-bg" | "insta" | "rounded",
     ) => {
       if (!bgRemovedFile || !uploadedFile || !uploadedShapeId) {
         return;
@@ -876,7 +877,7 @@ const Canvas = track(
           type: "image",
           opacity: 1,
           isLocked: false,
-        }))
+        })),
       );
       editor.selectNone();
     };
@@ -925,7 +926,7 @@ const Canvas = track(
           type: "image",
           opacity: 1,
           isLocked: false,
-        }))
+        })),
       );
 
       try {
@@ -934,7 +935,7 @@ const Canvas = track(
             path: fileName ?? "",
             content: editedFile,
           },
-          { cidVersion: 1 }
+          { cidVersion: 1 },
         );
 
         const metadata = JSON.stringify({
@@ -1067,7 +1068,7 @@ const Canvas = track(
               type: "image",
               opacity: 0.5,
               isLocked: false,
-            }))
+            })),
         );
         console.error(e);
       } finally {
@@ -1096,7 +1097,7 @@ const Canvas = track(
           type: "image",
           opacity: 1,
           isLocked: false,
-        }))
+        })),
       );
 
       try {
@@ -1108,11 +1109,11 @@ const Canvas = track(
         console.log(stringified);
 
         const shapes = Object.values(snapshot.store).filter(
-          (s) => s.typeName == "shape"
+          (s) => s.typeName == "shape",
         ) as TLImageShape[];
 
         const assets = Object.values(snapshot.store).filter(
-          (s) => s.typeName == "asset"
+          (s) => s.typeName == "asset",
         ) as TLImageAsset[];
 
         const formattedAssets = assets.map((a) => {
@@ -1207,7 +1208,7 @@ const Canvas = track(
           type: "image",
           opacity: 1,
           isLocked: false,
-        }))
+        })),
       );
       editor.selectNone();
     };
@@ -1273,7 +1274,7 @@ const Canvas = track(
 
       if (contractAddress && tokenId) {
         const res = await httpClient.get<TokenDetailResponse>(
-          `/zora/tokens/${contractAddress}/${tokenId}?chain=${chainId}`
+          `/zora/tokens/${contractAddress}/${tokenId}?chain=${chainId}`,
         );
         setMintTokenDetail(res.data);
       }
@@ -1406,7 +1407,7 @@ const Canvas = track(
           >
             <IconButton
               aria-label=""
-              colorScheme="blue"
+              colorScheme="primary"
               rounded="full"
               shadow="xl"
               icon={<Icon as={LiaUndoAltSolid} />}
@@ -1415,7 +1416,7 @@ const Canvas = track(
             />
             <IconButton
               aria-label=""
-              colorScheme="blue"
+              colorScheme="primary"
               rounded="full"
               shadow="xl"
               icon={<Icon as={LiaRedoAltSolid} />}
@@ -1437,7 +1438,7 @@ const Canvas = track(
           >
             <IconButton
               aria-label=""
-              colorScheme="blue"
+              colorScheme="primary"
               rounded="full"
               shadow="xl"
               icon={<Icon as={TbStackFront} />}
@@ -1445,7 +1446,7 @@ const Canvas = track(
             />
             <IconButton
               aria-label=""
-              colorScheme="blue"
+              colorScheme="primary"
               rounded="full"
               shadow="xl"
               icon={<Icon as={TbStackPop} />}
@@ -1453,7 +1454,7 @@ const Canvas = track(
             />
             <IconButton
               aria-label=""
-              colorScheme="blue"
+              colorScheme="primary"
               rounded="full"
               shadow="xl"
               icon={<Icon as={TbStackPush} />}
@@ -1461,7 +1462,7 @@ const Canvas = track(
             />
             <IconButton
               aria-label=""
-              colorScheme="blue"
+              colorScheme="primary"
               rounded="full"
               shadow="xl"
               icon={<Icon as={TbStackBack} />}
@@ -1534,7 +1535,7 @@ const Canvas = track(
                         <Text>{`Made by ${selectedShapeCreator?.displayName}`}</Text>
                         <Text>
                           {fromUnixTime(
-                            selectedShape?.meta.createdAt as number
+                            selectedShape?.meta.createdAt as number,
                           ).toLocaleDateString()}
                         </Text>
                       </>
@@ -1636,7 +1637,7 @@ const Canvas = track(
                     {shouldSwitchNetworkDrop ? (
                       <Button
                         pointerEvents="all"
-                        colorScheme="blue"
+                        colorScheme="primary"
                         shadow="xl"
                         rounded="full"
                         size="lg"
@@ -1648,7 +1649,7 @@ const Canvas = track(
                     ) : (
                       <Button
                         pointerEvents="all"
-                        colorScheme="blue"
+                        colorScheme="primary"
                         shadow="xl"
                         rounded="full"
                         size="lg"
@@ -1678,7 +1679,7 @@ const Canvas = track(
                   <IconButton
                     aria-label="insert image"
                     icon={<Icon as={PiSticker} />}
-                    colorScheme="blue"
+                    colorScheme="primary"
                     rounded="full"
                     shadow="xl"
                     pointerEvents="all"
@@ -1690,7 +1691,7 @@ const Canvas = track(
                     <IconButton
                       aria-label="insert image"
                       icon={<Icon as={CiImageOn} />}
-                      colorScheme="blue"
+                      colorScheme="primary"
                       rounded="full"
                       shadow="xl"
                       size="lg"
@@ -1714,7 +1715,7 @@ const Canvas = track(
                     <IconButton
                       aria-label="delete"
                       icon={<Icon as={GoTrash} />}
-                      colorScheme="blue"
+                      colorScheme="primary"
                       rounded="full"
                       shadow="xl"
                       pointerEvents="all"
@@ -1727,7 +1728,7 @@ const Canvas = track(
                     <IconButton
                       aria-label="mint-sticker"
                       icon={<Icon as={AddStickerIcon} />}
-                      colorScheme="blue"
+                      colorScheme="primary"
                       rounded="full"
                       shadow="xl"
                       pointerEvents="all"
@@ -1752,7 +1753,7 @@ const Canvas = track(
                       <IconButton
                         aria-label="save"
                         icon={<Icon as={isSavedSuccess ? FaCheck : LuSave} />}
-                        colorScheme="blue"
+                        colorScheme="primary"
                         rounded="full"
                         shadow="xl"
                         pointerEvents="all"
@@ -1766,7 +1767,7 @@ const Canvas = track(
                       <IconButton
                         aria-label="save"
                         icon={<Icon as={IoIosArrowBack} />}
-                        colorScheme="blue"
+                        colorScheme="primary"
                         rounded="full"
                         shadow="xl"
                         pointerEvents="all"
@@ -1785,12 +1786,16 @@ const Canvas = track(
           placement="bottom"
           onClose={onStickerClose}
           isOpen={isStickerOpen}
-          size="full"
+          size="lg"
         >
           <DrawerOverlay />
           <DrawerContent>
             <DrawerCloseButton />
-            <DrawerHeader>Sticker</DrawerHeader>
+            <DrawerHeader>
+              <Text className={vibur.className} fontSize="4xl">
+                Sticker
+              </Text>
+            </DrawerHeader>
             {tokens == undefined && (
               <Center w="full" h="full">
                 <Spinner />
@@ -1811,7 +1816,7 @@ const Canvas = track(
                           token.tokenContract,
                           token.tokenId,
                           token.image,
-                          token.name
+                          token.name,
                         )
                       }
                     >
@@ -1845,7 +1850,7 @@ const Canvas = track(
                     <Text>
                       {mintTokenDetail.contractSummary.first_minter.ens_name ??
                         formatAddress(
-                          mintTokenDetail.contractSummary.first_minter.address
+                          mintTokenDetail.contractSummary.first_minter.address,
                         )}
                     </Text>
                   )}
@@ -1861,10 +1866,10 @@ const Canvas = track(
                           .ens_name ??
                           formatAddress(
                             mintTokenDetail.contractSummary.top_minter.minter
-                              .address
+                              .address,
                           )}
                       </Text>
-                      <Tag colorScheme="blue">{`x${mintTokenDetail.contractSummary.top_minter.count}`}</Tag>
+                      <Tag colorScheme="primary">{`x${mintTokenDetail.contractSummary.top_minter.count}`}</Tag>
                     </HStack>
                   )}
                 </HStack>
@@ -1885,7 +1890,7 @@ const Canvas = track(
                 {shouldSwitchNetworkMint ? (
                   <Button
                     w="full"
-                    colorScheme="blue"
+                    colorScheme="primary"
                     rounded="full"
                     isDisabled={shouldSwitchNetworkMint == undefined}
                     isLoading={shouldSwitchNetworkMint == undefined}
@@ -1896,7 +1901,7 @@ const Canvas = track(
                 ) : (
                   <Button
                     w="full"
-                    colorScheme="blue"
+                    colorScheme="primary"
                     rounded="full"
                     isDisabled={
                       mintTokenDetail?.sales.fixedPrice.state != "STARTED"
@@ -1915,7 +1920,7 @@ const Canvas = track(
                     <Text>{`${mintTokenDetail?.contractSummary.mint_count} minted`}</Text>
                     <Countdown
                       date={fromUnixTime(
-                        mintTokenDetail.sales.fixedPrice.end / 1000
+                        mintTokenDetail.sales.fixedPrice.end / 1000,
                       )}
                       renderer={({
                         days,
@@ -1943,5 +1948,5 @@ const Canvas = track(
         </Drawer>
       </Box>
     );
-  }
+  },
 );
