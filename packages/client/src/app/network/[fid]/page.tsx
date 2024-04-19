@@ -16,11 +16,11 @@ export default function Home({ params }: { params: { fid: number } }) {
     }
     (async () => {
       const res = await httpClient.get<UserResponse>(
-        `/farcaster/${params.fid}`,
+        `/farcaster/${params.fid}`
       );
       setUser(res.data.user);
     })();
-  }, []);
+  }, [params.fid]);
 
   if (user == undefined) {
     return (
