@@ -246,13 +246,13 @@ const Canvas = track(
     const removeUnusedAssets = (data: string) => {
       const parsedData = JSON.parse(data) as StoreSnapshot<TLRecord>;
       const assetKeys = Object.keys(parsedData.store).filter(
-        (k) => k.match(assetKeyRegex) as string[],
+        (k) => k.match(assetKeyRegex) as string[]
       );
       const shapeKeys = Object.keys(parsedData.store).filter((k) =>
-        k.match(shapeKeyRegex),
+        k.match(shapeKeyRegex)
       ) as string[];
       const unusedAssetKey = assetKeys.filter(
-        (ak) => shapeKeys.indexOf(ak) == -1,
+        (ak) => shapeKeys.indexOf(ak) == -1
       );
 
       const dataWithoutAssetValues = { ...parsedData };
@@ -276,7 +276,7 @@ const Canvas = track(
         .replaceAll(IsLockedRegex, "");
 
       const current = JSON.stringify(
-        removeUnusedAssets(JSON.stringify(editor.store.getSnapshot())),
+        removeUnusedAssets(JSON.stringify(editor.store.getSnapshot()))
       )
         .replaceAll(OpacityRegex, "")
         .replaceAll(IsLockedRegex, "");
@@ -294,7 +294,7 @@ const Canvas = track(
           const assetId = getAssetId(
             asset.tokenID.toString(),
             asset.contractAddress,
-            asset.chainID,
+            asset.chainID
           );
           const assets: TLAsset[] = [
             {
@@ -366,7 +366,7 @@ const Canvas = track(
     // Fetch zora tokens
     const fetchTokens = async () => {
       const res = await httpClient.get<TokensResponse>(
-        `/zora/tokens/${address}`,
+        `/zora/tokens/${address}`
       );
       setTokens(res.data.tokens);
     };
@@ -427,7 +427,7 @@ const Canvas = track(
 
       if (selectedShapeId) {
         const filtered = allShapeIds.filter(
-          (s) => s.toString() != selectedShapeId,
+          (s) => s.toString() != selectedShapeId
         );
         editor.updateShapes(
           filtered.map((s) => {
@@ -437,7 +437,7 @@ const Canvas = track(
               opacity: 0.5,
               isLocked: true,
             };
-          }),
+          })
         );
       } else {
         editor.updateShapes(
@@ -450,7 +450,7 @@ const Canvas = track(
               isLocked:
                 shape?.meta.creator != address && canvasOwner != address,
             };
-          }),
+          })
         );
       }
     }, [selectedShapeId]);
@@ -465,7 +465,7 @@ const Canvas = track(
       }
       (async () => {
         const res = await httpClient.get<UserResponse>(
-          `/farcaster/${session?.user?.id}`,
+          `/farcaster/${session?.user?.id}`
         );
         setSelectedShapeCreator(res.data.user);
       })();
@@ -516,7 +516,7 @@ const Canvas = track(
             content: compressedImage,
             path: canvasOwner,
           },
-          { cidVersion: 1 },
+          { cidVersion: 1 }
         );
 
         previewURI = getIPFSPreviewURL(res.cid.toString());
@@ -527,16 +527,16 @@ const Canvas = track(
     const getAssetId = (
       tokenId: string,
       collectionAddress: Address,
-      chain: bigint,
+      chain: bigint
     ) => {
       const rawAssetId = fromHex(
         keccak256(
           encodePacked(
             ["uint256", "address", "uint256"],
-            [BigInt(tokenId), collectionAddress, BigInt(chain)],
-          ),
+            [BigInt(tokenId), collectionAddress, BigInt(chain)]
+          )
         ),
-        "bigint",
+        "bigint"
       );
       return rawAssetId;
     };
@@ -544,7 +544,7 @@ const Canvas = track(
     const getShapeId = (creator: Address, createdAt: bigint) => {
       const rawShapeId = fromHex(
         keccak256(encodePacked(["address", "uint256"], [creator, createdAt])),
-        "bigint",
+        "bigint"
       );
 
       return rawShapeId;
@@ -566,13 +566,13 @@ const Canvas = track(
           content: file,
           path: "",
         },
-        { cidVersion: 1, onlyHash: true },
+        { cidVersion: 1, onlyHash: true }
       );
 
       console.log(cidRes.cid.toString());
 
       const cacheRes = await httpClient.get<BgRemovedCidResponse>(
-        `/cache/bg-remove/${cidRes.cid.toString()}`,
+        `/cache/bg-remove/${cidRes.cid.toString()}`
       );
       if (cacheRes.data.cid != "") {
         console.log("cache hit");
@@ -597,7 +597,7 @@ const Canvas = track(
             headers: {
               "Content-Type": "image/png",
             },
-          },
+          }
         );
 
         const bgRemovedFile = new File([bgRemovedRes.data], file.name);
@@ -608,7 +608,7 @@ const Canvas = track(
             content: bgRemovedFile,
             path: "",
           },
-          { cidVersion: 1 },
+          { cidVersion: 1 }
         );
 
         const cacheReq: CreateBgRemovedCidRequest = {
@@ -616,7 +616,7 @@ const Canvas = track(
         };
         await httpClient.post(
           `/cache/bg-remove/${cidRes.cid.toString()}`,
-          cacheReq,
+          cacheReq
         );
         console.log(cidRes.cid.toString(), bgRemovedIPFSRes.cid.toString());
       }
@@ -630,7 +630,7 @@ const Canvas = track(
       tokenContract: TokenContract | null | undefined,
       tokenId: string,
       image: TokenContentMedia | null | undefined,
-      name: string | null | undefined,
+      name: string | null | undefined
     ) => {
       if (!address) {
         throw new Error("address is not found");
@@ -692,7 +692,7 @@ const Canvas = track(
       const rawAssetId = getAssetId(
         tokenId,
         tokenContract.collectionAddress as Address,
-        BigInt(tokenContract.chain),
+        BigInt(tokenContract.chain)
       );
 
       const now = getUnixTime(new Date());
@@ -727,7 +727,7 @@ const Canvas = track(
     };
 
     const handleInsertImage = async (
-      event: React.ChangeEvent<HTMLInputElement>,
+      event: React.ChangeEvent<HTMLInputElement>
     ) => {
       if (!address) {
         throw new Error("address is not found");
@@ -740,7 +740,7 @@ const Canvas = track(
           type: "image",
           opacity: 0.5,
           isLocked: true,
-        })),
+        }))
       );
 
       const file = event.target.files?.[0];
@@ -789,7 +789,7 @@ const Canvas = track(
     };
 
     const handleMakeSticker = async (
-      type: "white" | "black" | "no-bg" | "insta" | "rounded",
+      type: "white" | "black" | "no-bg" | "insta" | "rounded"
     ) => {
       if (!bgRemovedFile || !uploadedFile || !uploadedShapeId) {
         return;
@@ -880,7 +880,7 @@ const Canvas = track(
           type: "image",
           opacity: 1,
           isLocked: false,
-        })),
+        }))
       );
       editor.selectNone();
     };
@@ -929,7 +929,7 @@ const Canvas = track(
           type: "image",
           opacity: 1,
           isLocked: false,
-        })),
+        }))
       );
 
       try {
@@ -938,7 +938,7 @@ const Canvas = track(
             path: fileName ?? "",
             content: editedFile,
           },
-          { cidVersion: 1 },
+          { cidVersion: 1 }
         );
 
         const metadata = JSON.stringify({
@@ -1083,7 +1083,7 @@ const Canvas = track(
               type: "image",
               opacity: 0.5,
               isLocked: false,
-            })),
+            }))
         );
         console.error(e);
       } finally {
@@ -1112,7 +1112,7 @@ const Canvas = track(
           type: "image",
           opacity: 1,
           isLocked: false,
-        })),
+        }))
       );
 
       try {
@@ -1124,11 +1124,11 @@ const Canvas = track(
         console.log(stringified);
 
         const shapes = Object.values(snapshot.store).filter(
-          (s) => s.typeName == "shape",
+          (s) => s.typeName == "shape"
         ) as TLImageShape[];
 
         const assets = Object.values(snapshot.store).filter(
-          (s) => s.typeName == "asset",
+          (s) => s.typeName == "asset"
         ) as TLImageAsset[];
 
         const formattedAssets = assets.map((a) => {
@@ -1223,7 +1223,7 @@ const Canvas = track(
           type: "image",
           opacity: 1,
           isLocked: false,
-        })),
+        }))
       );
       editor.selectNone();
     };
@@ -1412,6 +1412,7 @@ const Canvas = track(
 
     const handleReset = () => {
       editor.bailToMark("latest");
+      editor.mark("latest");
     };
 
     return (
@@ -1566,7 +1567,7 @@ const Canvas = track(
                         <Text>{`Made by ${selectedShapeCreator?.displayName}`}</Text>
                         <Text>
                           {fromUnixTime(
-                            selectedShape?.meta.createdAt as number,
+                            selectedShape?.meta.createdAt as number
                           ).toLocaleDateString()}
                         </Text>
                       </>
@@ -1866,7 +1867,7 @@ const Canvas = track(
                           token.tokenContract,
                           token.tokenId,
                           token.image,
-                          token.name,
+                          token.name
                         )
                       }
                     >
@@ -1900,7 +1901,7 @@ const Canvas = track(
                     <Text>
                       {mintTokenDetail.contractSummary.first_minter.ens_name ??
                         formatAddress(
-                          mintTokenDetail.contractSummary.first_minter.address,
+                          mintTokenDetail.contractSummary.first_minter.address
                         )}
                     </Text>
                   )}
@@ -1916,7 +1917,7 @@ const Canvas = track(
                           .ens_name ??
                           formatAddress(
                             mintTokenDetail.contractSummary.top_minter.minter
-                              .address,
+                              .address
                           )}
                       </Text>
                       <Tag colorScheme="primary">{`x${mintTokenDetail.contractSummary.top_minter.count}`}</Tag>
@@ -1970,7 +1971,7 @@ const Canvas = track(
                     <Text>{`${mintTokenDetail?.contractSummary.mint_count} minted`}</Text>
                     <Countdown
                       date={fromUnixTime(
-                        mintTokenDetail.sales.fixedPrice.end / 1000,
+                        mintTokenDetail.sales.fixedPrice.end / 1000
                       )}
                       renderer={({
                         days,
@@ -1998,5 +1999,5 @@ const Canvas = track(
         </Drawer>
       </Box>
     );
-  },
+  }
 );
