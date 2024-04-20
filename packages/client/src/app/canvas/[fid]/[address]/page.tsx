@@ -1571,7 +1571,10 @@ const Canvas = track(
 
           {isEmojiPickerOpen && (
             <Box pointerEvents="all" ref={emojiPickerRef}>
-              <EmojiPicker onEmojiClick={(s) => setFileName(s.emoji)} />
+              <EmojiPicker
+                onEmojiClick={(s) => setFileName(s.emoji)}
+                autoFocusSearch={false}
+              />
             </Box>
           )}
 
