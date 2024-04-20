@@ -104,7 +104,7 @@ import { GoTrash } from "react-icons/go";
 import { FaCheck } from "react-icons/fa";
 import { LiaUndoAltSolid, LiaRedoAltSolid } from "react-icons/lia";
 
-import { createReferral } from "@/app/constants";
+import { createReferral, defaultChain } from "@/app/constants";
 import { MobileSelectTool } from "@/components/MobileSelectTool";
 import imageCompression from "browser-image-compression";
 import { getImageWithEdge } from "@/utils/image/getImageWithEdge";
@@ -130,11 +130,12 @@ import { BgRemovedCidResponse } from "@/models/bgRemovedCidResponse";
 import { vibur } from "@/app/fonts";
 import { getChainNameShorthand, getDomainFromChain } from "@/utils/zora/chain";
 import Link from "next/link";
+import { DropCastRequest } from "@/models/dropCastRequest";
 
 export default function Home({
   params,
 }: {
-  params: { address: Address; fid: number };
+  params: { address: Address; fid: string };
 }) {
   const customTools = [MobileSelectTool];
 
@@ -150,7 +151,7 @@ export default function Home({
           overflow="hidden"
         >
           <Tldraw hideUi tools={customTools}>
-            <Canvas canvasOwner={params.address} fid={params.fid} />
+            <Canvas canvasOwner={params.address} fid={Number(params.fid)} />
           </Tldraw>
         </Box>
       </Box>
@@ -1025,7 +1026,7 @@ const Canvas = track(
         }
 
         const tokenContract: TokenContract = {
-          chain: zoraSepolia.id,
+          chain: defaultChain.id,
           network: ZDKNetwork.Zora,
           collectionAddress: tokenAddress,
         };
@@ -1060,6 +1061,23 @@ const Canvas = track(
         setLastSave(JSON.stringify(editor.store.getSnapshot()));
         editor.mark("latest");
         setShouldShowDrop(false);
+
+        if (farcasterUser?.fid == fid) {
+          // NOTE: consider adding self notification setting
+          return;
+        }
+
+        const domain = getDomainFromChain(defaultChain.id);
+        const shortChainName = getChainNameShorthand(defaultChain.id);
+
+        const url = `https://${domain}/collect/${shortChainName}:${tokenAddress.toLowerCase()}/${tokenId}?referrer=${address}`;
+
+        const req: DropCastRequest = {
+          from: farcasterUser?.fid ?? -1,
+          to: fid,
+          url,
+        };
+        httpClient.post("/farcaster/cast/drop", req);
       } catch (e) {
         const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
         editor.updateShapes(
@@ -1276,7 +1294,7 @@ const Canvas = track(
       const domain = getDomainFromChain(chainId);
       const shortChainName = getChainNameShorthand(chainId);
 
-      return `https://${domain}/collect/${shortChainName}:${contractAddress.toLowerCase()}/${tokenId}`;
+      return `https://${domain}/collect/${shortChainName}:${contractAddress.toLowerCase()}/${tokenId}?referrer=${canvasAddress}`;
     }, [selectedAsset]);
 
     const handleOpenMintStickerModal = async () => {
@@ -1399,6 +1417,7 @@ const Canvas = track(
 
     const handleReset = () => {
       editor.bailToMark("latest");
+      editor.mark("latest");
     };
 
     return (

@@ -1,12 +1,12 @@
 import { Address } from "viem";
-import { base, zoraSepolia } from "wagmi/chains";
+import { zora, zoraSepolia } from "viem/chains";
 
 export const defaultChain =
-  process.env.NEXT_PUBLIC_IS_MAINNNET == "true" ? base : zoraSepolia;
+  process.env.NEXT_PUBLIC_IS_MAINNNET == "true" ? zora : zoraSepolia;
 export const supportedChains = [defaultChain];
 
 export const farcasterHubURL =
-  process.env.NEXT_PUBLIC_FARCASTER_HUB_ENDPOINT ?? "nemes.farcaster.xyz:2283";
+  process.env.NEXT_PUBLIC_FARCASTER_HUB_ENDPOINT ?? "hub-grpc.pinata.cloud";
 
 export const createReferral = process.env
   .NEXT_PUBLIC_CREATE_REFERRAL as Address;
