@@ -1062,6 +1062,11 @@ const Canvas = track(
         editor.mark("latest");
         setShouldShowDrop(false);
 
+        if (farcasterUser?.fid == fid) {
+          // NOTE: consider adding self notification setting
+          return;
+        }
+
         const domain = getDomainFromChain(defaultChain.id);
         const shortChainName = getChainNameShorthand(defaultChain.id);
 
