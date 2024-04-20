@@ -48,7 +48,8 @@
     "tldraw": "2.1.0-canary.8658e20ab55b",
     "usehooks-ts": "^2.15.1",
     "viem": "^2.8.18",
-    "wagmi": "^2.5.12"
+    "wagmi": "^2.5.12",
+    "zod": "^3.22.5"
   },
   "devDependencies": {
     "@types/formidable": "^3.4.5",

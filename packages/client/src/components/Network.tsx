@@ -47,7 +47,7 @@ const Content = track(
     const router = useRouter();
     const { logout } = usePrivy();
 
-    const { data: canvasData, isFetched: isCanvasFetched } = useReadContract({
+    const { data: canvasData, isSuccess: isCanvasSuccess } = useReadContract({
       abi: canvasAbi,
       address: canvasAddress,
       functionName: "getCanvas",
@@ -69,7 +69,7 @@ const Content = track(
         return;
       }
 
-      if (!isCanvasFetched) {
+      if (!isCanvasSuccess) {
         return;
       }
 
@@ -197,7 +197,7 @@ const Content = track(
 
         setNetworkReady(true);
       })();
-    }, [user?.fid, user.address, isCanvasFetched]);
+    }, [user?.fid, user.address, isCanvasSuccess]);
 
     const handleBack = () => {
       router.back();
@@ -240,15 +240,15 @@ const Content = track(
           justify="center"
         >
           {/* TODO: fix */}
-          {/* {pathname != "/" && (
+          {pathname != "/" && (
             <IconButton
               aria-label="home"
-              colorScheme="gray"
+              colorScheme="primary"
               icon={<Icon as={FiHome} />}
               onClick={handleBackHome}
               pointerEvents="all"
             />
-          )} */}
+          )}
 
           {hasPrevious && (
             <Button

@@ -18,11 +18,11 @@ import { useAccount } from "wagmi";
 import { Network } from "@/components/Network";
 import { UserResponse, UserResponseItem } from "@/models/userResponse";
 import { httpClient } from "@/utils/http/client";
+import { Address } from "viem";
 
 export default function Home() {
   const { ready, authenticated, login, user, logout } = usePrivy();
   const { data: session, status: sessionStatus } = useSession();
-  const { address } = useAccount();
 
   const [farcasterUser, setFarcasterUser] = useState<UserResponseItem>();
   const onceUserFetch = useRef<boolean>(false);
@@ -163,7 +163,6 @@ export default function Home() {
   //       <Center w="full" h="100dvh">
   //         <VStack>
   //           <Button onClick={() => logout()}>Disconnect wallet</Button>
-  //           <Button onClick={() => signOut()}>Signout farcaster</Button>
   //         </VStack>
   //       </Center>
   //     </main>
@@ -188,7 +187,7 @@ export default function Home() {
               displayName: session.user?.displayName ?? "",
               bio: session.user?.bio,
               userName: session.user?.displayName,
-              address,
+              address: user?.wallet?.address as Address | undefined,
             }}
             hasPrevious={false}
           />
