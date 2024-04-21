@@ -1,12 +1,12 @@
 export const getIPFSPreviewURL = (cid: string) => {
-  return `https://ipfs.decentralized-content.com/ipfs/${cid}`;
+  return `https://magic.decentralized-content.com/ipfs/${cid}`;
   // return new URL(
   //   `https://remote-image.decentralized-content.com/image?${new URLSearchParams(
   //     {
-  //       url: `https://ipfs-gateway-dev.zoralabs.workers.dev/ipfs/${cid}`,
-  //       w: "3840",
+  //       url: `https://magic.decentralized-content.com/ipfs/${cid}`,
+  //       w: "1920",
   //       q: "75",
-  //     },
-  //   ).toString()}`,
+  //     }
+  //   ).toString()}`
   // ).toString();
 };
