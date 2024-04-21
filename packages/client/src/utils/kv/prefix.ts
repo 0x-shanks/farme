@@ -1,0 +1,1 @@
+export const previewPrefix = 'preview-';

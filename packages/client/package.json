@@ -36,6 +36,7 @@
     "emoji-picker-react": "^4.9.2",
     "formidable": "^3.5.1",
     "framer-motion": "^11.0.8",
+    "frog": "^0.8.6",
     "kubo-rpc-client": "^3.0.4",
     "next": "14.1.1",
     "next-auth": "^4.24.7",
@@ -47,6 +48,7 @@
     "runes": "^0.4.3",
     "tldraw": "2.1.0-canary.8658e20ab55b",
     "usehooks-ts": "^2.15.1",
+    "uuid": "^9.0.1",
     "viem": "^2.8.18",
     "wagmi": "^2.5.12",
     "zod": "^3.22.5"
@@ -57,6 +59,7 @@
     "@types/react": "^18.2.72",
     "@types/react-dom": "^18.2.22",
     "@types/runes": "^0.4.3",
+    "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^7.1.0",
     "@typescript-eslint/parser": "^7.1.0",
     "@wagmi/cli": "^2.1.4",
