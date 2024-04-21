@@ -272,6 +272,106 @@ export const canvasAbi = [
     outputs: [],
   },
   {
+    stateMutability: "payable",
+    type: "function",
+    inputs: [
+      { name: "feeTaker", internalType: "address", type: "address" },
+      { name: "canvasOwner", internalType: "address", type: "address" },
+      {
+        name: "shapes",
+        internalType: "struct Canvas.Shape[]",
+        type: "tuple[]",
+        components: [
+          { name: "id", internalType: "uint256", type: "uint256" },
+          {
+            name: "x",
+            internalType: "struct Canvas.Float",
+            type: "tuple",
+            components: [
+              { name: "decimal", internalType: "uint16", type: "uint16" },
+              { name: "value", internalType: "int256", type: "int256" },
+            ],
+          },
+          {
+            name: "y",
+            internalType: "struct Canvas.Float",
+            type: "tuple",
+            components: [
+              { name: "decimal", internalType: "uint16", type: "uint16" },
+              { name: "value", internalType: "int256", type: "int256" },
+            ],
+          },
+          {
+            name: "rotation",
+            internalType: "struct Canvas.Float",
+            type: "tuple",
+            components: [
+              { name: "decimal", internalType: "uint16", type: "uint16" },
+              { name: "value", internalType: "int256", type: "int256" },
+            ],
+          },
+          { name: "creator", internalType: "address", type: "address" },
+          { name: "createdAt", internalType: "uint256", type: "uint256" },
+          { name: "fid", internalType: "uint256", type: "uint256" },
+          { name: "assetID", internalType: "uint256", type: "uint256" },
+          {
+            name: "w",
+            internalType: "struct Canvas.Float",
+            type: "tuple",
+            components: [
+              { name: "decimal", internalType: "uint16", type: "uint16" },
+              { name: "value", internalType: "int256", type: "int256" },
+            ],
+          },
+          {
+            name: "h",
+            internalType: "struct Canvas.Float",
+            type: "tuple",
+            components: [
+              { name: "decimal", internalType: "uint16", type: "uint16" },
+              { name: "value", internalType: "int256", type: "int256" },
+            ],
+          },
+          { name: "index", internalType: "string", type: "string" },
+        ],
+      },
+      {
+        name: "assets_",
+        internalType: "struct Canvas.Asset[]",
+        type: "tuple[]",
+        components: [
+          { name: "tokenID", internalType: "uint256", type: "uint256" },
+          { name: "contractAddress", internalType: "address", type: "address" },
+          { name: "chainID", internalType: "uint256", type: "uint256" },
+          { name: "srcURI", internalType: "string", type: "string" },
+          { name: "srcName", internalType: "string", type: "string" },
+          { name: "mimeType", internalType: "string", type: "string" },
+          {
+            name: "w",
+            internalType: "struct Canvas.Float",
+            type: "tuple",
+            components: [
+              { name: "decimal", internalType: "uint16", type: "uint16" },
+              { name: "value", internalType: "int256", type: "int256" },
+            ],
+          },
+          {
+            name: "h",
+            internalType: "struct Canvas.Float",
+            type: "tuple",
+            components: [
+              { name: "decimal", internalType: "uint16", type: "uint16" },
+              { name: "value", internalType: "int256", type: "int256" },
+            ],
+          },
+        ],
+      },
+      { name: "previewURI", internalType: "string", type: "string" },
+    ],
+    name: "editCanvasFee",
+    outputs: [],
+  },
+  {
     stateMutability: "pure",
     type: "function",
     inputs: [

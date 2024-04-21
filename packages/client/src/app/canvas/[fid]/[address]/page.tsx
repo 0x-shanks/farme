@@ -59,8 +59,7 @@ import {
   useSwitchChain,
   useWriteContract,
 } from "wagmi";
-import { ZDKChain, ZDKNetwork } from "@zoralabs/zdk";
-import { base, baseSepolia, zoraSepolia } from "viem/chains";
+import { ZDKNetwork } from "@zoralabs/zdk";
 import {
   Token,
   TokenContract,
@@ -69,22 +68,15 @@ import {
 import { addDays, getUnixTime } from "date-fns";
 import { canvasAbi } from "@/utils/contract/generated";
 import { canvasAddress, tokenAddress } from "@/utils/contract/address";
-import {
-  getClient,
-  getWalletClient,
-  waitForTransactionReceipt,
-} from "@wagmi/core";
+import { getWalletClient, waitForTransactionReceipt } from "@wagmi/core";
 import {
   Address,
-  Chain,
   createPublicClient,
   decodeEventLog,
   encodePacked,
   fromHex,
   http,
   keccak256,
-  toHex,
-  zeroAddress,
 } from "viem";
 import {
   createMintClient,
@@ -104,7 +96,7 @@ import { GoTrash } from "react-icons/go";
 import { FaCheck } from "react-icons/fa";
 import { LiaUndoAltSolid, LiaRedoAltSolid } from "react-icons/lia";
 
-import { createReferral, defaultChain } from "@/app/constants";
+import { createReferral, defaultChain, fee, feeTaker } from "@/app/constants";
 import { MobileSelectTool } from "@/components/MobileSelectTool";
 import imageCompression from "browser-image-compression";
 import { getImageWithEdge } from "@/utils/image/getImageWithEdge";
@@ -999,7 +991,7 @@ const Canvas = track(
               index: shape.index,
             },
             BigInt(Number.MAX_SAFE_INTEGER),
-            getDefaultFixedPriceMinterAddress(zoraSepolia.id),
+            getDefaultFixedPriceMinterAddress(defaultChain.id),
             salesConfig,
             createReferral,
             previewURI,
@@ -1181,8 +1173,15 @@ const Canvas = track(
         const result = await writeContractAsync({
           abi: canvasAbi,
           address: canvasAddress,
-          functionName: "editCanvas",
-          args: [canvasOwner, formattedShapes, formattedAssets, previewURI],
+          functionName: "editCanvasFee",
+          args: [
+            feeTaker,
+            canvasOwner,
+            formattedShapes,
+            formattedAssets,
+            previewURI,
+          ],
+          value: fee,
         });
 
         await waitForTransactionReceipt(config, {
@@ -1412,11 +1411,11 @@ const Canvas = track(
 
     const shouldSwitchNetworkDrop = useMemo(() => {
       // TODO: mainnet
-      return chainId != zoraSepolia.id;
+      return chainId != defaultChain.id;
     }, [chainId]);
 
     const handleSwitchChainDrop = () => {
-      switchChain({ chainId: zoraSepolia.id });
+      switchChain({ chainId: defaultChain.id });
     };
 
     const handleReset = () => {

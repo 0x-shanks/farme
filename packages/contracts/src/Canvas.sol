@@ -74,12 +74,24 @@ contract Canvas is UUPSUpgradeable, OwnableUpgradeable {
     return (shapes, assets_, previewURI);
   }
 
+  function editCanvasFee(
+    address feeTaker,
+    address canvasOwner,
+    Shape[] memory shapes,
+    Asset[] memory assets_,
+    string memory previewURI
+  ) external payable requiredCanvasOwner(canvasOwner) {
+    uint256 value = msg.value;
+    editCanvas(canvasOwner, shapes, assets_, previewURI);
+    payable(feeTaker).transfer(value);
+  }
+
   function editCanvas(
     address canvasOwner,
     Shape[] memory shapes,
     Asset[] memory assets_,
     string memory previewURI
-  ) external requiredCanvasOwner(canvasOwner) {
+  ) public requiredCanvasOwner(canvasOwner) {
     uint256[] memory shapeIds_ = new uint256[](shapes.length);
     for (uint256 i = 0; i < shapes.length; i++) {
       Shape memory shape = shapeMap[canvasOwner][shapes[i].id];
