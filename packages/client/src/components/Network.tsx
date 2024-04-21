@@ -1,24 +1,24 @@
-"use client";
+'use client';
 
-import { UserResponseItem, UsersResponse } from "@/models/userResponse";
-import { FC, useEffect, useRef, useState } from "react";
-import { IUserShape, UserShapeUtil } from "@/components/UserShapeUtil";
+import { UserResponseItem, UsersResponse } from '@/models/userResponse';
+import { FC, useEffect, useRef, useState } from 'react';
+import { IUserShape, UserShapeUtil } from '@/components/UserShapeUtil';
 import {
   IUserDetailShape,
-  UserDetailShapeUtil,
-} from "@/components/UserDetailShapeUtil";
-import { Tldraw, TLGeoShape, TLShapeId, track, useEditor } from "tldraw";
-import { httpClient } from "@/utils/http/client";
-import { usePathname, useRouter } from "next/navigation";
-import { Box, Button, HStack, Icon, IconButton } from "@chakra-ui/react";
-import { IoIosArrowBack } from "react-icons/io";
-import { canvasAbi } from "@/utils/contract/generated";
-import { canvasAddress } from "@/utils/contract/address";
-import { useReadContract } from "wagmi";
-import { MobileTool } from "./MobileTool";
-import { CiSettings } from "react-icons/ci";
-import { usePrivy } from "@privy-io/react-auth";
-import { FiHome } from "react-icons/fi";
+  UserDetailShapeUtil
+} from '@/components/UserDetailShapeUtil';
+import { Tldraw, TLGeoShape, TLShapeId, track, useEditor } from 'tldraw';
+import { httpClient } from '@/utils/http/client';
+import { usePathname, useRouter } from 'next/navigation';
+import { Box, Button, HStack, Icon, IconButton } from '@chakra-ui/react';
+import { IoIosArrowBack } from 'react-icons/io';
+import { canvasAbi } from '@/utils/contract/generated';
+import { canvasAddress } from '@/utils/contract/address';
+import { useReadContract } from 'wagmi';
+import { MobileTool } from './MobileTool';
+import { CiSettings } from 'react-icons/ci';
+import { usePrivy } from '@privy-io/react-auth';
+import { FiHome } from 'react-icons/fi';
 
 export const Network: FC<{
   user: UserResponseItem;
@@ -39,7 +39,7 @@ const Content = track(
     const editor = useEditor();
     const pathname = usePathname();
 
-    editor.setCurrentTool("mobile");
+    editor.setCurrentTool('mobile');
 
     const [isDetailReady, setIsDetailsReady] = useState<boolean>(false);
     const [isNetworkReady, setNetworkReady] = useState<boolean>(false);
@@ -50,11 +50,11 @@ const Content = track(
     const { data: canvasData, isSuccess: isCanvasSuccess } = useReadContract({
       abi: canvasAbi,
       address: canvasAddress,
-      functionName: "getCanvas",
+      functionName: 'getCanvas',
       args: [user.address!],
       query: {
-        enabled: user.address != undefined,
-      },
+        enabled: user.address != undefined
+      }
     });
 
     const detailW = 200;
@@ -80,23 +80,23 @@ const Content = track(
       const center = editor.getViewportPageCenter();
 
       editor.createShape<IUserDetailShape>({
-        type: "userDetail",
+        type: 'userDetail',
         props: {
           w: detailW,
           h: detailH,
-          fid: user?.fid ?? "0",
-          pfp: user?.pfp ?? "",
-          displayName: user?.displayName ?? "",
-          bio: user?.bio ?? "",
-          userName: user?.userName ?? "",
+          fid: user?.fid ?? '0',
+          pfp: user?.pfp ?? '',
+          displayName: user?.displayName ?? '',
+          bio: user?.bio ?? '',
+          userName: user?.userName ?? '',
           address: user.address,
           onClick: () => {
             router.push(`/canvas/${user.fid}/${user.address}`);
           },
-          preview: canvasData?.[2],
+          preview: canvasData?.[2]
         },
         x: center.x - detailW / 2,
-        y: center.y - detailH / 2,
+        y: center.y - detailH / 2
       });
 
       setIsDetailsReady(true);
@@ -140,7 +140,7 @@ const Content = track(
 
         editor.createShape<IUserShape>({
           id: `shape:${i}` as TLShapeId,
-          type: "user",
+          type: 'user',
           props: {
             w,
             h,
@@ -150,7 +150,7 @@ const Content = track(
             bio: undefined,
             userName: undefined,
             address: undefined,
-            onClick: () => {},
+            onClick: () => {}
           },
           x:
             center.x -
@@ -161,14 +161,14 @@ const Content = track(
             center.y -
             h / 2 +
             yOffset * yWeight * level +
-            (yOffset * detailH) / 2,
+            (yOffset * detailH) / 2
         });
       }
 
       // Get Network
       (async () => {
         const res = await httpClient.get<UsersResponse>(
-          `/farcaster/${user?.fid}/network`,
+          `/farcaster/${user?.fid}/network`
         );
 
         const users = res.data.users;
@@ -176,19 +176,19 @@ const Content = track(
         editor.updateShapes(
           users?.map((user, i) => ({
             id: `shape:${i}` as TLShapeId,
-            type: "user",
+            type: 'user',
             props: {
               fid: user?.fid ?? 0,
-              pfp: user?.pfp ?? "",
-              displayName: user.displayName ?? "",
-              bio: user?.bio ?? "",
-              userName: user?.userName ?? "",
+              pfp: user?.pfp ?? '',
+              displayName: user.displayName ?? '',
+              bio: user?.bio ?? '',
+              userName: user?.userName ?? '',
               address: user.address,
               onClick: () => {
                 router.push(`/network/${user.fid}`);
-              },
-            },
-          })),
+              }
+            }
+          }))
         );
 
         for (let i: number = users.length; i < 24; i++) {
@@ -204,7 +204,7 @@ const Content = track(
     };
 
     const handleBackHome = () => {
-      router.push("/");
+      router.push('/');
     };
 
     return (
@@ -240,7 +240,7 @@ const Content = track(
           justify="center"
         >
           {/* TODO: fix */}
-          {pathname != "/" && (
+          {pathname != '/' && (
             <IconButton
               aria-label="home"
               colorScheme="primary"
@@ -263,5 +263,5 @@ const Content = track(
         </HStack>
       </Box>
     );
-  },
+  }
 );

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   IndexKey,
@@ -14,8 +14,8 @@ import {
   Tldraw,
   exportToBlob,
   track,
-  useEditor,
-} from "tldraw";
+  useEditor
+} from 'tldraw';
 import {
   Box,
   Button,
@@ -44,31 +44,31 @@ import {
   background,
   DrawerBody,
   useOutsideClick,
-  Tag,
-} from "@chakra-ui/react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { CiImageOn } from "react-icons/ci";
-import { PiSticker } from "react-icons/pi";
-import { IoIosArrowBack, IoMdClose } from "react-icons/io";
-import { LuSave } from "react-icons/lu";
+  Tag
+} from '@chakra-ui/react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { CiImageOn } from 'react-icons/ci';
+import { PiSticker } from 'react-icons/pi';
+import { IoIosArrowBack, IoMdClose } from 'react-icons/io';
+import { LuSave } from 'react-icons/lu';
 import {
   useAccount,
   useChainId,
   useConfig,
   useReadContract,
   useSwitchChain,
-  useWriteContract,
-} from "wagmi";
-import { ZDKNetwork } from "@zoralabs/zdk";
+  useWriteContract
+} from 'wagmi';
+import { ZDKNetwork } from '@zoralabs/zdk';
 import {
   Token,
   TokenContract,
-  TokenContentMedia,
-} from "@zoralabs/zdk/dist/queries/queries-sdk";
-import { addDays, getUnixTime } from "date-fns";
-import { canvasAbi } from "@/utils/contract/generated";
-import { canvasAddress, tokenAddress } from "@/utils/contract/address";
-import { getWalletClient, waitForTransactionReceipt } from "@wagmi/core";
+  TokenContentMedia
+} from '@zoralabs/zdk/dist/queries/queries-sdk';
+import { addDays, getUnixTime } from 'date-fns';
+import { canvasAbi } from '@/utils/contract/generated';
+import { canvasAddress, tokenAddress } from '@/utils/contract/address';
+import { getWalletClient, waitForTransactionReceipt } from '@wagmi/core';
 import {
   Address,
   createPublicClient,
@@ -76,56 +76,56 @@ import {
   encodePacked,
   fromHex,
   http,
-  keccak256,
-} from "viem";
+  keccak256
+} from 'viem';
 import {
   createMintClient,
-  getDefaultFixedPriceMinterAddress,
-} from "@zoralabs/protocol-sdk";
+  getDefaultFixedPriceMinterAddress
+} from '@zoralabs/protocol-sdk';
 
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { TokensResponse } from "@/models/tokensResponse";
-import { ipfsClient } from "@/utils/ipfs/client";
-import { httpClient } from "@/utils/http/client";
-import { decodeFloat, encodeFloat } from "@/utils/contract/float";
-import { getIPFSPreviewURL } from "@/utils/ipfs/utils";
-import { UserResponse, UserResponseItem } from "@/models/userResponse";
-import { fromUnixTime } from "date-fns";
-import { GoTrash } from "react-icons/go";
-import { FaCheck } from "react-icons/fa";
-import { LiaUndoAltSolid, LiaRedoAltSolid } from "react-icons/lia";
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { TokensResponse } from '@/models/tokensResponse';
+import { ipfsClient } from '@/utils/ipfs/client';
+import { httpClient } from '@/utils/http/client';
+import { decodeFloat, encodeFloat } from '@/utils/contract/float';
+import { getIPFSPreviewURL } from '@/utils/ipfs/utils';
+import { UserResponse, UserResponseItem } from '@/models/userResponse';
+import { fromUnixTime } from 'date-fns';
+import { GoTrash } from 'react-icons/go';
+import { FaCheck } from 'react-icons/fa';
+import { LiaUndoAltSolid, LiaRedoAltSolid } from 'react-icons/lia';
 
-import { createReferral, defaultChain, fee, feeTaker } from "@/app/constants";
-import { MobileSelectTool } from "@/components/MobileSelectTool";
-import imageCompression from "browser-image-compression";
-import { getImageWithEdge } from "@/utils/image/getImageWithEdge";
-import EmojiPicker from "emoji-picker-react";
-import { toBase64 } from "@/utils/image/toBase64";
-import { getImageWithFrame } from "@/utils/image/getImageWithFrame";
-import { getImageRounded } from "@/utils/image/getImageRounded";
+import { createReferral, defaultChain, fee, feeTaker } from '@/app/constants';
+import { MobileSelectTool } from '@/components/MobileSelectTool';
+import imageCompression from 'browser-image-compression';
+import { getImageWithEdge } from '@/utils/image/getImageWithEdge';
+import EmojiPicker from 'emoji-picker-react';
+import { toBase64 } from '@/utils/image/toBase64';
+import { getImageWithFrame } from '@/utils/image/getImageWithFrame';
+import { getImageRounded } from '@/utils/image/getImageRounded';
 import {
   TbStackBack,
   TbStackFront,
   TbStackPop,
-  TbStackPush,
-} from "react-icons/tb";
-import { AddStickerIcon } from "@/components/icons/AddStickerIcon";
-import { TokenDetailResponse } from "@/models/tokenDetailResponse";
-import { formatAddress } from "@/utils/address";
-import Countdown from "react-countdown";
-import { getChain } from "@/utils/chain";
-import { wagmiConfig } from "@/app/provider";
-import { kv } from "@vercel/kv";
-import { CreateBgRemovedCidRequest } from "@/models/createBgRemovedCidRequest";
-import { BgRemovedCidResponse } from "@/models/bgRemovedCidResponse";
-import { vibur } from "@/app/fonts";
-import { getChainNameShorthand, getDomainFromChain } from "@/utils/zora/chain";
-import Link from "next/link";
-import { DropCastRequest } from "@/models/dropCastRequest";
+  TbStackPush
+} from 'react-icons/tb';
+import { AddStickerIcon } from '@/components/icons/AddStickerIcon';
+import { TokenDetailResponse } from '@/models/tokenDetailResponse';
+import { formatAddress } from '@/utils/address';
+import Countdown from 'react-countdown';
+import { getChain } from '@/utils/chain';
+import { wagmiConfig } from '@/app/provider';
+import { kv } from '@vercel/kv';
+import { CreateBgRemovedCidRequest } from '@/models/createBgRemovedCidRequest';
+import { BgRemovedCidResponse } from '@/models/bgRemovedCidResponse';
+import { vibur } from '@/app/fonts';
+import { getChainNameShorthand, getDomainFromChain } from '@/utils/zora/chain';
+import Link from 'next/link';
+import { DropCastRequest } from '@/models/dropCastRequest';
 
 export default function Home({
-  params,
+  params
 }: {
   params: { address: Address; fid: string };
 }) {
@@ -159,7 +159,7 @@ const Canvas = track(
     const config = useConfig();
     const router = useRouter();
 
-    editor.setCurrentTool("mobileSelect");
+    editor.setCurrentTool('mobileSelect');
 
     // States
     const [lastSave, setLastSave] = useState<string>();
@@ -184,20 +184,20 @@ const Canvas = track(
     const {
       isOpen: isStickerOpen,
       onOpen: onStickerOpen,
-      onClose: onStickerClose,
+      onClose: onStickerClose
     } = useDisclosure();
 
     const {
       isOpen: isMintStickerOpen,
       onOpen: onMintStickerOpen,
-      onClose: onMintStickerClose,
+      onClose: onMintStickerClose
     } = useDisclosure();
 
     const emojiPickerRef = useRef(null);
     const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
     useOutsideClick({
       ref: emojiPickerRef,
-      handler: () => setIsEmojiPickerOpen(false),
+      handler: () => setIsEmojiPickerOpen(false)
     });
 
     // Contract
@@ -205,8 +205,8 @@ const Canvas = track(
     const { data: canvasData, isSuccess: isCanvasSuccess } = useReadContract({
       abi: canvasAbi,
       address: canvasAddress,
-      functionName: "getCanvas",
-      args: [canvasOwner],
+      functionName: 'getCanvas',
+      args: [canvasOwner]
     });
 
     // Memo
@@ -238,13 +238,13 @@ const Canvas = track(
     const removeUnusedAssets = (data: string) => {
       const parsedData = JSON.parse(data) as StoreSnapshot<TLRecord>;
       const assetKeys = Object.keys(parsedData.store).filter(
-        (k) => k.match(assetKeyRegex) as string[],
+        (k) => k.match(assetKeyRegex) as string[]
       );
       const shapeKeys = Object.keys(parsedData.store).filter((k) =>
-        k.match(shapeKeyRegex),
+        k.match(shapeKeyRegex)
       ) as string[];
       const unusedAssetKey = assetKeys.filter(
-        (ak) => shapeKeys.indexOf(ak) == -1,
+        (ak) => shapeKeys.indexOf(ak) == -1
       );
 
       const dataWithoutAssetValues = { ...parsedData };
@@ -264,14 +264,14 @@ const Canvas = track(
       }
 
       const last = JSON.stringify(removeUnusedAssets(lastSave))
-        .replaceAll(OpacityRegex, "")
-        .replaceAll(IsLockedRegex, "");
+        .replaceAll(OpacityRegex, '')
+        .replaceAll(IsLockedRegex, '');
 
       const current = JSON.stringify(
-        removeUnusedAssets(JSON.stringify(editor.store.getSnapshot())),
+        removeUnusedAssets(JSON.stringify(editor.store.getSnapshot()))
       )
-        .replaceAll(OpacityRegex, "")
-        .replaceAll(IsLockedRegex, "");
+        .replaceAll(OpacityRegex, '')
+        .replaceAll(IsLockedRegex, '');
 
       return last != current;
     }, [address, editor.store.getSnapshot(), lastSave]);
@@ -286,34 +286,34 @@ const Canvas = track(
           const assetId = getAssetId(
             asset.tokenID.toString(),
             asset.contractAddress,
-            asset.chainID,
+            asset.chainID
           );
           const assets: TLAsset[] = [
             {
               meta: {
                 tokenContract: {
-                  name: "",
-                  network: "",
+                  name: '',
+                  network: '',
                   description: null,
                   collectionAddress: asset.contractAddress,
-                  symbol: "",
-                  chain: Number(asset.chainID),
+                  symbol: '',
+                  chain: Number(asset.chainID)
                 },
                 tokenId: Number(asset.tokenID),
-                onchainAssetId: assetId.toString(),
+                onchainAssetId: assetId.toString()
               },
               id: `asset:${assetId}` as TLAssetId,
-              type: "image",
-              typeName: "asset",
+              type: 'image',
+              typeName: 'asset',
               props: {
                 name: asset.srcName,
                 src: asset.srcURI,
                 w: decodeFloat(asset.w),
                 h: decodeFloat(asset.h),
                 mimeType: asset.mimeType,
-                isAnimated: asset.mimeType == "image/gif",
-              },
-            },
+                isAnimated: asset.mimeType == 'image/gif'
+              }
+            }
           ];
 
           editor.createAssets(assets);
@@ -329,21 +329,21 @@ const Canvas = track(
             meta: {
               creator: shape.creator,
               createdAt: Number(shape.createdAt),
-              onchainShapeId: shape.id.toString(),
+              onchainShapeId: shape.id.toString()
             },
             id: `shape:${shape.id}` as TLShapeId,
-            type: "image",
+            type: 'image',
             props: {
               w: decodeFloat(shape.w),
               h: decodeFloat(shape.h),
               assetId: `asset:${shape.assetID}`,
               playing: true,
-              url: "",
-              crop: null,
+              url: '',
+              crop: null
             },
-            parentId: "page:page" as TLParentId,
+            parentId: 'page:page' as TLParentId,
             index: shape.index as IndexKey,
-            typeName: "shape",
+            typeName: 'shape'
           });
         });
 
@@ -351,14 +351,14 @@ const Canvas = track(
         editor.zoomOut();
 
         setLastSave(JSON.stringify(editor.store.getSnapshot()));
-        editor.mark("latest");
+        editor.mark('latest');
       }
     }, [canvasData, isCanvasSuccess, canvasOwner, address]);
 
     // Fetch zora tokens
     const fetchTokens = async () => {
       const res = await httpClient.get<TokensResponse>(
-        `/zora/tokens/${address}`,
+        `/zora/tokens/${address}`
       );
       setTokens(res.data.tokens);
     };
@@ -379,23 +379,23 @@ const Canvas = track(
     // Watch select token
     editor.store.listen((entry) => {
       if (
-        entry.changes.updated.hasOwnProperty("instance_page_state:page:page")
+        entry.changes.updated.hasOwnProperty('instance_page_state:page:page')
       ) {
         const updatedEntry =
           //@ts-ignore
-          entry.changes.updated["instance_page_state:page:page"];
+          entry.changes.updated['instance_page_state:page:page'];
 
         if (!updatedEntry || updatedEntry.length < 2) {
           return;
         }
 
         if (
-          updatedEntry[1].hasOwnProperty("selectedShapeIds") &&
+          updatedEntry[1].hasOwnProperty('selectedShapeIds') &&
           updatedEntry[1].selectedShapeIds[0] != selectedShapeId
         ) {
           setSelectedShapeId(updatedEntry[1].selectedShapeIds[0]);
         } else if (
-          updatedEntry[1].hasOwnProperty("hoveredShapeId") &&
+          updatedEntry[1].hasOwnProperty('hoveredShapeId') &&
           updatedEntry[1].hoveredShapeId != selectedShapeId
         ) {
           setSelectedShapeId(updatedEntry[1].hoveredShapeId ?? undefined);
@@ -412,24 +412,24 @@ const Canvas = track(
         setUploadedShapeId(undefined);
         setBgRemovedFile(undefined);
         setEditedFile(undefined);
-        setFileName("");
+        setFileName('');
       }
 
       const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
 
       if (selectedShapeId) {
         const filtered = allShapeIds.filter(
-          (s) => s.toString() != selectedShapeId,
+          (s) => s.toString() != selectedShapeId
         );
         editor.updateShapes(
           filtered.map((s) => {
             return {
               id: s,
-              type: "image",
+              type: 'image',
               opacity: 0.5,
-              isLocked: true,
+              isLocked: true
             };
-          }),
+          })
         );
       } else {
         editor.updateShapes(
@@ -437,12 +437,11 @@ const Canvas = track(
             const shape = editor.getShape(s);
             return {
               id: s,
-              type: "image",
+              type: 'image',
               opacity: 1,
-              isLocked:
-                shape?.meta.creator != address && canvasOwner != address,
+              isLocked: shape?.meta.creator != address && canvasOwner != address
             };
-          }),
+          })
         );
       }
     }, [selectedShapeId]);
@@ -457,7 +456,7 @@ const Canvas = track(
       }
       (async () => {
         const res = await httpClient.get<UserResponse>(
-          `/farcaster/${session?.user?.id}`,
+          `/farcaster/${session?.user?.id}`
         );
         setSelectedShapeCreator(res.data.user);
       })();
@@ -486,29 +485,29 @@ const Canvas = track(
     //
 
     const getPreviewURL = async () => {
-      let previewURI = "";
+      let previewURI = '';
 
       if (Array.from(editor.getCurrentPageShapeIds()).length > 0) {
         const image = await exportToBlob({
           editor,
           ids: Array.from(editor.getCurrentPageShapeIds()),
-          format: "png",
-          opts: { background: false },
+          format: 'png',
+          opts: { background: false }
         });
 
-        const imageFile = new File([image], "", {
-          type: "image/png",
+        const imageFile = new File([image], '', {
+          type: 'image/png'
         });
         const compressedImage = await imageCompression(imageFile, {
-          maxWidthOrHeight: 500,
+          maxWidthOrHeight: 500
         });
 
         const res = await ipfsClient.add(
           {
             content: compressedImage,
-            path: canvasOwner,
+            path: canvasOwner
           },
-          { cidVersion: 1 },
+          { cidVersion: 1 }
         );
 
         previewURI = getIPFSPreviewURL(res.cid.toString());
@@ -519,24 +518,24 @@ const Canvas = track(
     const getAssetId = (
       tokenId: string,
       collectionAddress: Address,
-      chain: bigint,
+      chain: bigint
     ) => {
       const rawAssetId = fromHex(
         keccak256(
           encodePacked(
-            ["uint256", "address", "uint256"],
-            [BigInt(tokenId), collectionAddress, BigInt(chain)],
-          ),
+            ['uint256', 'address', 'uint256'],
+            [BigInt(tokenId), collectionAddress, BigInt(chain)]
+          )
         ),
-        "bigint",
+        'bigint'
       );
       return rawAssetId;
     };
 
     const getShapeId = (creator: Address, createdAt: bigint) => {
       const rawShapeId = fromHex(
-        keccak256(encodePacked(["address", "uint256"], [creator, createdAt])),
-        "bigint",
+        keccak256(encodePacked(['address', 'uint256'], [creator, createdAt])),
+        'bigint'
       );
 
       return rawShapeId;
@@ -556,18 +555,18 @@ const Canvas = track(
       const cidRes = await ipfsClient.add(
         {
           content: file,
-          path: "",
+          path: ''
         },
-        { cidVersion: 1, onlyHash: true },
+        { cidVersion: 1, onlyHash: true }
       );
 
       console.log(cidRes.cid.toString());
 
       const cacheRes = await httpClient.get<BgRemovedCidResponse>(
-        `/cache/bg-remove/${cidRes.cid.toString()}`,
+        `/cache/bg-remove/${cidRes.cid.toString()}`
       );
-      if (cacheRes.data.cid != "") {
-        console.log("cache hit");
+      if (cacheRes.data.cid != '') {
+        console.log('cache hit');
         const url = getIPFSPreviewURL(cacheRes.data.cid);
         try {
           const imageRes = await fetch(url);
@@ -575,44 +574,44 @@ const Canvas = track(
           const imageData = await imageRes.arrayBuffer();
 
           const bgRemovedFile = new File([imageData], file.name, {
-            type: "image/png",
+            type: 'image/png'
           });
           setBgRemovedFile(bgRemovedFile);
         } catch (e) {}
       } else {
-        console.log("no cache");
+        console.log('no cache');
         const formData = new FormData();
-        formData.append("file", compressed);
+        formData.append('file', compressed);
         const bgRemovedRes = await httpClient.post<ArrayBuffer>(
-          "/bg-remove",
+          '/bg-remove',
           formData,
           {
-            responseType: "arraybuffer",
+            responseType: 'arraybuffer',
             headers: {
-              "Content-Type": "image/png",
-            },
-          },
+              'Content-Type': 'image/png'
+            }
+          }
         );
 
         const bgRemovedFile = new File([bgRemovedRes.data], file.name, {
-          type: "image/png",
+          type: 'image/png'
         });
         setBgRemovedFile(bgRemovedFile);
 
         const bgRemovedIPFSRes = await ipfsClient.add(
           {
             content: bgRemovedFile,
-            path: "",
+            path: ''
           },
-          { cidVersion: 1 },
+          { cidVersion: 1 }
         );
 
         const cacheReq: CreateBgRemovedCidRequest = {
-          bgRemovedCid: bgRemovedIPFSRes.cid.toString(),
+          bgRemovedCid: bgRemovedIPFSRes.cid.toString()
         };
         await httpClient.post(
           `/cache/bg-remove/${cidRes.cid.toString()}`,
-          cacheReq,
+          cacheReq
         );
         console.log(cidRes.cid.toString(), bgRemovedIPFSRes.cid.toString());
       }
@@ -626,69 +625,69 @@ const Canvas = track(
       tokenContract: TokenContract | null | undefined,
       tokenId: string,
       image: TokenContentMedia | null | undefined,
-      name: string | null | undefined,
+      name: string | null | undefined
     ) => {
       if (!address) {
-        throw new Error("address is not found");
+        throw new Error('address is not found');
       }
 
       if (!tokenContract) {
-        throw new Error("tokenContract is not found");
+        throw new Error('tokenContract is not found');
       }
 
       if (!tokenId) {
-        throw new Error("tokenId is not found");
+        throw new Error('tokenId is not found');
       }
 
       if (!image) {
-        throw new Error("image is not found");
+        throw new Error('image is not found');
       }
 
       if (!image.url) {
-        throw new Error("image url is not found");
+        throw new Error('image url is not found');
       }
 
       if (!image.mimeType) {
-        throw new Error("image mimeType is not found");
+        throw new Error('image mimeType is not found');
       }
 
       const res = await fetch(image.url);
       const blob = await res.blob();
-      const file = new File([blob], name ?? "", { type: image.mimeType });
+      const file = new File([blob], name ?? '', { type: image.mimeType });
 
       const compressedImage = await imageCompression(file, {
-        maxWidthOrHeight: 1000,
+        maxWidthOrHeight: 1000
       });
       setUploadedFile(compressedImage);
 
       await editor.putExternalContent({
-        type: "files",
+        type: 'files',
         files: [compressedImage],
         point: editor.getViewportPageBounds().center,
-        ignoreParent: false,
+        ignoreParent: false
       });
 
       const shapeId = editor.getSelectedShapeIds()[0];
       const shape = editor.getShape<TLImageShape>(shapeId);
 
       if (!shape) {
-        throw new Error("shape is not found");
+        throw new Error('shape is not found');
       }
 
       const assetId = shape.props.assetId;
       if (!assetId) {
-        throw new Error("assetId is not found");
+        throw new Error('assetId is not found');
       }
 
       const asset = editor.getAsset(assetId);
       if (!asset) {
-        throw new Error("asset is not found");
+        throw new Error('asset is not found');
       }
 
       const rawAssetId = getAssetId(
         tokenId,
         tokenContract.collectionAddress as Address,
-        BigInt(tokenContract.chain),
+        BigInt(tokenContract.chain)
       );
 
       const now = getUnixTime(new Date());
@@ -699,8 +698,8 @@ const Canvas = track(
         meta: {
           creator: address,
           createdAt: now,
-          onchainShapeId: rawShapeId.toString(),
-        },
+          onchainShapeId: rawShapeId.toString()
+        }
       });
 
       editor.updateAssets([
@@ -710,33 +709,33 @@ const Canvas = track(
           meta: {
             tokenContract,
             tokenId,
-            onchainAssetId: rawAssetId.toString(),
-          },
-        },
+            onchainAssetId: rawAssetId.toString()
+          }
+        }
       ]);
 
       setUploadedShapeId(shapeId);
-      setFileName("😃");
+      setFileName('😃');
 
       onStickerClose();
       await updateBgRemoveFile(file, compressedImage);
     };
 
     const handleInsertImage = async (
-      event: React.ChangeEvent<HTMLInputElement>,
+      event: React.ChangeEvent<HTMLInputElement>
     ) => {
       if (!address) {
-        throw new Error("address is not found");
+        throw new Error('address is not found');
       }
 
       const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
       editor.updateShapes(
         allShapeIds.map((s) => ({
           id: s,
-          type: "image",
+          type: 'image',
           opacity: 0.5,
-          isLocked: true,
-        })),
+          isLocked: true
+        }))
       );
 
       const file = event.target.files?.[0];
@@ -745,7 +744,7 @@ const Canvas = track(
       }
 
       const compressedImage = await imageCompression(file, {
-        maxWidthOrHeight: 1000,
+        maxWidthOrHeight: 1000
       });
 
       setUploadedFile(compressedImage);
@@ -753,17 +752,17 @@ const Canvas = track(
       setShouldShowDrop(true);
 
       await editor.putExternalContent({
-        type: "files",
+        type: 'files',
         files: [compressedImage],
         point: editor.getViewportPageBounds().center,
-        ignoreParent: false,
+        ignoreParent: false
       });
 
       const shapeId = editor.getSelectedShapeIds()[0];
       const shape = editor.getShape<TLImageShape>(shapeId);
 
       if (!shape) {
-        throw new Error("shape is not found");
+        throw new Error('shape is not found');
       }
 
       const now = getUnixTime(new Date());
@@ -774,18 +773,18 @@ const Canvas = track(
         meta: {
           creator: address,
           createdAt: now,
-          onchainShapeId: rawShapeId.toString(),
-        },
+          onchainShapeId: rawShapeId.toString()
+        }
       });
 
       setUploadedShapeId(shapeId);
-      setFileName("😃");
+      setFileName('😃');
 
       await updateBgRemoveFile(file, compressedImage);
     };
 
     const handleMakeSticker = async (
-      type: "white" | "black" | "no-bg" | "insta" | "rounded",
+      type: 'white' | 'black' | 'no-bg' | 'insta' | 'rounded'
     ) => {
       if (!bgRemovedFile || !uploadedFile || !uploadedShapeId) {
         return;
@@ -793,55 +792,55 @@ const Canvas = track(
 
       const shape = editor.getShape<TLImageShape>(uploadedShapeId);
       if (!shape) {
-        throw new Error("shape is not found");
+        throw new Error('shape is not found');
       }
 
       const assetId = shape.props.assetId;
       if (!assetId) {
-        throw new Error("assetId is not found");
+        throw new Error('assetId is not found');
       }
 
       const a = editor.getAsset(assetId);
       if (!a) {
-        throw new Error("asset is not found");
+        throw new Error('asset is not found');
       }
       const asset = a as TLImageAsset;
 
-      let src = "";
+      let src = '';
       let w = 0;
       let h = 0;
       switch (type) {
-        case "white":
-          src = await getImageWithEdge(bgRemovedFile, "white");
+        case 'white':
+          src = await getImageWithEdge(bgRemovedFile, 'white');
           w = asset.props.w;
           h = asset.props.h;
           break;
-        case "black":
-          src = await getImageWithEdge(bgRemovedFile, "black");
+        case 'black':
+          src = await getImageWithEdge(bgRemovedFile, 'black');
           w = asset.props.w;
           h = asset.props.h;
           break;
-        case "no-bg":
+        case 'no-bg':
           src = await toBase64(bgRemovedFile);
           w = asset.props.w;
           h = asset.props.h;
           break;
-        case "insta":
-          const result = await getImageWithFrame(uploadedFile, "white");
+        case 'insta':
+          const result = await getImageWithFrame(uploadedFile, 'white');
           src = result.src;
           w = result.w;
           h = result.h;
           break;
-        case "rounded":
+        case 'rounded':
           src = await getImageRounded(uploadedFile);
           w = asset.props.w;
           h = asset.props.h;
           break;
       }
 
-      const fileData = src.replace(/^data:\w+\/\w+;base64,/, "");
-      const decodedFile = Buffer.from(fileData, "base64");
-      setEditedFile(new File([decodedFile], "", { type: "image/png" }));
+      const fileData = src.replace(/^data:\w+\/\w+;base64,/, '');
+      const decodedFile = Buffer.from(fileData, 'base64');
+      setEditedFile(new File([decodedFile], '', { type: 'image/png' }));
 
       editor.updateAssets([
         {
@@ -850,16 +849,16 @@ const Canvas = track(
             ...asset.props,
             src,
             w,
-            h,
-          },
-        },
+            h
+          }
+        }
       ]);
       setShouldShowDrop(true);
     };
 
     const handleDeleteInsertedImage = () => {
       if (uploadedShapeId == undefined) {
-        throw new Error("uploadedShapeId is not found");
+        throw new Error('uploadedShapeId is not found');
       }
       editor.deleteShape(uploadedShapeId);
       setUploadedFile(undefined);
@@ -867,42 +866,42 @@ const Canvas = track(
       setBgRemovedFile(undefined);
       setEditedFile(undefined);
       setSelectedShapeId(undefined);
-      setFileName("");
+      setFileName('');
       setShouldShowDrop(false);
       const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
       editor.updateShapes(
         allShapeIds.map((s) => ({
           id: s,
-          type: "image",
+          type: 'image',
           opacity: 1,
-          isLocked: false,
-        })),
+          isLocked: false
+        }))
       );
       editor.selectNone();
     };
 
     const handleDrop = async () => {
       if (!address) {
-        throw new Error("address is not found");
+        throw new Error('address is not found');
       }
       if (!uploadedShapeId) {
-        throw new Error("uploadedShapeId is not found");
+        throw new Error('uploadedShapeId is not found');
       }
 
       const shape = editor.getShape<TLImageShape>(uploadedShapeId as TLShapeId);
 
       if (!shape) {
-        throw new Error("shape is not found");
+        throw new Error('shape is not found');
       }
 
       const assetId = shape.props.assetId;
       if (!assetId) {
-        throw new Error("assetId is not found");
+        throw new Error('assetId is not found');
       }
 
       const asset = editor.getAsset(assetId) as TLImageAsset | undefined;
       if (!asset) {
-        throw new Error("asset is not found");
+        throw new Error('asset is not found');
       }
 
       if (
@@ -910,11 +909,11 @@ const Canvas = track(
         session.user == undefined ||
         session.user.id == undefined
       ) {
-        throw new Error("fid is not found");
+        throw new Error('fid is not found');
       }
 
       if (editedFile == undefined) {
-        throw new Error("editedFile is not found");
+        throw new Error('editedFile is not found');
       }
 
       setIsDropLoading(true);
@@ -922,19 +921,19 @@ const Canvas = track(
       editor.updateShapes(
         allShapeIds.map((s) => ({
           id: s,
-          type: "image",
+          type: 'image',
           opacity: 1,
-          isLocked: false,
-        })),
+          isLocked: false
+        }))
       );
 
       try {
         const res = await ipfsClient.add(
           {
-            path: fileName ?? "",
-            content: editedFile,
+            path: fileName ?? '',
+            content: editedFile
           },
-          { cidVersion: 1 },
+          { cidVersion: 1 }
         );
 
         const metadata = JSON.stringify({
@@ -942,12 +941,12 @@ const Canvas = track(
           description: ``,
           image: `ipfs://${res.cid}`,
           decimals: 0,
-          animation_url: "",
+          animation_url: ''
         });
 
         const metaRes = await ipfsClient.add({
           path: `${fileName}-metadata`,
-          content: metadata,
+          content: metadata
         });
 
         const previewURI = await getPreviewURL();
@@ -957,13 +956,13 @@ const Canvas = track(
           saleEnd: BigInt(getUnixTime(addDays(new Date(), 10))),
           maxTokensPerAddress: BigInt(0),
           pricePerToken: BigInt(0),
-          fundsRecipient: address,
+          fundsRecipient: address
         };
 
         const result = await writeContractAsync({
           abi: canvasAbi,
           address: canvasAddress,
-          functionName: "createSticker",
+          functionName: 'createSticker',
           args: [
             canvasOwner,
             `ipfs://${metaRes.cid.toString()}`,
@@ -972,10 +971,10 @@ const Canvas = track(
               contractAddress: tokenAddress,
               chainID: BigInt(0), // Get in contract
               srcURI: getIPFSPreviewURL(res.cid.toString()),
-              srcName: fileName ?? "",
-              mimeType: asset.props.mimeType ?? "",
+              srcName: fileName ?? '',
+              mimeType: asset.props.mimeType ?? '',
               w: encodeFloat(asset.props.w),
-              h: encodeFloat(asset.props.h),
+              h: encodeFloat(asset.props.h)
             },
             {
               id: BigInt(shape.meta.onchainShapeId as string),
@@ -988,18 +987,18 @@ const Canvas = track(
               assetID: BigInt(0),
               w: encodeFloat(shape.props.w),
               h: encodeFloat(shape.props.h),
-              index: shape.index,
+              index: shape.index
             },
             BigInt(Number.MAX_SAFE_INTEGER),
             getDefaultFixedPriceMinterAddress(defaultChain.id),
             salesConfig,
             createReferral,
-            previewURI,
-          ],
+            previewURI
+          ]
         });
 
         const receipt = await waitForTransactionReceipt(config, {
-          hash: result,
+          hash: result
         });
 
         let tokenId = 0;
@@ -1009,30 +1008,30 @@ const Canvas = track(
             const decoded = decodeEventLog({
               abi: canvasAbi,
               data: l.data,
-              topics: l.topics,
+              topics: l.topics
             });
-            if (decoded.eventName == "CreateSticker") {
+            if (decoded.eventName == 'CreateSticker') {
               tokenId = Number(decoded.args.id);
             }
           } catch (e) {}
         });
 
         if (tokenId == 0) {
-          throw new Error("tokenId is not found");
+          throw new Error('tokenId is not found');
         }
 
         const tokenContract: TokenContract = {
           chain: defaultChain.id,
           network: ZDKNetwork.Zora,
-          collectionAddress: tokenAddress,
+          collectionAddress: tokenAddress
         };
 
         editor.updateShape({
           ...shape,
           meta: {
             creator: address,
-            createdAt: getUnixTime(new Date()),
-          },
+            createdAt: getUnixTime(new Date())
+          }
         });
 
         editor.updateAssets([
@@ -1040,22 +1039,22 @@ const Canvas = track(
             ...asset,
             props: {
               ...asset.props,
-              src: getIPFSPreviewURL(res.cid.toString()),
+              src: getIPFSPreviewURL(res.cid.toString())
             },
             meta: {
               tokenContract,
-              tokenId,
-            },
-          },
+              tokenId
+            }
+          }
         ]);
 
         setUploadedFile(undefined);
         setUploadedShapeId(undefined);
         setBgRemovedFile(undefined);
         setEditedFile(undefined);
-        setFileName("");
+        setFileName('');
         setLastSave(JSON.stringify(editor.store.getSnapshot()));
-        editor.mark("latest");
+        editor.mark('latest');
         setShouldShowDrop(false);
 
         if (Number(session.user.id) == fid) {
@@ -1071,9 +1070,9 @@ const Canvas = track(
         const req: DropCastRequest = {
           from: Number(session.user.id),
           to: fid,
-          url,
+          url
         };
-        httpClient.post("/farcaster/cast/drop", req);
+        httpClient.post('/farcaster/cast/drop', req);
       } catch (e) {
         const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
         editor.updateShapes(
@@ -1081,10 +1080,10 @@ const Canvas = track(
             .filter((s) => s != selectedShapeId)
             .map((s) => ({
               id: s,
-              type: "image",
+              type: 'image',
               opacity: 0.5,
-              isLocked: false,
-            })),
+              isLocked: false
+            }))
         );
         console.error(e);
       } finally {
@@ -1094,7 +1093,7 @@ const Canvas = track(
 
     const handleSave = async () => {
       if (canvasOwner == undefined) {
-        throw new Error("canvasOwner is not found");
+        throw new Error('canvasOwner is not found');
       }
 
       if (
@@ -1102,7 +1101,7 @@ const Canvas = track(
         session.user == undefined ||
         session.user.id == undefined
       ) {
-        throw new Error("fid is not found");
+        throw new Error('fid is not found');
       }
 
       setIsSaveLoading(true);
@@ -1110,10 +1109,10 @@ const Canvas = track(
       editor.updateShapes(
         allShapeIds.map((s) => ({
           id: s,
-          type: "image",
+          type: 'image',
           opacity: 1,
-          isLocked: false,
-        })),
+          isLocked: false
+        }))
       );
 
       try {
@@ -1125,11 +1124,11 @@ const Canvas = track(
         console.log(stringified);
 
         const shapes = Object.values(snapshot.store).filter(
-          (s) => s.typeName == "shape",
+          (s) => s.typeName == 'shape'
         ) as TLImageShape[];
 
         const assets = Object.values(snapshot.store).filter(
-          (s) => s.typeName == "asset",
+          (s) => s.typeName == 'asset'
         ) as TLImageAsset[];
 
         const formattedAssets = assets.map((a) => {
@@ -1141,18 +1140,18 @@ const Canvas = track(
             tokenID: BigInt(a.meta.tokenId?.toString() ?? 0),
             contractAddress: tokenContract.collectionAddress,
             chainID: BigInt(tokenContract.chain),
-            srcURI: a.props.src ?? "",
-            srcName: a.props.name ?? "",
-            mimeType: a.props.mimeType ?? "",
+            srcURI: a.props.src ?? '',
+            srcName: a.props.name ?? '',
+            mimeType: a.props.mimeType ?? '',
             w: encodeFloat(a.props.w),
-            h: encodeFloat(a.props.h),
+            h: encodeFloat(a.props.h)
           };
         });
 
         const formattedShapes = shapes.map((s) => {
           const asset = assets.find((a) => a.id == s.props.assetId);
           if (asset == undefined) {
-            throw new Error("asset is not found");
+            throw new Error('asset is not found');
           }
 
           return {
@@ -1166,34 +1165,34 @@ const Canvas = track(
             assetID: BigInt(asset.meta.onchainAssetId as string),
             w: encodeFloat(s.props.w),
             h: encodeFloat(s.props.h),
-            index: s.index,
+            index: s.index
           };
         });
 
         const result = await writeContractAsync({
           abi: canvasAbi,
           address: canvasAddress,
-          functionName: "editCanvasFee",
+          functionName: 'editCanvasFee',
           args: [
             feeTaker,
             canvasOwner,
             formattedShapes,
             formattedAssets,
-            previewURI,
+            previewURI
           ],
-          value: fee,
+          value: fee
         });
 
         await waitForTransactionReceipt(config, {
           hash: result,
           onReplaced: (res) => {
-            console.log("onReplaced", res);
-          },
+            console.log('onReplaced', res);
+          }
         });
 
         setIsSavedSuccess(true);
         setLastSave(JSON.stringify(editor.store.getSnapshot()));
-        editor.mark("latest");
+        editor.mark('latest');
       } catch (e) {
         // TODO: error handle
         console.error(e);
@@ -1222,16 +1221,16 @@ const Canvas = track(
       setBgRemovedFile(undefined);
       setEditedFile(undefined);
       setSelectedShapeId(undefined);
-      setFileName("");
+      setFileName('');
       setShouldShowDrop(false);
       const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
       editor.updateShapes(
         allShapeIds.map((s) => ({
           id: s,
-          type: "image",
+          type: 'image',
           opacity: 1,
-          isLocked: false,
-        })),
+          isLocked: false
+        }))
       );
       editor.selectNone();
     };
@@ -1325,23 +1324,23 @@ const Canvas = track(
     };
 
     const [isMintingSticker, setIsMintingSticker] = useState<boolean>(false);
-    const [mintComment, setMintComment] = useState<string>("");
+    const [mintComment, setMintComment] = useState<string>('');
 
     const handleMintSticker = async () => {
       if (!address) {
-        throw new Error("address is not found");
+        throw new Error('address is not found');
       }
       if (!selectedAsset) {
-        throw new Error("selectedAsset is not found");
+        throw new Error('selectedAsset is not found');
       }
       const { contractAddress, chainId, tokenId } =
         getAssetToken(selectedAsset);
       if (!contractAddress || !tokenId || !chainId) {
-        throw new Error("contractAddress or tokenId or chain is invalid");
+        throw new Error('contractAddress or tokenId or chain is invalid');
       }
       const chain = getChain(chainId);
       if (chain == undefined) {
-        throw new Error("chain is invalid");
+        throw new Error('chain is invalid');
       }
 
       setIsMintingSticker(true);
@@ -1356,18 +1355,18 @@ const Canvas = track(
             mintToAddress: address,
             quantityToMint: 1,
             mintComment,
-            mintReferral: canvasOwner,
+            mintReferral: canvasOwner
           },
-          minterAccount: address,
+          minterAccount: address
         });
 
         const publicClient = createPublicClient({
           chain,
-          transport: http(),
+          transport: http()
         });
 
         const walletClient = await getWalletClient(wagmiConfig, {
-          chainId,
+          chainId
         });
 
         const { request } = await publicClient.simulateContract(prepared);
@@ -1376,7 +1375,7 @@ const Canvas = track(
 
         await publicClient.waitForTransactionReceipt({ hash: txHash });
 
-        setMintComment("");
+        setMintComment('');
       } catch (e) {
         // TODO: handle error
         console.error(e);
@@ -1400,11 +1399,11 @@ const Canvas = track(
 
     const handleSwitchChainMint = () => {
       if (!selectedAsset) {
-        throw new Error("selectedAsset is not found");
+        throw new Error('selectedAsset is not found');
       }
       const { chainId: cid } = getAssetToken(selectedAsset);
       if (!cid) {
-        throw new Error("chainId is invalid");
+        throw new Error('chainId is invalid');
       }
       switchChain({ chainId: cid });
     };
@@ -1419,8 +1418,8 @@ const Canvas = track(
     };
 
     const handleReset = () => {
-      editor.bailToMark("latest");
-      editor.mark("latest");
+      editor.bailToMark('latest');
+      editor.mark('latest');
     };
 
     return (
@@ -1521,7 +1520,7 @@ const Canvas = track(
           spacing={3}
         >
           <Avatar
-            src={farcasterUser?.pfp ?? ""}
+            src={farcasterUser?.pfp ?? ''}
             shadow="xl"
             borderWidth={2}
             borderColor="white"
@@ -1575,7 +1574,7 @@ const Canvas = track(
                         <Text>{`Made by ${selectedShapeCreator?.displayName}`}</Text>
                         <Text>
                           {fromUnixTime(
-                            selectedShape?.meta.createdAt as number,
+                            selectedShape?.meta.createdAt as number
                           ).toLocaleDateString()}
                         </Text>
                       </>
@@ -1607,7 +1606,7 @@ const Canvas = track(
                 variant="unstyled"
                 w="15%"
                 h="full"
-                onClick={() => handleMakeSticker("white")}
+                onClick={() => handleMakeSticker('white')}
                 isDisabled={!bgRemovedFile}
               >
                 <ChakraImage
@@ -1619,7 +1618,7 @@ const Canvas = track(
                 variant="unstyled"
                 w="15%"
                 h="full"
-                onClick={() => handleMakeSticker("black")}
+                onClick={() => handleMakeSticker('black')}
                 isDisabled={!bgRemovedFile}
               >
                 <ChakraImage
@@ -1631,7 +1630,7 @@ const Canvas = track(
                 variant="unstyled"
                 w="15%"
                 h="full"
-                onClick={() => handleMakeSticker("no-bg")}
+                onClick={() => handleMakeSticker('no-bg')}
                 isDisabled={!bgRemovedFile}
               >
                 <ChakraImage
@@ -1643,7 +1642,7 @@ const Canvas = track(
                 variant="unstyled"
                 w="15%"
                 h="full"
-                onClick={() => handleMakeSticker("insta")}
+                onClick={() => handleMakeSticker('insta')}
                 isDisabled={!bgRemovedFile}
               >
                 <ChakraImage
@@ -1655,7 +1654,7 @@ const Canvas = track(
                 variant="unstyled"
                 w="15%"
                 h="full"
-                onClick={() => handleMakeSticker("rounded")}
+                onClick={() => handleMakeSticker('rounded')}
                 isDisabled={!bgRemovedFile}
               >
                 <ChakraImage alt="rounded" src="/images/stickers/rounded.png" />
@@ -1775,10 +1774,10 @@ const Canvas = track(
 
                   {selectedShapeId && selectedShape?.isLocked && (
                     <Box
-                      pointerEvents={stickerUrl == undefined ? "none" : "all"}
+                      pointerEvents={stickerUrl == undefined ? 'none' : 'all'}
                     >
                       <Link
-                        href={stickerUrl ?? ""}
+                        href={stickerUrl ?? ''}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
@@ -1876,13 +1875,13 @@ const Canvas = track(
                           token.tokenContract,
                           token.tokenId,
                           token.image,
-                          token.name,
+                          token.name
                         )
                       }
                     >
                       <ChakraImage
-                        src={token.image?.url ?? ""}
-                        alt={token.name ?? ""}
+                        src={token.image?.url ?? ''}
+                        alt={token.name ?? ''}
                       />
                     </Button>
                   </GridItem>
@@ -1910,7 +1909,7 @@ const Canvas = track(
                     <Text>
                       {mintTokenDetail.contractSummary.first_minter.ens_name ??
                         formatAddress(
-                          mintTokenDetail.contractSummary.first_minter.address,
+                          mintTokenDetail.contractSummary.first_minter.address
                         )}
                     </Text>
                   )}
@@ -1926,7 +1925,7 @@ const Canvas = track(
                           .ens_name ??
                           formatAddress(
                             mintTokenDetail.contractSummary.top_minter.minter
-                              .address,
+                              .address
                           )}
                       </Text>
                       <Tag colorScheme="primary">{`x${mintTokenDetail.contractSummary.top_minter.count}`}</Tag>
@@ -1964,7 +1963,7 @@ const Canvas = track(
                     colorScheme="primary"
                     rounded="full"
                     isDisabled={
-                      mintTokenDetail?.sales.fixedPrice.state != "STARTED"
+                      mintTokenDetail?.sales.fixedPrice.state != 'STARTED'
                     }
                     isLoading={isMintingSticker}
                     onClick={handleMintSticker}
@@ -1980,14 +1979,14 @@ const Canvas = track(
                     <Text>{`${mintTokenDetail?.contractSummary.mint_count} minted`}</Text>
                     <Countdown
                       date={fromUnixTime(
-                        mintTokenDetail.sales.fixedPrice.end / 1000,
+                        mintTokenDetail.sales.fixedPrice.end / 1000
                       )}
                       renderer={({
                         days,
                         hours,
                         minutes,
                         seconds,
-                        completed,
+                        completed
                       }) => {
                         if (completed) {
                           return <Text>・The mintable period has ended</Text>;
@@ -2008,5 +2007,5 @@ const Canvas = track(
         </Drawer>
       </Box>
     );
-  },
+  }
 );

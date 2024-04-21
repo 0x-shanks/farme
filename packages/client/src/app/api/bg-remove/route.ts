@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios from 'axios';
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -6,11 +6,11 @@ export async function POST(request: Request) {
     `${process.env.BG_REMOVE_URL}/api/remove-background`,
     formData,
     {
-      responseType: "arraybuffer",
+      responseType: 'arraybuffer',
       headers: {
-        "Content-Type": "image/png",
-      },
-    },
+        'Content-Type': 'image/png'
+      }
+    }
   );
 
   return new Response(response.data, { status: 200 });

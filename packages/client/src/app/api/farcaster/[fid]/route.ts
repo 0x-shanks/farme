@@ -1,26 +1,26 @@
 // export const revalidate = 1; // A whole day
 
-import { UserResponse } from "@/models/userResponse";
-import { farcasterHubClient } from "@/utils/farcaster/client";
-import { UserDataType } from "@farcaster/hub-nodejs";
-import { NextResponse } from "next/server";
-import { cache } from "react";
-import { Address, fromBytes } from "viem";
+import { UserResponse } from '@/models/userResponse';
+import { farcasterHubClient } from '@/utils/farcaster/client';
+import { UserDataType } from '@farcaster/hub-nodejs';
+import { NextResponse } from 'next/server';
+import { cache } from 'react';
+import { Address, fromBytes } from 'viem';
 
 export const revalidate = 3600 * 24; // A whole day
 
 export async function GET(
   request: Request,
-  { params }: { params: { fid: number } },
+  { params }: { params: { fid: number } }
 ) {
   const fid = params.fid;
 
   const getUser = cache(
-    async () => await farcasterHubClient.getUserDataByFid({ fid }),
+    async () => await farcasterHubClient.getUserDataByFid({ fid })
   );
 
   const getVerification = cache(
-    async () => await farcasterHubClient.getVerificationsByFid({ fid }),
+    async () => await farcasterHubClient.getVerificationsByFid({ fid })
   );
 
   const user = await getUser();
@@ -51,7 +51,7 @@ export async function GET(
       const v = verification.unwrapOr(undefined);
       if (v?.messages[0] != undefined) {
         const add = v.messages[0].data?.verificationAddAddressBody?.address;
-        data.address = add != undefined ? fromBytes(add, "hex") : undefined;
+        data.address = add != undefined ? fromBytes(add, 'hex') : undefined;
       }
     }
     const body = m.data?.userDataBody;
@@ -75,7 +75,7 @@ export async function GET(
   });
 
   const response: UserResponse = {
-    user: data,
+    user: data
   };
 
   return NextResponse.json(response);

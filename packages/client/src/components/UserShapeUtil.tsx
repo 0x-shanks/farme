@@ -1,4 +1,4 @@
-import { Avatar, VStack, Text, SkeletonText } from "@chakra-ui/react";
+import { Avatar, VStack, Text, SkeletonText } from '@chakra-ui/react';
 import {
   Geometry2d,
   HTMLContainer,
@@ -8,12 +8,12 @@ import {
   T,
   TLBaseShape,
   TLOnClickHandler,
-  TLShapeUtilFlag,
-} from "tldraw";
-import runes from "runes";
+  TLShapeUtilFlag
+} from 'tldraw';
+import runes from 'runes';
 
 export type IUserShape = TLBaseShape<
-  "user",
+  'user',
   {
     w: number | undefined;
     h: number | undefined;
@@ -36,11 +36,11 @@ const cardShapeProps: ShapeProps<IUserShape> = {
   bio: T.string.optional(),
   userName: T.string.optional(),
   address: T.string.optional(),
-  onClick: T.any,
+  onClick: T.any
 };
 
 export class UserShapeUtil extends ShapeUtil<IUserShape> {
-  static override type = "user" as const;
+  static override type = 'user' as const;
   static override props = cardShapeProps;
 
   override onClick?: TLOnClickHandler<IUserShape> = (shape) => {
@@ -52,17 +52,17 @@ export class UserShapeUtil extends ShapeUtil<IUserShape> {
   override hideSelectionBoundsBg = () => true;
   override hideSelectionBoundsFg = () => true;
 
-  getDefaultProps(): IUserShape["props"] {
+  getDefaultProps(): IUserShape['props'] {
     return {
       w: 200,
       h: 200,
       fid: 0,
-      pfp: "",
-      displayName: "",
-      bio: "",
-      userName: "",
-      address: "",
-      onClick: () => {},
+      pfp: '',
+      displayName: '',
+      bio: '',
+      userName: '',
+      address: '',
+      onClick: () => {}
     };
   }
 
@@ -70,7 +70,7 @@ export class UserShapeUtil extends ShapeUtil<IUserShape> {
     return new Rectangle2d({
       width: shape.props.w ?? 200,
       height: shape.props.h ?? 200,
-      isFilled: true,
+      isFilled: true
     });
   }
 
@@ -79,7 +79,7 @@ export class UserShapeUtil extends ShapeUtil<IUserShape> {
       <HTMLContainer>
         <VStack spacing={1} w={shape.props.w} h={shape.props.h}>
           <Avatar
-            src={shape.props.pfp ?? ""}
+            src={shape.props.pfp ?? ''}
             shadow="xl"
             borderWidth={2}
             borderColor="white"

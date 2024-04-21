@@ -1,6 +1,6 @@
 export const getImageWithFrame = async (
   file: File,
-  color: string,
+  color: string
 ): Promise<{
   src: string;
   w: number;
@@ -8,13 +8,13 @@ export const getImageWithFrame = async (
 }> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
 
     img.onload = () => {
       const size = {
         width: img.naturalWidth,
-        height: img.naturalHeight,
+        height: img.naturalHeight
       };
 
       canvas.width = size.width;
@@ -36,34 +36,34 @@ export const getImageWithFrame = async (
       }
 
       if (ctx == null) {
-        throw new Error("ctx not found");
+        throw new Error('ctx not found');
       }
 
       ctx.fillRect(
         (isHorizontal ? canvas.width / 4 : 0) + space,
         space,
         cw - space * 2,
-        cw - space * 2,
+        cw - space * 2
       );
 
-      ctx.globalCompositeOperation = "source-in";
+      ctx.globalCompositeOperation = 'source-in';
       ctx.drawImage(
         img,
         space,
         0,
         img.width - space * 2,
-        img.height - space * 2,
+        img.height - space * 2
       );
 
-      ctx.globalCompositeOperation = "destination-over";
+      ctx.globalCompositeOperation = 'destination-over';
       ctx.fillStyle = color;
       ctx.fillRect(isHorizontal ? canvas.width / 4 : 0, 0, cw, ch);
 
-      const dataURL = canvas.toDataURL("image/png");
+      const dataURL = canvas.toDataURL('image/png');
       resolve({
         src: dataURL,
         w: cw,
-        h: ch,
+        h: ch
       });
     };
 

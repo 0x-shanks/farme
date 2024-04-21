@@ -1,5 +1,5 @@
-import { ZDKChain } from "@zoralabs/zdk";
-import { base, mainnet, optimism, zora, zoraSepolia } from "viem/chains";
+import { ZDKChain } from '@zoralabs/zdk';
+import { base, mainnet, optimism, zora, zoraSepolia } from 'viem/chains';
 
 export const getChainName = (chainId: number) => {
   switch (chainId) {
@@ -12,26 +12,26 @@ export const getChainName = (chainId: number) => {
     case zora.id:
       return ZDKChain.ZoraMainnet;
     case zoraSepolia.id:
-      return "ZORA-SEPOLIA";
+      return 'ZORA-SEPOLIA';
     default:
-      throw new Error("invalid chain");
+      throw new Error('invalid chain');
   }
 };
 
 export const getChainNameShorthand = (chainId: number) => {
   switch (chainId) {
     case mainnet.id:
-      return "eth";
+      return 'eth';
     case base.id:
-      return "base";
+      return 'base';
     case optimism.id:
-      return "oeth";
+      return 'oeth';
     case zora.id:
-      return "zora";
+      return 'zora';
     case zoraSepolia.id:
-      return "zsep";
+      return 'zsep';
     default:
-      throw new Error("invalid chain");
+      throw new Error('invalid chain');
   }
 };
 
@@ -41,10 +41,10 @@ export const getDomainFromChain = (chainId: number) => {
     case base.id:
     case optimism.id:
     case zora.id:
-      return "zora.co";
+      return 'zora.co';
     case zoraSepolia.id:
-      return "testnet.zora.co";
+      return 'testnet.zora.co';
     default:
-      throw new Error("invalid chain");
+      throw new Error('invalid chain');
   }
 };

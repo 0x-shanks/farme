@@ -1,21 +1,21 @@
-"use client";
+'use client';
 
-import { CacheProvider } from "@chakra-ui/next-js";
-import { ChakraProvider } from "@chakra-ui/react";
-import { PrivyProvider } from "@privy-io/react-auth";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { WagmiProvider, createConfig } from "@privy-io/wagmi";
+import { CacheProvider } from '@chakra-ui/next-js';
+import { ChakraProvider } from '@chakra-ui/react';
+import { PrivyProvider } from '@privy-io/react-auth';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { WagmiProvider, createConfig } from '@privy-io/wagmi';
 
-import { theme, toastOption } from "./styles";
-import getIsPWA from "@/utils/getIsPWA";
+import { theme, toastOption } from './styles';
+import getIsPWA from '@/utils/getIsPWA';
 
-import { defaultChain, supportedChains } from "./constants";
-import { fallback, http } from "viem";
-import { zora, zoraSepolia } from "wagmi/chains";
-import { SessionProvider } from "next-auth/react";
+import { defaultChain, supportedChains } from './constants';
+import { fallback, http } from 'viem';
+import { zora, zoraSepolia } from 'wagmi/chains';
+import { SessionProvider } from 'next-auth/react';
 
-import { AuthKitProvider } from "@farcaster/auth-kit";
+import { AuthKitProvider } from '@farcaster/auth-kit';
 
 export const PWAContext = createContext<boolean>(false);
 
@@ -24,7 +24,7 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
 
   const currentValue = useContext(PWAContext);
   if (currentValue)
-    throw new Error("[PWA Provider] Provider can only be used once");
+    throw new Error('[PWA Provider] Provider can only be used once');
   return <PWAContext.Provider value={isPWA}>{children}</PWAContext.Provider>;
 };
 
@@ -32,8 +32,8 @@ export const wagmiConfig = createConfig({
   chains: [zoraSepolia, zora],
   transports: {
     [zoraSepolia.id]: fallback([http()]),
-    [zora.id]: fallback([http()]),
-  },
+    [zora.id]: fallback([http()])
+  }
 });
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -47,8 +47,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, [ref]);
 
   const farcasterConfig = {
-    siweUri: "http://localhost:8000/login",
-    domain: "localhost",
+    siweUri: 'http://localhost:8000/login',
+    domain: 'localhost'
   };
 
   return (
@@ -56,25 +56,25 @@ export function Providers({ children }: { children: React.ReactNode }) {
       {mounted && (
         <PWAProvider>
           <PrivyProvider
-            appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || ""}
+            appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || ''}
             // onSuccess={(user, isNewUser) => {
             //   sendConnectWalletEvent(user, isNewUser);
             // }}
             config={{
-              loginMethods: ["wallet"],
+              loginMethods: ['wallet'],
               appearance: {
-                accentColor: "#2141FB",
-                logo: "images/logo.png",
+                accentColor: '#2141FB',
+                logo: 'images/logo.png'
               },
               embeddedWallets: {
-                createOnLogin: "users-without-wallets",
+                createOnLogin: 'users-without-wallets',
                 requireUserPasswordOnCreate: false,
-                noPromptOnSignature: true,
+                noPromptOnSignature: true
               },
               defaultChain: defaultChain,
               supportedChains: supportedChains,
               walletConnectCloudProjectId:
-                process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID ?? "",
+                process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID ?? ''
             }}
           >
             <QueryClientProvider client={queryClient}>

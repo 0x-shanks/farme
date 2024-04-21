@@ -1,3 +1,3 @@
-import axios from "axios";
+import axios from 'axios';
 
-export const httpClient = axios.create({ baseURL: "/api" });
+export const httpClient = axios.create({ baseURL: '/api' });

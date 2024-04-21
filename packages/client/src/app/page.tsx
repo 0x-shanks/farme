@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Box,
@@ -7,18 +7,18 @@ import {
   Image,
   Spinner,
   VStack,
-  Text,
-} from "@chakra-ui/react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { usePrivy } from "@privy-io/react-auth";
-import { StatusAPIResponse } from "@farcaster/auth-kit";
-import { SignInButton } from "@farcaster/auth-kit";
-import { getCsrfToken, signIn, signOut, useSession } from "next-auth/react";
-import { useAccount } from "wagmi";
-import { Network } from "@/components/Network";
-import { UserResponse, UserResponseItem } from "@/models/userResponse";
-import { httpClient } from "@/utils/http/client";
-import { Address } from "viem";
+  Text
+} from '@chakra-ui/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { usePrivy } from '@privy-io/react-auth';
+import { StatusAPIResponse } from '@farcaster/auth-kit';
+import { SignInButton } from '@farcaster/auth-kit';
+import { getCsrfToken, signIn, signOut, useSession } from 'next-auth/react';
+import { useAccount } from 'wagmi';
+import { Network } from '@/components/Network';
+import { UserResponse, UserResponseItem } from '@/models/userResponse';
+import { httpClient } from '@/utils/http/client';
+import { Address } from 'viem';
 
 export default function Home() {
   const { ready, authenticated, login, user, logout } = usePrivy();
@@ -36,7 +36,7 @@ export default function Home() {
     }
     (async () => {
       const res = await httpClient.get<UserResponse>(
-        `/farcaster/${session?.user?.id}`,
+        `/farcaster/${session?.user?.id}`
       );
       setFarcasterUser(res.data.user);
       onceUserFetch.current = true;
@@ -45,14 +45,14 @@ export default function Home() {
 
   const getNonce = useCallback(async () => {
     const nonce = await getCsrfToken();
-    if (nonce == undefined) throw new Error("Unable to generate nonce");
+    if (nonce == undefined) throw new Error('Unable to generate nonce');
     return nonce;
   }, []);
 
   const handleSignInSuccess = useCallback(
     (res: StatusAPIResponse) => {
       console.log(res);
-      signIn("credentials", {
+      signIn('credentials', {
         message: res.message,
         signature: res.signature,
         name: res.username,
@@ -60,13 +60,13 @@ export default function Home() {
         pfp: res.pfpUrl,
         nonce: res.nonce,
         bio: res.bio,
-        redirect: false,
+        redirect: false
       });
     },
-    [signIn],
+    [signIn]
   );
 
-  if (!ready || sessionStatus == "loading") {
+  if (!ready || sessionStatus == 'loading') {
     return (
       <main>
         <Center w="full" h="100dvh" pos="fixed" top={0} left={0}>
@@ -182,12 +182,12 @@ export default function Home() {
         >
           <Network
             user={{
-              fid: parseInt(session.user?.id ?? "0"),
-              pfp: session.user?.image ?? "",
-              displayName: session.user?.displayName ?? "",
+              fid: parseInt(session.user?.id ?? '0'),
+              pfp: session.user?.image ?? '',
+              displayName: session.user?.displayName ?? '',
               bio: session.user?.bio,
               userName: session.user?.displayName,
-              address: user?.wallet?.address as Address | undefined,
+              address: user?.wallet?.address as Address | undefined
             }}
             hasPrevious={false}
           />

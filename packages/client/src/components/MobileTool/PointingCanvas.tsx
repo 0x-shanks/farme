@@ -4,42 +4,42 @@ import {
   isShapeId,
   StateNode,
   TLEventHandlers,
-  TLShape,
-} from "tldraw";
+  TLShape
+} from 'tldraw';
 
 export class PointingCanvas extends StateNode {
-  static override id = "pointing_canvas";
+  static override id = 'pointing_canvas';
 
   override onEnter = () => {
     this.editor.stopCameraAnimation();
   };
 
-  override onPointerUp: TLEventHandlers["onPointerUp"] = () => {
+  override onPointerUp: TLEventHandlers['onPointerUp'] = () => {
     // @ts-ignore
     selectOnCanvasPointerUp(this.editor);
     this.complete();
   };
 
-  override onPointerMove: TLEventHandlers["onPointerMove"] = (info) => {
+  override onPointerMove: TLEventHandlers['onPointerMove'] = (info) => {
     if (this.editor.inputs.isDragging) {
-      this.parent.transition("dragging", info);
+      this.parent.transition('dragging', info);
     }
   };
 
-  override onComplete: TLEventHandlers["onComplete"] = () => {
+  override onComplete: TLEventHandlers['onComplete'] = () => {
     this.complete();
   };
 
-  override onCancel: TLEventHandlers["onCancel"] = () => {
+  override onCancel: TLEventHandlers['onCancel'] = () => {
     this.complete();
   };
 
   override onInterrupt = () => {
-    this.parent.transition("idle");
+    this.parent.transition('idle');
   };
 
   private complete() {
-    this.parent.transition("idle");
+    this.parent.transition('idle');
   }
 }
 
@@ -52,7 +52,7 @@ export function selectOnCanvasPointerUp(editor: Editor) {
     margin: HIT_TEST_MARGIN / editor.getZoomLevel(),
     hitLabels: true,
     renderingOnly: true,
-    filter: (shape) => !shape.isLocked,
+    filter: (shape) => !shape.isLocked
   });
 
   // Note at the start: if we select a shape that is inside of a group,
@@ -73,14 +73,14 @@ export function selectOnCanvasPointerUp(editor: Editor) {
 
       if (selectedShapeIds.includes(outermostSelectableShape.id)) {
         // Remove it from selected shapes
-        editor.mark("deselecting shape");
+        editor.mark('deselecting shape');
         editor.deselect(outermostSelectableShape);
       } else {
         // Add it to selected shapes
-        editor.mark("shift selecting shape");
+        editor.mark('shift selecting shape');
         editor.setSelectedShapes([
           ...selectedShapeIds,
-          outermostSelectableShape.id,
+          outermostSelectableShape.id
         ]);
       }
     } else {
@@ -106,7 +106,7 @@ export function selectOnCanvasPointerUp(editor: Editor) {
       }
 
       if (shapeToSelect && !selectedShapeIds.includes(shapeToSelect.id)) {
-        editor.mark("selecting shape");
+        editor.mark('selecting shape');
         editor.select(shapeToSelect.id);
       }
     }
@@ -121,7 +121,7 @@ export function selectOnCanvasPointerUp(editor: Editor) {
       // nothing instead of their current selection.
 
       if (selectedShapeIds.length > 0) {
-        editor.mark("selecting none");
+        editor.mark('selecting none');
         editor.selectNone();
       }
 
@@ -135,7 +135,7 @@ export function selectOnCanvasPointerUp(editor: Editor) {
         if (
           !editor.isPointInShape(groupShape, currentPagePoint, {
             margin: 0,
-            hitInside: true,
+            hitInside: true
           })
         ) {
           editor.setFocusedGroup(null);

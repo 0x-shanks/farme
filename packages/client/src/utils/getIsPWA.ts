@@ -1,4 +1,4 @@
-const MQ_STAND_ALONE = "(display-mode: standalone)";
+const MQ_STAND_ALONE = '(display-mode: standalone)';
 
 const getIsPWA = () => {
   let displayMode = false;

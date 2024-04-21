@@ -1,4 +1,4 @@
-import { farcasterHubClient } from "@/utils/farcaster/client";
+import { farcasterHubClient } from '@/utils/farcaster/client';
 import {
   FarcasterNetwork,
   getAuthMetadata,
@@ -9,11 +9,11 @@ import {
   makeCastAdd,
   Metadata,
   NobleEd25519Signer,
-  ViemLocalEip712Signer,
-} from "@farcaster/hub-nodejs";
-import { NextResponse } from "next/server";
-import { Hex, hexToBytes } from "viem";
-import { z } from "zod";
+  ViemLocalEip712Signer
+} from '@farcaster/hub-nodejs';
+import { NextResponse } from 'next/server';
+import { Hex, hexToBytes } from 'viem';
+import { z } from 'zod';
 
 const FID = 489899;
 const FC_NETWORK = FarcasterNetwork.MAINNET;
@@ -21,12 +21,12 @@ const FC_NETWORK = FarcasterNetwork.MAINNET;
 const requestSchema = z.object({
   from: z.number(),
   to: z.number(),
-  url: z.string().url(),
+  url: z.string().url()
 });
 
 export async function POST(request: Request) {
   if (!process.env.FARCASTER_EDDSA_ACCOUNT_KEY) {
-    throw new Error("priv key is not found");
+    throw new Error('priv key is not found');
   }
 
   const body = await request.json();
@@ -34,40 +34,40 @@ export async function POST(request: Request) {
     from: number;
     to: number;
     url: string;
-  } = { from: -1, to: -1, url: "" };
+  } = { from: -1, to: -1, url: '' };
   try {
     parsedBody = requestSchema.parse(body);
   } catch (err) {
     if (err instanceof z.ZodError) {
       console.log(err.issues);
       return NextResponse.json(JSON.stringify({ message: err.issues }), {
-        status: 400,
+        status: 400
       });
     }
     throw err;
   }
 
   const privateKeyBytes = hexToBytes(
-    process.env.FARCASTER_EDDSA_ACCOUNT_KEY as Hex,
+    process.env.FARCASTER_EDDSA_ACCOUNT_KEY as Hex
   );
 
   const ed25519Signer = new NobleEd25519Signer(privateKeyBytes);
 
   const dataOptions = {
     fid: FID,
-    network: FC_NETWORK,
+    network: FC_NETWORK
   };
 
   const cast = await makeCastAdd(
     {
-      text: "from  to ",
+      text: 'from  to ',
       embeds: [{ url: parsedBody.url }],
       embedsDeprecated: [],
       mentions: [parsedBody.from, parsedBody.to],
-      mentionsPositions: [5, 9],
+      mentionsPositions: [5, 9]
     },
     dataOptions,
-    ed25519Signer,
+    ed25519Signer
   );
   if (cast.isOk()) {
     const res = await farcasterHubClient.submitMessage(cast.value);
@@ -78,5 +78,5 @@ export async function POST(request: Request) {
     throw cast.error;
   }
 
-  return NextResponse.json("");
+  return NextResponse.json('');
 }

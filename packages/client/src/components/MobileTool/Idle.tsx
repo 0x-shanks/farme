@@ -9,27 +9,27 @@ import {
   TLEventHandlers,
   TLShape,
   Vec,
-  VecLike,
-} from "tldraw";
+  VecLike
+} from 'tldraw';
 
 export class Idle extends StateNode {
-  static override id = "idle";
-  isDarwin = window.navigator.userAgent.toLowerCase().indexOf("mac") > -1;
+  static override id = 'idle';
+  isDarwin = window.navigator.userAgent.toLowerCase().indexOf('mac') > -1;
 
   override onEnter = () => {
     this.parent.setCurrentToolIdMask(undefined);
     updateHoveredId(this.editor);
     this.editor.updateInstanceState(
-      { cursor: { type: "default", rotation: 0 } },
-      { ephemeral: true },
+      { cursor: { type: 'default', rotation: 0 } },
+      { ephemeral: true }
     );
   };
 
-  override onPointerMove: TLEventHandlers["onPointerMove"] = () => {
+  override onPointerMove: TLEventHandlers['onPointerMove'] = () => {
     updateHoveredId(this.editor);
   };
 
-  override onPointerDown: TLEventHandlers["onPointerDown"] = (info) => {
+  override onPointerDown: TLEventHandlers['onPointerDown'] = (info) => {
     if (this.editor.getIsMenuOpen()) return;
 
     const shouldEnterCropMode =
@@ -38,21 +38,21 @@ export class Idle extends StateNode {
     if (info.ctrlKey && !shouldEnterCropMode) {
       // On Mac, you can right click using the Control keys + Click.
       if (
-        info.target === "shape" &&
+        info.target === 'shape' &&
         this.isDarwin &&
-        this.editor.inputs.keys.has("ControlLeft")
+        this.editor.inputs.keys.has('ControlLeft')
       ) {
         if (!this.editor.isShapeOrAncestorLocked(info.shape)) {
-          this.parent.transition("pointing_shape", info);
+          this.parent.transition('pointing_shape', info);
           return;
         }
       }
 
-      this.parent.transition("brushing", info);
+      this.parent.transition('brushing', info);
       return;
     }
     switch (info.target) {
-      case "canvas": {
+      case 'canvas': {
         // Check to see if we hit any shape under the pointer; if so,
         // handle this as a pointer down on the shape instead of the canvas
         const hitShape = getHitShapeOnCanvasPointerDown(this.editor);
@@ -60,7 +60,7 @@ export class Idle extends StateNode {
           this.onPointerDown({
             ...info,
             shape: hitShape,
-            target: "shape",
+            target: 'shape'
           });
           return;
         }
@@ -68,7 +68,7 @@ export class Idle extends StateNode {
         const selectedShapeIds = this.editor.getSelectedShapeIds();
         const onlySelectedShape = this.editor.getOnlySelectedShape();
         const {
-          inputs: { currentPagePoint },
+          inputs: { currentPagePoint }
         } = this.editor;
 
         if (
@@ -81,70 +81,70 @@ export class Idle extends StateNode {
           if (isPointInRotatedSelectionBounds(this.editor, currentPagePoint)) {
             this.onPointerDown({
               ...info,
-              target: "selection",
+              target: 'selection'
             });
             return;
           }
         }
 
-        this.parent.transition("pointing_canvas", info);
+        this.parent.transition('pointing_canvas', info);
         break;
       }
 
-      case "shape": {
+      case 'shape': {
         const { shape } = info;
         if (this.isOverArrowLabelTest(shape)) {
           // We're moving the label on a shape.
-          this.parent.transition("pointing_arrow_label", info);
+          this.parent.transition('pointing_arrow_label', info);
           break;
         }
 
         if (this.editor.isShapeOrAncestorLocked(shape)) {
-          this.parent.transition("pointing_canvas", info);
+          this.parent.transition('pointing_canvas', info);
           break;
         }
-        this.parent.transition("pointing_shape", info);
+        this.parent.transition('pointing_shape', info);
         break;
       }
-      case "handle": {
+      case 'handle': {
         if (this.editor.getInstanceState().isReadonly) break;
         if (this.editor.inputs.altKey) {
-          this.parent.transition("pointing_shape", info);
+          this.parent.transition('pointing_shape', info);
         } else {
-          this.parent.transition("pointing_handle", info);
+          this.parent.transition('pointing_handle', info);
         }
         break;
       }
 
-      case "selection": {
+      case 'selection': {
         switch (info.handle) {
-          case "mobile_rotate":
-          case "top_left_rotate":
-          case "top_right_rotate":
-          case "bottom_left_rotate":
-          case "bottom_right_rotate": {
-            this.parent.transition("pointing_rotate_handle", info);
+          case 'mobile_rotate':
+          case 'top_left_rotate':
+          case 'top_right_rotate':
+          case 'bottom_left_rotate':
+          case 'bottom_right_rotate': {
+            this.parent.transition('pointing_rotate_handle', info);
             break;
           }
-          case "top":
-          case "right":
-          case "bottom":
-          case "left": {
+          case 'top':
+          case 'right':
+          case 'bottom':
+          case 'left': {
             if (shouldEnterCropMode) {
-              this.parent.transition("pointing_crop_handle", info);
+              this.parent.transition('pointing_crop_handle', info);
             } else {
-              this.parent.transition("pointing_resize_handle", info);
+              this.parent.transition('pointing_resize_handle', info);
             }
             break;
           }
-          case "top_left":
-          case "top_right":
-          case "bottom_left":
-          case "bottom_right": {
+          case 'top_left':
+          case 'top_right':
+          case 'bottom_left':
+          case 'bottom_right': {
             if (shouldEnterCropMode) {
-              this.parent.transition("pointing_crop_handle", info);
+              this.parent.transition('pointing_crop_handle', info);
             } else {
-              this.parent.transition("pointing_resize_handle", info);
+              this.parent.transition('pointing_resize_handle', info);
             }
             break;
           }
@@ -158,12 +158,12 @@ export class Idle extends StateNode {
               this.onPointerDown({
                 ...info,
                 shape: hoveredShape,
-                target: "shape",
+                target: 'shape'
               });
               return;
             }
 
-            this.parent.transition("pointing_selection", info);
+            this.parent.transition('pointing_selection', info);
           }
         }
         break;
@@ -171,14 +171,14 @@ export class Idle extends StateNode {
     }
   };
 
-  override onCancel: TLEventHandlers["onCancel"] = () => {
+  override onCancel: TLEventHandlers['onCancel'] = () => {
     if (
       this.editor.getFocusedGroupId() !== this.editor.getCurrentPageId() &&
       this.editor.getSelectedShapeIds().length > 0
     ) {
       this.editor.popFocusedGroupId();
     } else {
-      this.editor.mark("clearing selection");
+      this.editor.mark('clearing selection');
       this.editor.selectNone();
     }
   };
@@ -188,11 +188,11 @@ export class Idle extends StateNode {
 
     const pointInShapeSpace = this.editor.getPointInShapeSpace(
       shape,
-      this.editor.inputs.currentPagePoint,
+      this.editor.inputs.currentPagePoint
     );
 
     // todo: Extract into general hit test for arrows
-    if (this.editor.isShapeOfType<TLArrowShape>(shape, "arrow")) {
+    if (this.editor.isShapeOfType<TLArrowShape>(shape, 'arrow')) {
       // How should we handle multiple labels? Do shapes ever have multiple labels?
       const labelGeometry =
         this.editor.getShapeGeometry<Group2d>(shape).children[1];
@@ -216,7 +216,7 @@ function _updateHoveredId(editor: Editor) {
     hitInside: false,
     hitLabels: false,
     margin: HIT_TEST_MARGIN / editor.getZoomLevel(),
-    renderingOnly: true,
+    renderingOnly: true
   });
 
   if (!hitShape) return editor.setHoveredShape(null);
@@ -242,7 +242,7 @@ function _updateHoveredId(editor: Editor) {
 }
 
 export const updateHoveredId =
-  process.env.NODE_ENV === "test"
+  process.env.NODE_ENV === 'test'
     ? _updateHoveredId
     : throttle(_updateHoveredId, 32);
 
@@ -257,11 +257,11 @@ export function getShouldEnterCropMode(editor: Editor): boolean {
 
 export function getHitShapeOnCanvasPointerDown(
   editor: Editor,
-  hitLabels = false,
+  hitLabels = false
 ): TLShape | undefined {
   const zoomLevel = editor.getZoomLevel();
   const {
-    inputs: { currentPagePoint },
+    inputs: { currentPagePoint }
   } = editor;
 
   return (
@@ -270,7 +270,7 @@ export function getHitShapeOnCanvasPointerDown(
       hitInside: false,
       hitLabels,
       margin: HIT_TEST_MARGIN / zoomLevel,
-      renderingOnly: true,
+      renderingOnly: true
     }) ??
     // selected shape at point
     editor.getSelectedShapeAtPoint(currentPagePoint)
@@ -287,7 +287,7 @@ function isPointInRotatedSelectionBounds(editor: Editor, point: VecLike) {
   return pointInPolygon(
     point,
     selectionBounds.corners.map((c) =>
-      Vec.RotWith(c, selectionBounds.point, selectionRotation),
-    ),
+      Vec.RotWith(c, selectionBounds.point, selectionRotation)
+    )
   );
 }

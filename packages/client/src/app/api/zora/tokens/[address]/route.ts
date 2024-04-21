@@ -1,34 +1,34 @@
-import { zdk } from "@/utils/zora";
-import { cache } from "react";
-import { Address, zeroAddress } from "viem";
+import { zdk } from '@/utils/zora';
+import { cache } from 'react';
+import { Address, zeroAddress } from 'viem';
 import {
   Chain,
   SortDirection,
   Token,
-  TokenSortKey,
-} from "@zoralabs/zdk/dist/queries/queries-sdk";
-import { getIPFSPreviewURL } from "@/utils/ipfs/utils";
-import { TokensResponse } from "@/models/tokensResponse";
-import { ZDKChain, ZDKNetwork } from "@zoralabs/zdk";
-import { NextResponse } from "next/server";
+  TokenSortKey
+} from '@zoralabs/zdk/dist/queries/queries-sdk';
+import { getIPFSPreviewURL } from '@/utils/ipfs/utils';
+import { TokensResponse } from '@/models/tokensResponse';
+import { ZDKChain, ZDKNetwork } from '@zoralabs/zdk';
+import { NextResponse } from 'next/server';
 
 export const revalidate = 3600;
 
 export async function GET(
   request: Request,
-  { params }: { params: { address: Address } },
+  { params }: { params: { address: Address } }
 ) {
   const address = params.address;
 
-  if (address == "0x" || address == zeroAddress) {
-    throw new Error("Invalid address");
+  if (address == '0x' || address == zeroAddress) {
+    throw new Error('Invalid address');
   }
 
   const getTokens = cache(
     async () =>
       await zdk.tokens({
         where: {
-          ownerAddresses: [address],
+          ownerAddresses: [address]
         },
         networks: [
           { network: ZDKNetwork.Zora, chain: ZDKChain.ZoraMainnet },
@@ -37,14 +37,14 @@ export async function GET(
           { network: ZDKNetwork.Ethereum, chain: ZDKChain.Mainnet },
           {
             network: ZDKNetwork.Zora,
-            chain: "ZORA_SEPOLIA" as Chain,
-          },
+            chain: 'ZORA_SEPOLIA' as Chain
+          }
         ],
         sort: {
           sortDirection: SortDirection.Desc,
-          sortKey: TokenSortKey.Minted,
-        },
-      }),
+          sortKey: TokenSortKey.Minted
+        }
+      })
   );
 
   const ts = await getTokens();
@@ -55,14 +55,14 @@ export async function GET(
       image: {
         ...token.image,
         url:
-          token.image?.url?.split(":")[0] == "ipfs"
-            ? getIPFSPreviewURL(token.image?.url.split("://")[1])
-            : token.image?.url,
-      },
+          token.image?.url?.split(':')[0] == 'ipfs'
+            ? getIPFSPreviewURL(token.image?.url.split('://')[1])
+            : token.image?.url
+      }
     }));
 
   const response: TokensResponse = {
-    tokens,
+    tokens
   };
 
   return NextResponse.json(response);

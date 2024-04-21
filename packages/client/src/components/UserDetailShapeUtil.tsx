@@ -5,8 +5,8 @@ import {
   Card,
   CardBody,
   Image,
-  Box,
-} from "@chakra-ui/react";
+  Box
+} from '@chakra-ui/react';
 import {
   Geometry2d,
   HTMLContainer,
@@ -15,12 +15,12 @@ import {
   ShapeUtil,
   T,
   TLBaseShape,
-  TLOnClickHandler,
-} from "tldraw";
-import runes from "runes";
+  TLOnClickHandler
+} from 'tldraw';
+import runes from 'runes';
 
 export type IUserDetailShape = TLBaseShape<
-  "userDetail",
+  'userDetail',
   {
     w: number;
     h: number;
@@ -45,11 +45,11 @@ const cardShapeProps: ShapeProps<IUserDetailShape> = {
   userName: T.string,
   address: T.string,
   onClick: T.any,
-  preview: T.string,
+  preview: T.string
 };
 
 export class UserDetailShapeUtil extends ShapeUtil<IUserDetailShape> {
-  static override type = "userDetail" as const;
+  static override type = 'userDetail' as const;
   static override props = cardShapeProps;
 
   override onClick?: TLOnClickHandler<IUserDetailShape> = (shape) => {
@@ -61,18 +61,18 @@ export class UserDetailShapeUtil extends ShapeUtil<IUserDetailShape> {
   override hideSelectionBoundsBg = () => true;
   override hideSelectionBoundsFg = () => true;
 
-  getDefaultProps(): IUserDetailShape["props"] {
+  getDefaultProps(): IUserDetailShape['props'] {
     return {
       w: 200,
       h: 200,
       fid: 0,
-      pfp: "",
-      displayName: "",
-      bio: "",
-      userName: "",
-      address: "",
+      pfp: '',
+      displayName: '',
+      bio: '',
+      userName: '',
+      address: '',
       onClick: () => {},
-      preview: "",
+      preview: ''
     };
   }
 
@@ -80,7 +80,7 @@ export class UserDetailShapeUtil extends ShapeUtil<IUserDetailShape> {
     return new Rectangle2d({
       width: shape.props.w,
       height: shape.props.h,
-      isFilled: true,
+      isFilled: true
     });
   }
 
@@ -90,14 +90,14 @@ export class UserDetailShapeUtil extends ShapeUtil<IUserDetailShape> {
         <VStack spacing={2} w={shape.props.w} h={shape.props.h}>
           <VStack spacing={1} w="full">
             <Avatar
-              src={shape.props.pfp ?? ""}
+              src={shape.props.pfp ?? ''}
               shadow="xl"
               borderWidth={2}
               borderColor="white"
             />
             <VStack spacing={0}>
               <Text fontWeight={600}>
-                {`${!!shape.props.displayName ? runes.substr(shape.props.displayName, 0, 8) : ""}${!!shape.props.displayName?.length && shape.props.displayName?.length > 8 ? "..." : ""}`}
+                {`${!!shape.props.displayName ? runes.substr(shape.props.displayName, 0, 8) : ''}${!!shape.props.displayName?.length && shape.props.displayName?.length > 8 ? '...' : ''}`}
               </Text>
               <Text
                 textColor="gray"

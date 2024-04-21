@@ -1,23 +1,23 @@
-import { StateNode, TLEventHandlers, Vec } from "tldraw";
+import { StateNode, TLEventHandlers, Vec } from 'tldraw';
 
 const CAMERA_SLIDE_FRICTION = 0.09;
 
 export class Dragging extends StateNode {
-  static override id = "dragging";
+  static override id = 'dragging';
 
   override onEnter = () => {
     this.update();
   };
 
-  override onPointerMove: TLEventHandlers["onPointerMove"] = () => {
+  override onPointerMove: TLEventHandlers['onPointerMove'] = () => {
     this.update();
   };
 
-  override onPointerUp: TLEventHandlers["onPointerUp"] = () => {
+  override onPointerUp: TLEventHandlers['onPointerUp'] = () => {
     this.complete();
   };
 
-  override onCancel: TLEventHandlers["onCancel"] = () => {
+  override onCancel: TLEventHandlers['onCancel'] = () => {
     this.complete();
   };
 
@@ -39,9 +39,9 @@ export class Dragging extends StateNode {
     this.editor.slideCamera({
       speed: Math.min(2, this.editor.inputs.pointerVelocity.len()),
       direction: this.editor.inputs.pointerVelocity,
-      friction: CAMERA_SLIDE_FRICTION,
+      friction: CAMERA_SLIDE_FRICTION
     });
 
-    this.parent.transition("idle");
+    this.parent.transition('idle');
   }
 }

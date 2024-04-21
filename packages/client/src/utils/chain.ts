@@ -1,4 +1,4 @@
-import { base, mainnet, optimism, zora, zoraSepolia } from "viem/chains";
+import { base, mainnet, optimism, zora, zoraSepolia } from 'viem/chains';
 
 export const getChain = (id: number) => {
   switch (id) {

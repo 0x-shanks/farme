@@ -1,17 +1,17 @@
-import { UsersResponse } from "@/models/userResponse";
-import { farcasterHubClient } from "@/utils/farcaster/client";
-import { CastAddBody, ReactionBody, UserDataType } from "@farcaster/hub-nodejs";
-import { NextResponse } from "next/server";
+import { UsersResponse } from '@/models/userResponse';
+import { farcasterHubClient } from '@/utils/farcaster/client';
+import { CastAddBody, ReactionBody, UserDataType } from '@farcaster/hub-nodejs';
+import { NextResponse } from 'next/server';
 
-import { cache } from "react";
-import { Address, fromBytes } from "viem";
+import { cache } from 'react';
+import { Address, fromBytes } from 'viem';
 
 export const revalidate = 3600 * 24; // A whole day
 // export const revalidate = 1; // A whole day
 
 export async function GET(
   request: Request,
-  { params }: { params: { fid: number } },
+  { params }: { params: { fid: number } }
 ) {
   const fid = params.fid;
 
@@ -20,8 +20,8 @@ export async function GET(
       await farcasterHubClient.getReactionsByFid({
         fid,
         pageSize: 50,
-        reverse: true,
-      }),
+        reverse: true
+      })
   );
 
   const reactions = await getReactions();
@@ -36,7 +36,7 @@ export async function GET(
     },
     (e) => {
       throw e;
-    },
+    }
   );
 
   const getCastsByMention = cache(
@@ -44,8 +44,8 @@ export async function GET(
       await farcasterHubClient.getCastsByMention({
         fid: fid,
         pageSize: 20,
-        reverse: true,
-      }),
+        reverse: true
+      })
   );
   const castsByMention = await getCastsByMention();
   const castBodies: CastAddBody[] = [];
@@ -59,7 +59,7 @@ export async function GET(
     },
     (e) => {
       throw e;
-    },
+    }
   );
 
   const score = new Map<number, number>();
@@ -97,15 +97,13 @@ export async function GET(
   fids = fids.slice(0, fids.length - 1 > 23 ? 23 : fids.length - 1);
 
   const users = await Promise.all(
-    fids.map(
-      cache(async (fid) => farcasterHubClient.getUserDataByFid({ fid })),
-    ),
+    fids.map(cache(async (fid) => farcasterHubClient.getUserDataByFid({ fid })))
   );
 
   const verifications = await Promise.all(
     fids.map(
-      cache(async (fid) => farcasterHubClient.getVerificationsByFid({ fid })),
-    ),
+      cache(async (fid) => farcasterHubClient.getVerificationsByFid({ fid }))
+    )
   );
 
   const addresses = new Map<number, Address | undefined>();
@@ -115,7 +113,7 @@ export async function GET(
       const body = v.messages[0].data?.verificationAddAddressBody;
       addresses.set(
         v.messages[0].data?.fid ?? 0,
-        body?.address != undefined ? fromBytes(body.address, "hex") : undefined,
+        body?.address != undefined ? fromBytes(body.address, 'hex') : undefined
       );
     }
   });
@@ -173,7 +171,7 @@ export async function GET(
   });
 
   const response: UsersResponse = {
-    users: userData,
+    users: userData
   };
 
   return NextResponse.json(response);

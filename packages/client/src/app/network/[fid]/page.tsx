@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { UserResponse, UserResponseItem } from "@/models/userResponse";
-import { httpClient } from "@/utils/http/client";
-import { Box, Center, Spinner } from "@chakra-ui/react";
-import { useEffect, useRef, useState } from "react";
-import { Network } from "@/components/Network";
+import { UserResponse, UserResponseItem } from '@/models/userResponse';
+import { httpClient } from '@/utils/http/client';
+import { Box, Center, Spinner } from '@chakra-ui/react';
+import { useEffect, useRef, useState } from 'react';
+import { Network } from '@/components/Network';
 
 export default function Home({ params }: { params: { fid: number } }) {
   const [user, setUser] = useState<UserResponseItem>();
@@ -16,7 +16,7 @@ export default function Home({ params }: { params: { fid: number } }) {
     }
     (async () => {
       const res = await httpClient.get<UserResponse>(
-        `/farcaster/${params.fid}`,
+        `/farcaster/${params.fid}`
       );
       setUser(res.data.user);
     })();
