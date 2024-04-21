@@ -59,7 +59,8 @@ export async function GET(
             ? getIPFSPreviewURL(token.image?.url.split('://')[1])
             : token.image?.url
       }
-    }));
+    }))
+    .sort((a, b) => b.lastRefreshTime - a.lastRefreshTime);
 
   const response: TokensResponse = {
     tokens
