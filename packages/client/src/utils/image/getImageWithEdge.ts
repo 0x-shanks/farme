@@ -1,7 +1,7 @@
 export const getImageWithEdge = async (
   file: File,
   color: string,
-  samples: number = 36
+  samples: number = 36,
 ): Promise<string> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -29,7 +29,7 @@ export const getImageWithEdge = async (
         ctx.drawImage(
           img,
           s * Math.sin((Math.PI * 2 * angle) / 360) + x,
-          s * Math.cos((Math.PI * 2 * angle) / 360) + y
+          s * Math.cos((Math.PI * 2 * angle) / 360) + y,
         );
       }
 
