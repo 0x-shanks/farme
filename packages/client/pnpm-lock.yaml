@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
+  emoji-picker-react@4.9.2:
+    hash: jtsvurjqplmxmrtqorzaqcajtm
+    path: patches/emoji-picker-react@4.9.2.patch
   tldraw@2.1.0-canary.8658e20ab55b:
     hash: i23mpuxtki766tkmqzhvgt7kn4
     path: patches/tldraw@2.1.0-canary.8658e20ab55b.patch
@@ -72,7 +75,7 @@ dependencies:
     version: 3.6.0
   emoji-picker-react:
     specifier: ^4.9.2
-    version: 4.9.2(react@18.0.0)
+    version: 4.9.2(patch_hash=jtsvurjqplmxmrtqorzaqcajtm)(react@18.0.0)
   formidable:
     specifier: ^3.5.1
     version: 3.5.1
@@ -10745,7 +10748,7 @@ packages:
       minimalistic-crypto-utils: 1.0.1
     dev: false
 
-  /emoji-picker-react@4.9.2(react@18.0.0):
+  /emoji-picker-react@4.9.2(patch_hash=jtsvurjqplmxmrtqorzaqcajtm)(react@18.0.0):
     resolution: {integrity: sha512-pdvLKpto0DMrjE+/8V9QeYjrMcOkJmqBn3GyCSG2zanY32rN2cnWzBUmzArvapAjzBvgf7hNmJP8xmsdu0cmJA==}
     engines: {node: '>=10'}
     peerDependencies:
@@ -10754,6 +10757,7 @@ packages:
       flairup: 0.0.38
       react: 18.0.0
     dev: false
+    patched: true
 
   /emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}

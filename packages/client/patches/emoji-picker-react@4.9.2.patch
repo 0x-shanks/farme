@@ -1,0 +1,36 @@
+diff --git a/dist/emoji-picker-react.cjs.development.js b/dist/emoji-picker-react.cjs.development.js
+index 3a805ebac7799161ac5933a5bc8bb4e7f9f79d67..d69294b4d6515595433f42d5aef1728932192796 100644
+--- a/dist/emoji-picker-react.cjs.development.js
++++ b/dist/emoji-picker-react.cjs.development.js
+@@ -20384,6 +20384,7 @@ var styles$j = /*#__PURE__*/stylesheet.create( /*#__PURE__*/_extends({
+     width: '1px'
+   },
+   search: {
++	fontSize: "1rem",
+     outline: 'none',
+     transition: 'all 0.2s ease-in-out',
+     color: 'var(--epr-search-input-text-color)',
+diff --git a/dist/emoji-picker-react.esm.js b/dist/emoji-picker-react.esm.js
+index 2fbee94d0e38b605dbd02b4453a8c541938bf7d8..85ad1da01f97d61e76e9b510107f1cac75759efb 100644
+--- a/dist/emoji-picker-react.esm.js
++++ b/dist/emoji-picker-react.esm.js
+@@ -20383,6 +20383,7 @@ var styles$j = /*#__PURE__*/stylesheet.create( /*#__PURE__*/_extends({
+     width: '1px'
+   },
+   search: {
++	fontSize: "1rem",
+     outline: 'none',
+     transition: 'all 0.2s ease-in-out',
+     color: 'var(--epr-search-input-text-color)',
+diff --git a/src/components/header/Search/Search.tsx b/src/components/header/Search/Search.tsx
+index feb1eb8c0eab5e5f7bb01dd36ca708a18efc0f42..cf9bac6dbef79bfd191b427cedb576428fc5845a 100644
+--- a/src/components/header/Search/Search.tsx
++++ b/src/components/header/Search/Search.tsx
+@@ -108,6 +108,7 @@ const styles = stylesheet.create({
+     width: '1px'
+   },
+   search: {
++    fontSize: "1rem",
+     outline: 'none',
+     transition: 'all 0.2s ease-in-out',
+     color: 'var(--epr-search-input-text-color)',

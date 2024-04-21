@@ -72,7 +72,8 @@
   },
   "pnpm": {
     "patchedDependencies": {
-      "tldraw@2.1.0-canary.8658e20ab55b": "patches/tldraw@2.1.0-canary.8658e20ab55b.patch"
+      "tldraw@2.1.0-canary.8658e20ab55b": "patches/tldraw@2.1.0-canary.8658e20ab55b.patch",
+      "emoji-picker-react@4.9.2": "patches/emoji-picker-react@4.9.2.patch"
     }
   }
 }
