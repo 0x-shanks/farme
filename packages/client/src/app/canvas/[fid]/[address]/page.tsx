@@ -1596,6 +1596,7 @@ const Canvas = track(
               <EmojiPicker
                 onEmojiClick={(s) => setFileName(s.emoji)}
                 autoFocusSearch={false}
+                width="100%"
               />
             </Box>
           )}
