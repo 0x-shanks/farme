@@ -1219,7 +1219,7 @@ const Canvas = track(
         const req: SaveCastRequest = {
           from: Number(session.user.id),
           to: fid,
-          url: `${siteOrigin}/api/farcaster/frames/bafkreiayutsfprj35rajgtakn3hybyri6krcerb6gtnwbot45iojzo6vpu`
+          url: `${siteOrigin}/api/farcaster/frames/${cid}`
         };
         httpClient.post('/farcaster/cast/save', req);
       } catch (e) {
