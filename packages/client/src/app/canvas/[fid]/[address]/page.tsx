@@ -1862,7 +1862,7 @@ const Canvas = track(
               </Center>
             )}
             <DrawerBody>
-              <SimpleGrid columns={3} spacing={6} px={6}>
+              <SimpleGrid columns={3} spacing={6} px={6} mb={40}>
                 {tokens?.map((token) => (
                   <GridItem
                     key={token.tokenContract?.collectionAddress + token.tokenId}
