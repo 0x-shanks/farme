@@ -210,7 +210,7 @@ const Canvas = track(
 
     // Contract
     const { writeContractAsync } = useWriteContract();
-    const { data: canvasData, isFetched: isCanvasFetched } = useReadContract({
+    const { data: canvasData, isSuccess: isCanvasSuccess } = useReadContract({
       abi: canvasAbi,
       address: canvasAddress,
       functionName: "getCanvas",
@@ -289,7 +289,7 @@ const Canvas = track(
       if (!canvasAddress || !address) {
         return;
       }
-      if (isCanvasFetched && canvasData != undefined) {
+      if (isCanvasSuccess && canvasData != undefined) {
         canvasData[1].forEach((asset) => {
           const assetId = getAssetId(
             asset.tokenID.toString(),
@@ -361,7 +361,7 @@ const Canvas = track(
         setLastSave(JSON.stringify(editor.store.getSnapshot()));
         editor.mark("latest");
       }
-    }, [canvasData, isCanvasFetched, canvasOwner, address]);
+    }, [canvasData, isCanvasSuccess, canvasOwner, address]);
 
     // Fetch zora tokens
     const fetchTokens = async () => {
