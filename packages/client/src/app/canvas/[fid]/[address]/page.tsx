@@ -1066,7 +1066,7 @@ const Canvas = track(
         editor.mark("latest");
         setShouldShowDrop(false);
 
-        if (farcasterUser?.fid == fid) {
+        if (Number(session.user.id) == fid) {
           // NOTE: consider adding self notification setting
           return;
         }
@@ -1077,7 +1077,7 @@ const Canvas = track(
         const url = `https://${domain}/collect/${shortChainName}:${tokenAddress.toLowerCase()}/${tokenId}?referrer=${address}`;
 
         const req: DropCastRequest = {
-          from: farcasterUser?.fid ?? -1,
+          from: Number(session.user.id),
           to: fid,
           url,
         };

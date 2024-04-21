@@ -28,9 +28,6 @@ export async function POST(request: Request) {
   if (!process.env.FARCASTER_EDDSA_ACCOUNT_KEY) {
     throw new Error("priv key is not found");
   }
-  if (!process.env.AIRSTACK_API_KEY) {
-    throw new Error("airstack key is not found");
-  }
 
   const body = await request.json();
   let parsedBody: {
