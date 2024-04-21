@@ -23,7 +23,11 @@ app.frame('/', async (c) => {
 
   return c.res({
     image: getIPFSPreviewURL(cid),
-    intents: [<Button.Link href={url}>Check farme!</Button.Link>]
+    intents: [
+      <Button.Link href={url} key="button1">
+        Check farme!
+      </Button.Link>
+    ]
   });
 });
 
