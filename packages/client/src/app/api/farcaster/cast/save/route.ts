@@ -1,15 +1,8 @@
 import { farcasterHubClient } from '@/utils/farcaster/client';
 import {
   FarcasterNetwork,
-  getAuthMetadata,
-  ID_REGISTRY_ADDRESS,
-  idRegistryABI,
-  KEY_GATEWAY_ADDRESS,
-  keyGatewayABI,
   makeCastAdd,
-  Metadata,
-  NobleEd25519Signer,
-  ViemLocalEip712Signer
+  NobleEd25519Signer
 } from '@farcaster/hub-nodejs';
 import { NextResponse } from 'next/server';
 import { Hex, hexToBytes } from 'viem';
@@ -60,11 +53,11 @@ export async function POST(request: Request) {
 
   const cast = await makeCastAdd(
     {
-      text: ' A new sticker is dropped in your canvas by ',
+      text: ' Your canvas is updated by ',
       embeds: [{ url: parsedBody.url }],
       embedsDeprecated: [],
       mentions: [parsedBody.to, parsedBody.from],
-      mentionsPositions: [0, 44]
+      mentionsPositions: [0, 27]
     },
     dataOptions,
     ed25519Signer

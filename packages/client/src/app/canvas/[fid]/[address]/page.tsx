@@ -96,7 +96,13 @@ import { GoTrash } from 'react-icons/go';
 import { FaCheck } from 'react-icons/fa';
 import { LiaUndoAltSolid, LiaRedoAltSolid } from 'react-icons/lia';
 
-import { createReferral, defaultChain, fee, feeTaker } from '@/app/constants';
+import {
+  createReferral,
+  defaultChain,
+  fee,
+  feeTaker,
+  siteOrigin
+} from '@/app/constants';
 import { MobileSelectTool } from '@/components/MobileSelectTool';
 import imageCompression from 'browser-image-compression';
 import { getImageWithEdge } from '@/utils/image/getImageWithEdge';
@@ -123,8 +129,11 @@ import { vibur } from '@/app/fonts';
 import { getChainNameShorthand, getDomainFromChain } from '@/utils/zora/chain';
 import Link from 'next/link';
 import { DropCastRequest } from '@/models/dropCastRequest';
+import { usePrivy } from '@privy-io/react-auth';
+import { CreatePreviewMappingRequest } from '@/models/createPreviewMappingRequest';
+import { SaveCastRequest } from '@/models/saveCastRequest';
 
-export default function Home({
+export default function CanvasPage({
   params
 }: {
   params: { address: Address; fid: string };
@@ -154,7 +163,10 @@ export default function Home({
 const Canvas = track(
   ({ canvasOwner, fid }: { canvasOwner: Address; fid: number }) => {
     const editor = useEditor();
-    const { address } = useAccount();
+    const { user } = usePrivy();
+    const address = useMemo(() => {
+      return user?.wallet?.address as Address | undefined;
+    }, [user?.wallet?.address]);
     const { data: session } = useSession();
     const config = useConfig();
     const router = useRouter();
@@ -491,8 +503,7 @@ const Canvas = track(
         const image = await exportToBlob({
           editor,
           ids: Array.from(editor.getCurrentPageShapeIds()),
-          format: 'png',
-          opts: { background: false }
+          format: 'png'
         });
 
         const imageFile = new File([image], '', {
@@ -1193,6 +1204,24 @@ const Canvas = track(
         setIsSavedSuccess(true);
         setLastSave(JSON.stringify(editor.store.getSnapshot()));
         editor.mark('latest');
+
+        const split = previewURI.split('/');
+        const cid = split[split.length - 1];
+
+        const previewReq: CreatePreviewMappingRequest = { fid, cid };
+        await httpClient.post('/preview/mapping', previewReq);
+
+        if (Number(session.user.id) == fid) {
+          // NOTE: consider adding self notification setting
+          return;
+        }
+
+        const req: SaveCastRequest = {
+          from: Number(session.user.id),
+          to: fid,
+          url: `${siteOrigin}/api/farcaster/frames/bafkreiayutsfprj35rajgtakn3hybyri6krcerb6gtnwbot45iojzo6vpu`
+        };
+        httpClient.post('/farcaster/cast/save', req);
       } catch (e) {
         // TODO: error handle
         console.error(e);
