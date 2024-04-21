@@ -582,7 +582,9 @@ const Canvas = track(
           console.log(imageRes);
           const imageData = await imageRes.arrayBuffer();
 
-          const bgRemovedFile = new File([imageData], file.name);
+          const bgRemovedFile = new File([imageData], file.name, {
+            type: "image/png",
+          });
           setBgRemovedFile(bgRemovedFile);
         } catch (e) {}
       } else {
@@ -600,7 +602,9 @@ const Canvas = track(
           }
         );
 
-        const bgRemovedFile = new File([bgRemovedRes.data], file.name);
+        const bgRemovedFile = new File([bgRemovedRes.data], file.name, {
+          type: "image/png",
+        });
         setBgRemovedFile(bgRemovedFile);
 
         const bgRemovedIPFSRes = await ipfsClient.add(
