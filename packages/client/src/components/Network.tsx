@@ -7,13 +7,7 @@ import {
   IUserDetailShape,
   UserDetailShapeUtil
 } from '@/components/UserDetailShapeUtil';
-import {
-  Tldraw,
-  TLShapeId,
-  track,
-  useEditor,
-  useLocalStorageState
-} from 'tldraw';
+import { Tldraw, TLShapeId, track, useEditor } from 'tldraw';
 import { httpClient } from '@/utils/http/client';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -45,8 +39,8 @@ import { usePrivy } from '@privy-io/react-auth';
 import { FiHome } from 'react-icons/fi';
 import Link from 'next/link';
 import { FaChevronRight } from 'react-icons/fa';
-import { useSession, signOut } from 'next-auth/react';
-import { siteOrigin } from '@/app/constants';
+import { signOut } from 'next-auth/react';
+import { useLocalStorage } from 'usehooks-ts';
 
 export const Network: FC<{
   user: UserResponseItem;
@@ -242,7 +236,7 @@ const Content = track(
     } = useDisclosure();
 
     const [enabledNotification, setEnabledNotification] =
-      useLocalStorageState<boolean>('notification', true);
+      useLocalStorage<boolean>('notification', true);
 
     const handleLogout = async () => {
       await logout();

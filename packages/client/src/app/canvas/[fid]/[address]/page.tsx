@@ -122,7 +122,6 @@ import { formatAddress } from '@/utils/address';
 import Countdown from 'react-countdown';
 import { getChain } from '@/utils/chain';
 import { wagmiConfig } from '@/app/provider';
-import { kv } from '@vercel/kv';
 import { CreateBgRemovedCidRequest } from '@/models/createBgRemovedCidRequest';
 import { BgRemovedCidResponse } from '@/models/bgRemovedCidResponse';
 import { vibur } from '@/app/fonts';
@@ -132,6 +131,7 @@ import { DropCastRequest } from '@/models/dropCastRequest';
 import { usePrivy } from '@privy-io/react-auth';
 import { CreatePreviewMappingRequest } from '@/models/createPreviewMappingRequest';
 import { SaveCastRequest } from '@/models/saveCastRequest';
+import { useLocalStorage } from 'usehooks-ts';
 
 export default function CanvasPage({
   params
@@ -192,6 +192,8 @@ const Canvas = track(
       useState<TokenDetailResponse>();
     const [farcasterUser, setFarcasterUser] = useState<UserResponseItem>();
     const onceUserFetch = useRef();
+    const [enabledNotification, setEnabledNotification] =
+      useLocalStorage<boolean>('notification', true);
 
     const {
       isOpen: isStickerOpen,
@@ -1068,6 +1070,10 @@ const Canvas = track(
         editor.mark('latest');
         setShouldShowDrop(false);
 
+        if (!enabledNotification) {
+          return;
+        }
+
         if (Number(session.user.id) == fid) {
           // NOTE: consider adding self notification setting
           return;
@@ -1210,6 +1216,10 @@ const Canvas = track(
 
         const previewReq: CreatePreviewMappingRequest = { fid, cid };
         await httpClient.post('/preview/mapping', previewReq);
+
+        if (!enabledNotification) {
+          return;
+        }
 
         if (Number(session.user.id) == fid) {
           // NOTE: consider adding self notification setting
