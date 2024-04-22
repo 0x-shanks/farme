@@ -41,6 +41,7 @@ import Link from 'next/link';
 import { FaChevronRight } from 'react-icons/fa';
 import { signOut } from 'next-auth/react';
 import { useLocalStorage } from 'usehooks-ts';
+import { MdLogin } from 'react-icons/md';
 
 export const Network: FC<{
   user: UserResponseItem;
@@ -67,7 +68,7 @@ const Content = track(
     const [isNetworkReady, setNetworkReady] = useState<boolean>(false);
     const onceFetch = useRef<boolean>(false);
     const router = useRouter();
-    const { logout } = usePrivy();
+    const { logout, authenticated } = usePrivy();
 
     const { data: canvasData, isSuccess: isCanvasSuccess } = useReadContract({
       abi: canvasAbi,
@@ -256,55 +257,78 @@ const Content = track(
           left={0}
           right={0}
         >
-          <Box
-            pointerEvents="all"
-            pos="absolute"
-            top={0}
-            right={0}
-            px={6}
-            py={4}
-          >
-            <IconButton
-              aria-label=""
-              colorScheme="gray"
-              shadow="xl"
-              size="lg"
-              icon={<Icon as={CiSettings} />}
-              onClick={onSettingOpen}
-            />
-          </Box>
-
-          <HStack
-            pos="absolute"
-            bottom={8}
-            left={0}
-            right={0}
-            px={6}
-            py={4}
-            justify="center"
-          >
-            {/* TODO: fix */}
-            {pathname != '/' && (
-              <IconButton
-                aria-label="home"
-                colorScheme="primary"
-                icon={<Icon as={FiHome} />}
-                onClick={handleBackHome}
+          {authenticated ? (
+            <>
+              <Box
                 pointerEvents="all"
-              />
-            )}
-
-            {hasPrevious && (
-              <Button
-                colorScheme="primary"
-                leftIcon={<Icon as={IoIosArrowBack} />}
-                onClick={handleBack}
-                pointerEvents="all"
+                pos="absolute"
+                top={0}
+                right={0}
+                px={6}
+                py={4}
               >
-                Back
-              </Button>
-            )}
-          </HStack>
+                <IconButton
+                  aria-label=""
+                  colorScheme="gray"
+                  shadow="xl"
+                  size="lg"
+                  icon={<Icon as={CiSettings} />}
+                  onClick={onSettingOpen}
+                />
+              </Box>
+
+              <HStack
+                pos="absolute"
+                bottom={8}
+                left={0}
+                right={0}
+                px={6}
+                py={4}
+                justify="center"
+              >
+                {pathname != '/' && (
+                  <IconButton
+                    aria-label="home"
+                    colorScheme="primary"
+                    icon={<Icon as={FiHome} />}
+                    onClick={handleBackHome}
+                    pointerEvents="all"
+                  />
+                )}
+
+                {hasPrevious && (
+                  <Button
+                    colorScheme="primary"
+                    leftIcon={<Icon as={IoIosArrowBack} />}
+                    onClick={handleBack}
+                    pointerEvents="all"
+                  >
+                    Back
+                  </Button>
+                )}
+              </HStack>
+            </>
+          ) : (
+            <HStack
+              pos="absolute"
+              bottom={8}
+              left={0}
+              right={0}
+              px={6}
+              py={4}
+              justify="center"
+            >
+              <Link href="/">
+                <Button
+                  colorScheme="primary"
+                  leftIcon={<Icon as={MdLogin} />}
+                  pointerEvents="all"
+                >
+                  Login
+                </Button>
+              </Link>
+            </HStack>
+          )}
         </Box>
 
         <Drawer
