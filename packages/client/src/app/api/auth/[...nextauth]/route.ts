@@ -3,6 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { createAppClient, viemConnector } from '@farcaster/auth-client';
 import { NextRequest, NextResponse } from 'next/server';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { siteDomain } from '@/app/constants';
 
 const handler = (req: NextRequest, res: NextResponse) =>
   NextAuth(
@@ -23,9 +24,6 @@ const handler = (req: NextRequest, res: NextResponse) =>
               type: 'text',
               placeholder: '0x0'
             },
-            // In a production app with a server, these should be fetched from
-            // your Farcaster data indexer rather than have them accepted as part
-            // of credentials.
             name: {
               label: 'Name',
               type: 'text',
@@ -60,7 +58,7 @@ const handler = (req: NextRequest, res: NextResponse) =>
             const verifyResponse = await appClient.verifySignInMessage({
               message: credentials?.message as string,
               signature: credentials?.signature as `0x${string}`,
-              domain: 'localhost',
+              domain: siteDomain,
               nonce: credentials?.nonce as string
             });
             const { success, fid, error } = verifyResponse;

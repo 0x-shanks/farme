@@ -10,7 +10,12 @@ import { WagmiProvider, createConfig } from '@privy-io/wagmi';
 import { theme, toastOption } from './styles';
 import getIsPWA from '@/utils/getIsPWA';
 
-import { defaultChain, supportedChains } from './constants';
+import {
+  defaultChain,
+  siteDomain,
+  siteOrigin,
+  supportedChains
+} from './constants';
 import { fallback, http } from 'viem';
 import { zora, zoraSepolia } from 'wagmi/chains';
 import { SessionProvider } from 'next-auth/react';
@@ -47,8 +52,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, [ref]);
 
   const farcasterConfig = {
-    siweUri: 'http://localhost:8000/login',
-    domain: 'localhost'
+    siweUri: `${siteOrigin}/login`,
+    domain: siteDomain
   };
 
   return (
@@ -57,9 +62,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <PWAProvider>
           <PrivyProvider
             appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || ''}
-            // onSuccess={(user, isNewUser) => {
-            //   sendConnectWalletEvent(user, isNewUser);
-            // }}
             config={{
               loginMethods: ['wallet'],
               appearance: {

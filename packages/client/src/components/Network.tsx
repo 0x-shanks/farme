@@ -7,10 +7,34 @@ import {
   IUserDetailShape,
   UserDetailShapeUtil
 } from '@/components/UserDetailShapeUtil';
-import { Tldraw, TLGeoShape, TLShapeId, track, useEditor } from 'tldraw';
+import {
+  Tldraw,
+  TLShapeId,
+  track,
+  useEditor,
+  useLocalStorageState
+} from 'tldraw';
 import { httpClient } from '@/utils/http/client';
 import { usePathname, useRouter } from 'next/navigation';
-import { Box, Button, HStack, Icon, IconButton } from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  Divider,
+  Drawer,
+  DrawerBody,
+  DrawerCloseButton,
+  DrawerContent,
+  DrawerOverlay,
+  HStack,
+  Icon,
+  IconButton,
+  useDisclosure,
+  VStack,
+  Text,
+  Switch,
+  DrawerHeader,
+  Image
+} from '@chakra-ui/react';
 import { IoIosArrowBack } from 'react-icons/io';
 import { canvasAbi } from '@/utils/contract/generated';
 import { canvasAddress } from '@/utils/contract/address';
@@ -19,6 +43,10 @@ import { MobileTool } from './MobileTool';
 import { CiSettings } from 'react-icons/ci';
 import { usePrivy } from '@privy-io/react-auth';
 import { FiHome } from 'react-icons/fi';
+import Link from 'next/link';
+import { FaChevronRight } from 'react-icons/fa';
+import { useSession, signOut } from 'next-auth/react';
+import { siteOrigin } from '@/app/constants';
 
 export const Network: FC<{
   user: UserResponseItem;
@@ -207,61 +235,183 @@ const Content = track(
       router.push('/');
     };
 
-    return (
-      <Box
-        pos="absolute"
-        zIndex={300}
-        inset={0}
-        pointerEvents="none"
-        top={0}
-        bottom={0}
-        left={0}
-        right={0}
-      >
-        <Box pointerEvents="all" pos="absolute" top={0} right={0} px={6} py={4}>
-          <IconButton
-            aria-label=""
-            colorScheme="gray"
-            shadow="xl"
-            size="lg"
-            icon={<Icon as={CiSettings} />}
-            // TODO: fix
-            onClick={logout}
-          />
-        </Box>
+    const {
+      isOpen: isSettingOpen,
+      onOpen: onSettingOpen,
+      onClose: onSettingClose
+    } = useDisclosure();
 
-        <HStack
+    const [enabledNotification, setEnabledNotification] =
+      useLocalStorageState<boolean>('notification', true);
+
+    const handleLogout = async () => {
+      await logout();
+      await signOut({ redirect: false });
+      router.push('/');
+    };
+
+    return (
+      <>
+        <Box
           pos="absolute"
-          bottom={8}
+          zIndex={300}
+          inset={0}
+          pointerEvents="none"
+          top={0}
+          bottom={0}
           left={0}
           right={0}
-          px={6}
-          py={4}
-          justify="center"
         >
-          {/* TODO: fix */}
-          {pathname != '/' && (
+          <Box
+            pointerEvents="all"
+            pos="absolute"
+            top={0}
+            right={0}
+            px={6}
+            py={4}
+          >
             <IconButton
-              aria-label="home"
-              colorScheme="primary"
-              icon={<Icon as={FiHome} />}
-              onClick={handleBackHome}
-              pointerEvents="all"
+              aria-label=""
+              colorScheme="gray"
+              shadow="xl"
+              size="lg"
+              icon={<Icon as={CiSettings} />}
+              onClick={onSettingOpen}
             />
-          )}
+          </Box>
 
-          {hasPrevious && (
-            <Button
-              colorScheme="primary"
-              leftIcon={<Icon as={IoIosArrowBack} />}
-              onClick={handleBack}
-              pointerEvents="all"
-            >
-              Back
-            </Button>
-          )}
-        </HStack>
-      </Box>
+          <HStack
+            pos="absolute"
+            bottom={8}
+            left={0}
+            right={0}
+            px={6}
+            py={4}
+            justify="center"
+          >
+            {/* TODO: fix */}
+            {pathname != '/' && (
+              <IconButton
+                aria-label="home"
+                colorScheme="primary"
+                icon={<Icon as={FiHome} />}
+                onClick={handleBackHome}
+                pointerEvents="all"
+              />
+            )}
+
+            {hasPrevious && (
+              <Button
+                colorScheme="primary"
+                leftIcon={<Icon as={IoIosArrowBack} />}
+                onClick={handleBack}
+                pointerEvents="all"
+              >
+                Back
+              </Button>
+            )}
+          </HStack>
+        </Box>
+
+        <Drawer
+          placement="bottom"
+          onClose={onSettingClose}
+          isOpen={isSettingOpen}
+        >
+          <DrawerOverlay />
+          <DrawerContent>
+            <DrawerCloseButton />
+            <DrawerHeader>Settings</DrawerHeader>
+            <DrawerBody w="full" pb={20}>
+              <VStack w="full" spacing={6}>
+                <VStack w="full">
+                  <HStack w="full" justify="space-between">
+                    <Text>Account</Text>
+                    <Button colorScheme="red" size="sm" onClick={handleLogout}>
+                      Logout
+                    </Button>
+                  </HStack>
+
+                  <Divider />
+                </VStack>
+
+                <VStack w="full">
+                  <HStack w="full" justify="space-between">
+                    <Text>Notification</Text>
+                    <Switch
+                      colorScheme="primary"
+                      isChecked={enabledNotification}
+                      onChange={(e) => setEnabledNotification(e.target.checked)}
+                    />
+                  </HStack>
+
+                  <Text w="full" textAlign="start" fontSize="sm" color="gray">
+                    If disabled, notifications from you to the other party on
+                    the farcaster will be stopped.
+                  </Text>
+                  <Divider />
+                </VStack>
+
+                <VStack w="full">
+                  <HStack w="full" justify="space-between">
+                    <Text>Privacy and terms</Text>
+                  </HStack>
+
+                  <Box w="full">
+                    {/* TODO: fix href */}
+                    <Link href="">
+                      <HStack w="full" justify="space-between">
+                        <Text
+                          w="full"
+                          textAlign="start"
+                          fontSize="sm"
+                          color="gray"
+                        >
+                          Privacy
+                        </Text>
+                        <Icon as={FaChevronRight} />
+                      </HStack>
+                    </Link>
+                  </Box>
+
+                  <Box w="full">
+                    {/* TODO: fix href */}
+                    <Link href="">
+                      <HStack w="full" justify="space-between">
+                        <Text
+                          w="full"
+                          textAlign="start"
+                          fontSize="sm"
+                          color="gray"
+                        >
+                          Terms
+                        </Text>
+                        <Icon as={FaChevronRight} />
+                      </HStack>
+                    </Link>
+                  </Box>
+
+                  <Divider />
+                </VStack>
+
+                <Link
+                  href="https://warpcast.com/farme-club"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <VStack>
+                    <Text fontSize="sm" color="gray" as="u">
+                      Follow farme on farcaster
+                    </Text>
+
+                    <Image src="/images/logo.png" w="40%" alt="farme" />
+                  </VStack>
+                </Link>
+              </VStack>
+            </DrawerBody>
+          </DrawerContent>
+        </Drawer>
+      </>
     );
   }
 );
