@@ -19,3 +19,5 @@ export const siteOrigin =
   process.env.NEXT_PUBLIC_ORIGIN ||
   process.env.VERCEL_URL ||
   'http://localhost:8000';
+
+export const siteDomain = siteOrigin.split('://')[1];
