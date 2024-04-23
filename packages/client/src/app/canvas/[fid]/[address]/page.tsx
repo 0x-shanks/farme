@@ -170,6 +170,8 @@ const Canvas = track(
     const { data: session } = useSession();
     const config = useConfig();
     const router = useRouter();
+    const chainId = useChainId();
+    const { switchChain } = useSwitchChain();
 
     editor.setCurrentTool('mobileSelect');
 
@@ -195,6 +197,8 @@ const Canvas = track(
     const [enabledNotification, setEnabledNotification] =
       useLocalStorage<boolean>('notification', true);
     const [shouldRetry, setShouldRetry] = useState<boolean>(false);
+    const [isMintingSticker, setIsMintingSticker] = useState<boolean>(false);
+    const [mintComment, setMintComment] = useState<string>('');
 
     const {
       isOpen: isStickerOpen,
@@ -224,7 +228,9 @@ const Canvas = track(
       args: [canvasOwner]
     });
 
+    //
     // Memo
+    //
     const selectedShape = useMemo(() => {
       if (selectedShapeId == undefined) {
         return undefined;
@@ -290,6 +296,32 @@ const Canvas = track(
 
       return last != current;
     }, [address, editor.store.getSnapshot(), lastSave]);
+
+    const shouldSwitchNetworkDrop = useMemo(() => {
+      return chainId != defaultChain.id;
+    }, [chainId]);
+
+    const stickerUrl = useMemo(() => {
+      if (!selectedAsset) {
+        return undefined;
+      }
+
+      const { contractAddress, chainId, tokenId } =
+        getAssetToken(selectedAsset);
+
+      if (!contractAddress || !tokenId || !chainId) {
+        return undefined;
+      }
+
+      const domain = getDomainFromChain(chainId);
+      const shortChainName = getChainNameShorthand(chainId);
+
+      return `https://${domain}/collect/${shortChainName}:${contractAddress.toLowerCase()}/${tokenId}?referrer=${canvasAddress}`;
+    }, [selectedAsset]);
+
+    //
+    // Side effect
+    //
 
     // Load canvas
     useEffect(() => {
@@ -1343,24 +1375,6 @@ const Canvas = track(
       editor.history.redo();
     };
 
-    const stickerUrl = useMemo(() => {
-      if (!selectedAsset) {
-        return undefined;
-      }
-
-      const { contractAddress, chainId, tokenId } =
-        getAssetToken(selectedAsset);
-
-      if (!contractAddress || !tokenId || !chainId) {
-        return undefined;
-      }
-
-      const domain = getDomainFromChain(chainId);
-      const shortChainName = getChainNameShorthand(chainId);
-
-      return `https://${domain}/collect/${shortChainName}:${contractAddress.toLowerCase()}/${tokenId}?referrer=${canvasAddress}`;
-    }, [selectedAsset]);
-
     const handleOpenMintStickerModal = async () => {
       // TODO: fix api
       // onMintStickerOpen();
@@ -1384,9 +1398,6 @@ const Canvas = track(
       onMintStickerClose();
       setMintTokenDetail(undefined);
     };
-
-    const [isMintingSticker, setIsMintingSticker] = useState<boolean>(false);
-    const [mintComment, setMintComment] = useState<string>('');
 
     const handleMintSticker = async () => {
       if (!address) {
@@ -1446,8 +1457,6 @@ const Canvas = track(
       }
     };
 
-    const chainId = useChainId();
-    const { switchChain } = useSwitchChain();
     const shouldSwitchNetworkMint = useMemo(() => {
       if (!selectedAsset) {
         return undefined;
@@ -1469,11 +1478,6 @@ const Canvas = track(
       }
       switchChain({ chainId: cid });
     };
-
-    const shouldSwitchNetworkDrop = useMemo(() => {
-      // TODO: mainnet
-      return chainId != defaultChain.id;
-    }, [chainId]);
 
     const handleSwitchChainDrop = () => {
       switchChain({ chainId: defaultChain.id });
