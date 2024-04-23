@@ -1,8 +1,8 @@
 import { Address, parseEther } from 'viem';
 import { zora, zoraSepolia } from 'viem/chains';
 
-export const defaultChain =
-  process.env.NEXT_PUBLIC_IS_MAINNNET == 'true' ? zora : zoraSepolia;
+export const isMainnet = process.env.NEXT_PUBLIC_IS_MAINNNET == 'true';
+export const defaultChain = isMainnet ? zora : zoraSepolia;
 export const supportedChains = [defaultChain];
 
 export const farcasterHubURL =
@@ -23,3 +23,4 @@ export const siteOrigin =
 export const siteDomain = siteOrigin.split('://')[1];
 
 export const maxErrorReason = 40;
+export const appFid = 489899;

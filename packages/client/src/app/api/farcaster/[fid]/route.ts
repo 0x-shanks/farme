@@ -38,7 +38,7 @@ export async function GET(
   const u = user.unwrapOr(undefined);
 
   if (u == undefined) {
-    throw new Error();
+    throw new Error('user is not found');
   }
 
   const data: UserRes = {};

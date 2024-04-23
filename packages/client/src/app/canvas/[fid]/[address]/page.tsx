@@ -1181,6 +1181,7 @@ const Canvas = track(
             description: 'Unknown error',
             position: 'top-right'
           });
+          console.error(e);
         }
       } finally {
         setShouldRetry(false);
@@ -1334,6 +1335,7 @@ const Canvas = track(
             description: 'Unknown error',
             position: 'top-right'
           });
+          console.error(e);
         }
       } finally {
         setShouldRetry(false);
