@@ -21,3 +21,5 @@ export const siteOrigin =
   'http://localhost:8000';
 
 export const siteDomain = siteOrigin.split('://')[1];
+
+export const maxErrorReason = 40;
