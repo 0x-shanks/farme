@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
 import 'tldraw/tldraw.css';
 import '@farcaster/auth-kit/styles.css';
@@ -7,6 +6,7 @@ import '@farcaster/auth-kit/styles.css';
 import { Providers } from './provider';
 import { inter } from './fonts';
 import { siteOrigin } from './constants';
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 const title = 'farme';
 const description = 'Everyone builds memories onchain';
@@ -38,11 +38,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const gaId = process.env.GA_ID;
   return (
     <html lang="en">
       <body className={inter.className}>
         <Providers>{children}</Providers>
       </body>
+      {!!gaId && <GoogleAnalytics gaId={gaId} />}
     </html>
   );
 }
