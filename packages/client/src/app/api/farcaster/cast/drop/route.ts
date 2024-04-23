@@ -1,3 +1,4 @@
+import { appFid } from '@/app/constants';
 import { farcasterHubClient } from '@/utils/farcaster/client';
 import {
   FarcasterNetwork,
@@ -15,7 +16,6 @@ import { NextResponse } from 'next/server';
 import { Hex, hexToBytes } from 'viem';
 import { z } from 'zod';
 
-const FID = 489899;
 const FC_NETWORK = FarcasterNetwork.MAINNET;
 
 const requestSchema = z.object({
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
   const ed25519Signer = new NobleEd25519Signer(privateKeyBytes);
 
   const dataOptions = {
-    fid: FID,
+    fid: appFid,
     network: FC_NETWORK
   };
 
