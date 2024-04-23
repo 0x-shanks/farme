@@ -131,6 +131,7 @@ import { CreatePreviewMappingRequest } from '@/models/createPreviewMappingReques
 import { SaveCastRequest } from '@/models/saveCastRequest';
 import { useLocalStorage } from 'usehooks-ts';
 import { MdLogin } from 'react-icons/md';
+import { IoReload } from 'react-icons/io5';
 
 export default function CanvasPage({
   params
@@ -193,6 +194,7 @@ const Canvas = track(
     const onceUserFetch = useRef();
     const [enabledNotification, setEnabledNotification] =
       useLocalStorage<boolean>('notification', true);
+    const [shouldRetry, setShouldRetry] = useState<boolean>(false);
 
     const {
       isOpen: isStickerOpen,
@@ -499,6 +501,16 @@ const Canvas = track(
         setFarcasterUser(res.data.user);
       })();
     }, [onceUserFetch]);
+
+    // Retry
+    useEffect(() => {
+      if (isDropLoading || isSaveLoading) {
+        const timer = setTimeout(() => {
+          setShouldRetry(true);
+        }, 3000);
+        return () => clearTimeout(timer);
+      }
+    }, [isDropLoading, isSaveLoading]);
 
     //
     // Util
@@ -1113,6 +1125,7 @@ const Canvas = track(
         );
         console.error(e);
       } finally {
+        setShouldRetry(false);
         setIsDropLoading(false);
       }
     };
@@ -1245,6 +1258,7 @@ const Canvas = track(
         // TODO: error handle
         console.error(e);
       } finally {
+        setShouldRetry(false);
         setIsSaveLoading(false);
       }
     };
@@ -1470,6 +1484,15 @@ const Canvas = track(
       editor.mark('latest');
     };
 
+    const handleRetry = async () => {
+      if (isDropLoading) {
+        await handleDrop();
+      }
+      if (isSaveLoading) {
+        await handleSave();
+      }
+    };
+
     return (
       <Box
         pos="absolute"
@@ -1607,7 +1630,18 @@ const Canvas = track(
         {authenticated ? (
           <VStack pos="absolute" bottom={8} left={0} right={0} w="full">
             <VStack px={6} py={4} justify="center" w="full">
-              {!!selectedShapeId && !editedFile && (
+              {shouldRetry && (
+                <Button
+                  colorScheme="primary"
+                  onClick={handleRetry}
+                  rounded="full"
+                  leftIcon={<Icon as={IoReload} />}
+                  pointerEvents="all"
+                >
+                  Retry
+                </Button>
+              )}
+              {!!selectedShapeId && !editedFile && !isSaveLoading && (
                 <Card shadow="lg">
                   <CardBody>
                     <VStack spacing={1}>
@@ -1852,7 +1886,7 @@ const Canvas = track(
                     {isChangeCanvas ? (
                       <>
                         <IconButton
-                          aria-label="save"
+                          aria-label="reset"
                           icon={<Icon as={IoMdClose} />}
                           colorScheme="gray"
                           rounded="full"
