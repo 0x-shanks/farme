@@ -100,9 +100,10 @@ contract Canvas is UUPSUpgradeable, OwnableUpgradeable {
       bool isNewSticker = shape.creator == address(0);
       bool isCreator = msg.sender == shape.creator;
 
+      // Skip
       if (!isCanvasOwner && !isNewSticker && !isCreator) {
         if (_getIsChange(shape, shapes[i], asset, assets_[i])) {
-          revert Forbidden();
+          continue;
         }
       }
 
