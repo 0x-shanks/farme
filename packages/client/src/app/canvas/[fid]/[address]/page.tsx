@@ -693,10 +693,10 @@ const Canvas = track(
       if (isDropLoading || isSaveLoading) {
         const timer = setTimeout(() => {
           setShouldRetry(true);
-        }, 3000);
+        }, 5000);
         return () => clearTimeout(timer);
       }
-    }, [isDropLoading, isSaveLoading]);
+    }, [isDropLoading, isSaveLoading, shouldRetry]);
 
     //
     // Handler
@@ -1551,6 +1551,7 @@ const Canvas = track(
     };
 
     const handleRetry = async () => {
+      setShouldRetry(false);
       if (isDropLoading) {
         await handleDrop();
       }
