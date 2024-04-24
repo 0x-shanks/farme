@@ -1,7 +1,7 @@
 'use client';
 
 import { UserResponseItem, UsersResponse } from '@/models/userResponse';
-import { FC, useEffect, useRef, useState } from 'react';
+import { FC, useEffect, useMemo, useRef, useState } from 'react';
 import { IUserShape, UserShapeUtil } from '@/components/UserShapeUtil';
 import {
   IUserDetailShape,
@@ -27,7 +27,11 @@ import {
   Text,
   Switch,
   DrawerHeader,
-  Image
+  Image,
+  Slider,
+  SliderTrack,
+  SliderFilledTrack,
+  SliderThumb
 } from '@chakra-ui/react';
 import { IoIosArrowBack } from 'react-icons/io';
 import { canvasAbi } from '@/utils/contract/generated';
@@ -42,6 +46,7 @@ import { FaChevronRight } from 'react-icons/fa';
 import { signOut } from 'next-auth/react';
 import { useLocalStorage } from 'usehooks-ts';
 import { MdLogin } from 'react-icons/md';
+import { getMintDuration } from '@/utils/getMintDuration';
 
 export const Network: FC<{
   user: UserResponseItem;
@@ -69,6 +74,8 @@ const Content = track(
     const onceFetch = useRef<boolean>(false);
     const router = useRouter();
     const { logout, authenticated } = usePrivy();
+    const [defaultExpiredPeriod, setDefaultExpiredPeriod] =
+      useLocalStorage<number>('expiredPeriod', 5);
 
     const { data: canvasData, isSuccess: isCanvasSuccess } = useReadContract({
       abi: canvasAbi,
@@ -245,6 +252,11 @@ const Content = track(
       router.push('/');
     };
 
+    const expiredPeriod = useMemo(
+      () => getMintDuration(defaultExpiredPeriod),
+      [defaultExpiredPeriod]
+    );
+
     return (
       <>
         <Box
@@ -367,6 +379,36 @@ const Content = track(
                     If disabled, notifications from you to the other party on
                     the farcaster will be stopped.
                   </Text>
+                  <Divider />
+                </VStack>
+
+                <VStack w="full">
+                  <Text textAlign="start" w="full">
+                    Default mint duration
+                  </Text>
+
+                  <Text w="full" textAlign="start" fontSize="sm" color="gray">
+                    Set default mint duration when dropping stickers
+                  </Text>
+
+                  <HStack w="full">
+                    <Text w={40}>{expiredPeriod?.label}</Text>
+                    <Slider
+                      aria-label="expired"
+                      defaultValue={defaultExpiredPeriod}
+                      min={0}
+                      max={9}
+                      colorScheme="primary"
+                      pointerEvents="all"
+                      onChange={setDefaultExpiredPeriod}
+                    >
+                      <SliderTrack>
+                        <SliderFilledTrack />
+                      </SliderTrack>
+                      <SliderThumb boxSize={5} />
+                    </Slider>
+                  </HStack>
+
                   <Divider />
                 </VStack>
 

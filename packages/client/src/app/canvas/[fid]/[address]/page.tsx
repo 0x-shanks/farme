@@ -44,7 +44,11 @@ import {
   DrawerBody,
   useOutsideClick,
   Tag,
-  useToast
+  useToast,
+  Slider,
+  SliderTrack,
+  SliderFilledTrack,
+  SliderThumb
 } from '@chakra-ui/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CiImageOn } from 'react-icons/ci';
@@ -64,7 +68,7 @@ import {
   TokenContract,
   TokenContentMedia
 } from '@zoralabs/zdk/dist/queries/queries-sdk';
-import { addDays, getUnixTime } from 'date-fns';
+import { addDays, addMonths, addWeeks, addYears, getUnixTime } from 'date-fns';
 import { canvasAbi } from '@/utils/contract/generated';
 import { canvasAddress, tokenAddress } from '@/utils/contract/address';
 import { getWalletClient, waitForTransactionReceipt } from '@wagmi/core';
@@ -135,6 +139,7 @@ import { SaveCastRequest } from '@/models/saveCastRequest';
 import { useLocalStorage } from 'usehooks-ts';
 import { MdLogin } from 'react-icons/md';
 import { IoReload } from 'react-icons/io5';
+import { getMintDuration } from '@/utils/getMintDuration';
 
 export default function CanvasPage({
   params
@@ -203,6 +208,10 @@ const Canvas = track(
     const [shouldRetry, setShouldRetry] = useState<boolean>(false);
     const [isMintingSticker, setIsMintingSticker] = useState<boolean>(false);
     const [mintComment, setMintComment] = useState<string>('');
+    const [defaultExpiredPeriod, setDefaultExpiredPeriod] =
+      useLocalStorage<number>('expiredPeriod', 5);
+    const [expiredPeriodSlider, setExpiredPeriodSlider] =
+      useState<number>(defaultExpiredPeriod);
 
     const {
       isOpen: isStickerOpen,
@@ -458,6 +467,11 @@ const Canvas = track(
 
       return `https://${domain}/collect/${shortChainName}:${contractAddress.toLowerCase()}/${tokenId}?referrer=${canvasAddress}`;
     }, [selectedAsset]);
+
+    const expiredPeriod = useMemo(
+      () => getMintDuration(expiredPeriodSlider),
+      [expiredPeriodSlider]
+    );
 
     //
     // Side effect
@@ -1022,7 +1036,7 @@ const Canvas = track(
 
         const salesConfig = {
           saleStart: BigInt(getUnixTime(new Date())),
-          saleEnd: BigInt(getUnixTime(addDays(new Date(), 10))),
+          saleEnd: BigInt(getUnixTime(expiredPeriod.date)),
           maxTokensPerAddress: BigInt(0),
           pricePerToken: BigInt(0),
           fundsRecipient: address
@@ -1806,11 +1820,10 @@ const Canvas = track(
                     </Button>
                   </HStack>
                 )}
-                <HStack px={6} py={4} justify="space-between" w="full">
+                <HStack px={6} pb={4} justify="space-between" w="full">
                   {shouldShowDrop ? (
                     <>
-                      <Spacer />
-                      <VStack spacing={6} w="full">
+                      <VStack spacing={2} w="full">
                         <HStack w="full" alignItems="end">
                           <IconButton
                             aria-label="close image"
@@ -1851,7 +1864,7 @@ const Canvas = track(
                           )}
 
                           <VStack spacing={1}>
-                            <Text fontSize="xs">Symbol</Text>
+                            <Text fontSize="xs">Mood</Text>
                             <Button
                               pointerEvents="all"
                               onClick={() => setIsEmojiPickerOpen(true)}
@@ -1863,8 +1876,25 @@ const Canvas = track(
                             </Button>
                           </VStack>
                         </HStack>
+
+                        <HStack w="full">
+                          <Text w={20}>{expiredPeriod?.label}</Text>
+                          <Slider
+                            aria-label="expired"
+                            defaultValue={defaultExpiredPeriod}
+                            min={0}
+                            max={9}
+                            colorScheme="primary"
+                            pointerEvents="all"
+                            onChange={setExpiredPeriodSlider}
+                          >
+                            <SliderTrack>
+                              <SliderFilledTrack />
+                            </SliderTrack>
+                            <SliderThumb boxSize={5} />
+                          </Slider>
+                        </HStack>
                       </VStack>
-                      <Spacer />
                     </>
                   ) : (
                     <>
