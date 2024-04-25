@@ -6,7 +6,7 @@
   "scripts": {
     "deploy:testnet": "source .env && forge script script/CanvasDeploy.s.sol --rpc-url $ZORA_SEPOLIA_RPC_URL --broadcast",
     "upgrade:testnet": "source .env && forge script script/CanvasUpgrade.s.sol --sig 'run(address)' --rpc-url=$ZORA_SEPOLIA_RPC_URL $(cat broadcast/CanvasDeploy.s.sol/999999999/run-latest.json | jq -r '.transactions[1].contractAddress') --broadcast",
-    "test": "pnpm forge test"
+    "test": "pnpm forge test -vv"
   },
   "keywords": [],
   "author": "",
