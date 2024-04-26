@@ -1,3 +1,5 @@
 .next
 pnpm-lock.yaml
 public
+src/utils/contract/*.json
+src/utils/contract/generated.ts

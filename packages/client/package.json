@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write './**/*.{ts,tsx,yaml,json}'",
-    "copy:contract": "cp ../contracts/broadcast/CanvasDeploy.s.sol/999999999/run-latest.json src/utils/contract/testnet.json",
+    "copy:contract": "cp ../contracts/broadcast/CanvasDeploy.s.sol/999999999/run-latest.json src/utils/contract/testnet.json && cp ../contracts/broadcast/CanvasDeploy.s.sol/7777777/run-latest.json src/utils/contract/mainnet.json",
     "gen:wagmi": "wagmi generate",
     "prepare:contract": "pnpm copy:contract && pnpm gen:wagmi"
   },
