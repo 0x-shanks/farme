@@ -4,8 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "deploy:testnet": "source .env && forge script script/CanvasDeploy.s.sol --rpc-url $ZORA_SEPOLIA_RPC_URL --broadcast",
-    "upgrade:testnet": "source .env && forge script script/CanvasUpgrade.s.sol --sig 'run(address)' --rpc-url=$ZORA_SEPOLIA_RPC_URL $(cat broadcast/CanvasDeploy.s.sol/999999999/run-latest.json | jq -r '.transactions[1].contractAddress') --broadcast",
+    "deploy:testnet": "cp .env.testnet .env && source .env && forge script script/CanvasDeploy.s.sol --rpc-url $ZORA_RPC_URL --broadcast",
+    "upgrade:testnet": "cp .env.testnet .env && source .env && forge script script/CanvasUpgrade.s.sol --sig 'run(address)' --rpc-url=$ZORA_RPC_URL $(cat broadcast/CanvasDeploy.s.sol/999999999/run-latest.json | jq -r '.transactions[1].contractAddress') --broadcast",
+    "deploy:mainnet": "cp .env.mainnet .env && source .env && forge script script/CanvasDeploy.s.sol --rpc-url $ZORA_RPC_URL --broadcast",
+    "upgrade:mainnet": "cp .env.mainnet .env && source .env && forge script script/CanvasUpgrade.s.sol --sig 'run(address)' --rpc-url=$ZORA_RPC_URL $(cat broadcast/CanvasDeploy.s.sol/7777777/run-latest.json | jq -r '.transactions[1].contractAddress') --broadcast",
     "test": "pnpm forge test -vv"
   },
   "keywords": [],

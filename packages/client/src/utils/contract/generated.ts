@@ -8,7 +8,7 @@ export const canvasAbi = [
     type: 'function',
     inputs: [],
     name: 'UPGRADE_INTERFACE_VERSION',
-    outputs: [{ name: '', internalType: 'string', type: 'string' }]
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
   },
   {
     stateMutability: 'view',
@@ -28,8 +28,8 @@ export const canvasAbi = [
         type: 'tuple',
         components: [
           { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-          { name: 'value', internalType: 'int256', type: 'int256' }
-        ]
+          { name: 'value', internalType: 'int256', type: 'int256' },
+        ],
       },
       {
         name: 'h',
@@ -37,17 +37,17 @@ export const canvasAbi = [
         type: 'tuple',
         components: [
           { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-          { name: 'value', internalType: 'int256', type: 'int256' }
-        ]
-      }
-    ]
+          { name: 'value', internalType: 'int256', type: 'int256' },
+        ],
+      },
+    ],
   },
   {
     stateMutability: 'view',
     type: 'function',
     inputs: [{ name: '', internalType: 'address', type: 'address' }],
     name: 'canvasPreviewURI',
-    outputs: [{ name: '', internalType: 'string', type: 'string' }]
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
   },
   {
     stateMutability: 'nonpayable',
@@ -72,8 +72,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'h',
@@ -81,10 +81,10 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
-          }
-        ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
+          },
+        ],
       },
       {
         name: 'shape',
@@ -98,8 +98,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'y',
@@ -107,8 +107,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'rotation',
@@ -116,8 +116,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           { name: 'creator', internalType: 'address', type: 'address' },
           { name: 'createdAt', internalType: 'uint256', type: 'uint256' },
@@ -129,8 +129,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'h',
@@ -138,17 +138,17 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
-          { name: 'index', internalType: 'string', type: 'string' }
-        ]
+          { name: 'index', internalType: 'string', type: 'string' },
+        ],
       },
       { name: 'maxSupply', internalType: 'uint256', type: 'uint256' },
       {
         name: 'fixedPriceMinterAddress',
         internalType: 'address',
-        type: 'address'
+        type: 'address',
       },
       {
         name: 'salesConfig',
@@ -160,17 +160,17 @@ export const canvasAbi = [
           {
             name: 'maxTokensPerAddress',
             internalType: 'uint64',
-            type: 'uint64'
+            type: 'uint64',
           },
           { name: 'pricePerToken', internalType: 'uint96', type: 'uint96' },
-          { name: 'fundsRecipient', internalType: 'address', type: 'address' }
-        ]
+          { name: 'fundsRecipient', internalType: 'address', type: 'address' },
+        ],
       },
       { name: 'createReferral', internalType: 'address', type: 'address' },
-      { name: 'previewURI', internalType: 'string', type: 'string' }
+      { name: 'previewURI', internalType: 'string', type: 'string' },
     ],
     name: 'createSticker',
-    outputs: []
+    outputs: [],
   },
   {
     stateMutability: 'nonpayable',
@@ -189,8 +189,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'y',
@@ -198,8 +198,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'rotation',
@@ -207,8 +207,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           { name: 'creator', internalType: 'address', type: 'address' },
           { name: 'createdAt', internalType: 'uint256', type: 'uint256' },
@@ -220,8 +220,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'h',
@@ -229,11 +229,11 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
-          { name: 'index', internalType: 'string', type: 'string' }
-        ]
+          { name: 'index', internalType: 'string', type: 'string' },
+        ],
       },
       {
         name: 'updatedShapes',
@@ -247,8 +247,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'y',
@@ -256,8 +256,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'rotation',
@@ -265,8 +265,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           { name: 'creator', internalType: 'address', type: 'address' },
           { name: 'createdAt', internalType: 'uint256', type: 'uint256' },
@@ -278,8 +278,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'h',
@@ -287,11 +287,11 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
-          { name: 'index', internalType: 'string', type: 'string' }
-        ]
+          { name: 'index', internalType: 'string', type: 'string' },
+        ],
       },
       { name: 'deletedShapeIDs', internalType: 'uint256[]', type: 'uint256[]' },
       {
@@ -311,8 +311,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'h',
@@ -320,15 +320,15 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
-          }
-        ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
+          },
+        ],
       },
-      { name: 'previewURI', internalType: 'string', type: 'string' }
+      { name: 'previewURI', internalType: 'string', type: 'string' },
     ],
     name: 'editCanvas',
-    outputs: []
+    outputs: [],
   },
   {
     stateMutability: 'payable',
@@ -348,8 +348,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'y',
@@ -357,8 +357,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'rotation',
@@ -366,8 +366,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           { name: 'creator', internalType: 'address', type: 'address' },
           { name: 'createdAt', internalType: 'uint256', type: 'uint256' },
@@ -379,8 +379,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'h',
@@ -388,11 +388,11 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
-          { name: 'index', internalType: 'string', type: 'string' }
-        ]
+          { name: 'index', internalType: 'string', type: 'string' },
+        ],
       },
       {
         name: 'updatedShapes',
@@ -406,8 +406,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'y',
@@ -415,8 +415,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'rotation',
@@ -424,8 +424,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           { name: 'creator', internalType: 'address', type: 'address' },
           { name: 'createdAt', internalType: 'uint256', type: 'uint256' },
@@ -437,8 +437,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'h',
@@ -446,11 +446,11 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
-          { name: 'index', internalType: 'string', type: 'string' }
-        ]
+          { name: 'index', internalType: 'string', type: 'string' },
+        ],
       },
       { name: 'deletedShapeIDs', internalType: 'uint256[]', type: 'uint256[]' },
       {
@@ -470,8 +470,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'h',
@@ -479,15 +479,15 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
-          }
-        ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
+          },
+        ],
       },
-      { name: 'previewURI', internalType: 'string', type: 'string' }
+      { name: 'previewURI', internalType: 'string', type: 'string' },
     ],
     name: 'editCanvasFee',
-    outputs: []
+    outputs: [],
   },
   {
     stateMutability: 'view',
@@ -512,8 +512,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'h',
@@ -521,12 +521,12 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
-          }
-        ]
-      }
-    ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
+          },
+        ],
+      },
+    ],
   },
   {
     stateMutability: 'pure',
@@ -534,10 +534,10 @@ export const canvasAbi = [
     inputs: [
       { name: 'tokenId', internalType: 'uint256', type: 'uint256' },
       { name: 'contractAddress', internalType: 'address', type: 'address' },
-      { name: 'chainId', internalType: 'uint256', type: 'uint256' }
+      { name: 'chainId', internalType: 'uint256', type: 'uint256' },
     ],
     name: 'getAssetId',
-    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }]
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
   },
   {
     stateMutability: 'view',
@@ -557,8 +557,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'y',
@@ -566,8 +566,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'rotation',
@@ -575,8 +575,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           { name: 'creator', internalType: 'address', type: 'address' },
           { name: 'createdAt', internalType: 'uint256', type: 'uint256' },
@@ -588,8 +588,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'h',
@@ -597,11 +597,11 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
-          { name: 'index', internalType: 'string', type: 'string' }
-        ]
+          { name: 'index', internalType: 'string', type: 'string' },
+        ],
       },
       {
         name: '',
@@ -620,8 +620,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'h',
@@ -629,34 +629,34 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
-          }
-        ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
+          },
+        ],
       },
-      { name: '', internalType: 'string', type: 'string' }
-    ]
+      { name: '', internalType: 'string', type: 'string' },
+    ],
   },
   {
     stateMutability: 'view',
     type: 'function',
     inputs: [{ name: 'canvasOwner', internalType: 'address', type: 'address' }],
     name: 'getCanvasPreviewURI',
-    outputs: [{ name: '', internalType: 'string', type: 'string' }]
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
   },
   {
     stateMutability: 'view',
     type: 'function',
     inputs: [{ name: 'canvasOwner', internalType: 'address', type: 'address' }],
     name: 'getShapeIDs',
-    outputs: [{ name: '', internalType: 'uint256[]', type: 'uint256[]' }]
+    outputs: [{ name: '', internalType: 'uint256[]', type: 'uint256[]' }],
   },
   {
     stateMutability: 'view',
     type: 'function',
     inputs: [
       { name: 'canvasOwner', internalType: 'address', type: 'address' },
-      { name: 'shapeID', internalType: 'uint256', type: 'uint256' }
+      { name: 'shapeID', internalType: 'uint256', type: 'uint256' },
     ],
     name: 'getShapeMap',
     outputs: [
@@ -672,8 +672,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'y',
@@ -681,8 +681,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'rotation',
@@ -690,8 +690,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           { name: 'creator', internalType: 'address', type: 'address' },
           { name: 'createdAt', internalType: 'uint256', type: 'uint256' },
@@ -703,8 +703,8 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
           {
             name: 'h',
@@ -712,58 +712,58 @@ export const canvasAbi = [
             type: 'tuple',
             components: [
               { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-              { name: 'value', internalType: 'int256', type: 'int256' }
-            ]
+              { name: 'value', internalType: 'int256', type: 'int256' },
+            ],
           },
-          { name: 'index', internalType: 'string', type: 'string' }
-        ]
-      }
-    ]
+          { name: 'index', internalType: 'string', type: 'string' },
+        ],
+      },
+    ],
   },
   {
     stateMutability: 'nonpayable',
     type: 'function',
     inputs: [{ name: 'owner', internalType: 'address', type: 'address' }],
     name: 'initialize',
-    outputs: []
+    outputs: [],
   },
   {
     stateMutability: 'view',
     type: 'function',
     inputs: [],
     name: 'owner',
-    outputs: [{ name: '', internalType: 'address', type: 'address' }]
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
   },
   {
     stateMutability: 'view',
     type: 'function',
     inputs: [],
     name: 'proxiableUUID',
-    outputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }]
+    outputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
   },
   {
     stateMutability: 'nonpayable',
     type: 'function',
     inputs: [],
     name: 'renounceOwnership',
-    outputs: []
+    outputs: [],
   },
   {
     stateMutability: 'view',
     type: 'function',
     inputs: [
       { name: '', internalType: 'address', type: 'address' },
-      { name: '', internalType: 'uint256', type: 'uint256' }
+      { name: '', internalType: 'uint256', type: 'uint256' },
     ],
     name: 'shapeIDs',
-    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }]
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
   },
   {
     stateMutability: 'view',
     type: 'function',
     inputs: [
       { name: '', internalType: 'address', type: 'address' },
-      { name: '', internalType: 'uint256', type: 'uint256' }
+      { name: '', internalType: 'uint256', type: 'uint256' },
     ],
     name: 'shapeMap',
     outputs: [
@@ -774,8 +774,8 @@ export const canvasAbi = [
         type: 'tuple',
         components: [
           { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-          { name: 'value', internalType: 'int256', type: 'int256' }
-        ]
+          { name: 'value', internalType: 'int256', type: 'int256' },
+        ],
       },
       {
         name: 'y',
@@ -783,8 +783,8 @@ export const canvasAbi = [
         type: 'tuple',
         components: [
           { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-          { name: 'value', internalType: 'int256', type: 'int256' }
-        ]
+          { name: 'value', internalType: 'int256', type: 'int256' },
+        ],
       },
       {
         name: 'rotation',
@@ -792,8 +792,8 @@ export const canvasAbi = [
         type: 'tuple',
         components: [
           { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-          { name: 'value', internalType: 'int256', type: 'int256' }
-        ]
+          { name: 'value', internalType: 'int256', type: 'int256' },
+        ],
       },
       { name: 'creator', internalType: 'address', type: 'address' },
       { name: 'createdAt', internalType: 'uint256', type: 'uint256' },
@@ -805,8 +805,8 @@ export const canvasAbi = [
         type: 'tuple',
         components: [
           { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-          { name: 'value', internalType: 'int256', type: 'int256' }
-        ]
+          { name: 'value', internalType: 'int256', type: 'int256' },
+        ],
       },
       {
         name: 'h',
@@ -814,28 +814,28 @@ export const canvasAbi = [
         type: 'tuple',
         components: [
           { name: 'decimal', internalType: 'uint16', type: 'uint16' },
-          { name: 'value', internalType: 'int256', type: 'int256' }
-        ]
+          { name: 'value', internalType: 'int256', type: 'int256' },
+        ],
       },
-      { name: 'index', internalType: 'string', type: 'string' }
-    ]
+      { name: 'index', internalType: 'string', type: 'string' },
+    ],
   },
   {
     stateMutability: 'nonpayable',
     type: 'function',
     inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
     name: 'transferOwnership',
-    outputs: []
+    outputs: [],
   },
   {
     stateMutability: 'payable',
     type: 'function',
     inputs: [
       { name: 'newImplementation', internalType: 'address', type: 'address' },
-      { name: 'data', internalType: 'bytes', type: 'bytes' }
+      { name: 'data', internalType: 'bytes', type: 'bytes' },
     ],
     name: 'upgradeToAndCall',
-    outputs: []
+    outputs: [],
   },
   {
     type: 'event',
@@ -845,11 +845,11 @@ export const canvasAbi = [
         name: 'creator',
         internalType: 'address',
         type: 'address',
-        indexed: false
+        indexed: false,
       },
-      { name: 'id', internalType: 'uint256', type: 'uint256', indexed: false }
+      { name: 'id', internalType: 'uint256', type: 'uint256', indexed: false },
     ],
-    name: 'CreateSticker'
+    name: 'CreateSticker',
   },
   {
     type: 'event',
@@ -859,16 +859,16 @@ export const canvasAbi = [
         name: 'editor',
         internalType: 'address',
         type: 'address',
-        indexed: false
+        indexed: false,
       },
       {
         name: 'canvasOwner',
         internalType: 'address',
         type: 'address',
-        indexed: false
-      }
+        indexed: false,
+      },
     ],
-    name: 'EditCanvas'
+    name: 'EditCanvas',
   },
   {
     type: 'event',
@@ -878,10 +878,10 @@ export const canvasAbi = [
         name: 'version',
         internalType: 'uint64',
         type: 'uint64',
-        indexed: false
-      }
+        indexed: false,
+      },
     ],
-    name: 'Initialized'
+    name: 'Initialized',
   },
   {
     type: 'event',
@@ -891,16 +891,16 @@ export const canvasAbi = [
         name: 'previousOwner',
         internalType: 'address',
         type: 'address',
-        indexed: true
+        indexed: true,
       },
       {
         name: 'newOwner',
         internalType: 'address',
         type: 'address',
-        indexed: true
-      }
+        indexed: true,
+      },
     ],
-    name: 'OwnershipTransferred'
+    name: 'OwnershipTransferred',
   },
   {
     type: 'event',
@@ -910,22 +910,22 @@ export const canvasAbi = [
         name: 'implementation',
         internalType: 'address',
         type: 'address',
-        indexed: true
-      }
+        indexed: true,
+      },
     ],
-    name: 'Upgraded'
+    name: 'Upgraded',
   },
   {
     type: 'error',
     inputs: [{ name: 'target', internalType: 'address', type: 'address' }],
-    name: 'AddressEmptyCode'
+    name: 'AddressEmptyCode',
   },
   {
     type: 'error',
     inputs: [
-      { name: 'implementation', internalType: 'address', type: 'address' }
+      { name: 'implementation', internalType: 'address', type: 'address' },
     ],
-    name: 'ERC1967InvalidImplementation'
+    name: 'ERC1967InvalidImplementation',
   },
   { type: 'error', inputs: [], name: 'ERC1967NonPayable' },
   { type: 'error', inputs: [], name: 'FailedInnerCall' },
@@ -936,17 +936,17 @@ export const canvasAbi = [
   {
     type: 'error',
     inputs: [{ name: 'owner', internalType: 'address', type: 'address' }],
-    name: 'OwnableInvalidOwner'
+    name: 'OwnableInvalidOwner',
   },
   {
     type: 'error',
     inputs: [{ name: 'account', internalType: 'address', type: 'address' }],
-    name: 'OwnableUnauthorizedAccount'
+    name: 'OwnableUnauthorizedAccount',
   },
   { type: 'error', inputs: [], name: 'UUPSUnauthorizedCallContext' },
   {
     type: 'error',
     inputs: [{ name: 'slot', internalType: 'bytes32', type: 'bytes32' }],
-    name: 'UUPSUnsupportedProxiableUUID'
-  }
-] as const;
+    name: 'UUPSUnsupportedProxiableUUID',
+  },
+] as const
