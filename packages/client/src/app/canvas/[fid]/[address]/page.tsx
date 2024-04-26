@@ -382,12 +382,12 @@ const Canvas = track(
       const parsedData = JSON.parse(data) as StoreSnapshot<TLRecord>;
       const assetKeys = Object.values(parsedData.store)
         .filter((s) => s.typeName == 'asset')
-        .map((s) => s.id);
+        .map((s) => s.id as string);
       const assetKeysInShape = Object.values(parsedData.store)
         .filter((s) => s.typeName == 'shape')
         .map((s) => {
           const is = s as TLImageShape;
-          return is.props.assetId;
+          return is.props.assetId as string;
         });
       const unusedAssetKey = assetKeys.filter(
         (ak) => assetKeysInShape.indexOf(ak) == -1
