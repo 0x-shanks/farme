@@ -9,6 +9,7 @@ import {
   TLImageShape,
   TLParentId,
   TLRecord,
+  TLShape,
   TLShapeId,
   Tldraw,
   exportToBlob,
@@ -377,6 +378,129 @@ const Canvas = track(
       }
     };
 
+    const removeUnusedAssets = (data: string) => {
+      const parsedData = JSON.parse(data) as StoreSnapshot<TLRecord>;
+      const assetKeys = Object.values(parsedData.store)
+        .filter((s) => s.typeName == 'asset')
+        .map((s) => s.id);
+      const assetKeysInShape = Object.values(parsedData.store)
+        .filter((s) => s.typeName == 'shape')
+        .map((s) => {
+          const is = s as TLImageShape;
+          return is.props.assetId;
+        });
+      const unusedAssetKey = assetKeys.filter(
+        (ak) => assetKeysInShape.indexOf(ak) == -1
+      );
+
+      const dataWithoutAssetValues = { ...parsedData };
+      unusedAssetKey.forEach((key) => {
+        delete dataWithoutAssetValues.store[key as any];
+      });
+      return dataWithoutAssetValues;
+    };
+
+    const getAddedShapes = (
+      currentJson: string,
+      lastJson: string
+    ): TLImageShape[] => {
+      const current = JSON.parse(currentJson) as StoreSnapshot<TLRecord>;
+      const currentShapes = Object.values(current.store).filter(
+        (s) => s.typeName == 'shape'
+      );
+      const currentShapeKeys = currentShapes.map((s) => s.meta.onchainShapeId);
+
+      const last = JSON.parse(lastJson) as StoreSnapshot<TLRecord>;
+      const lastShapeKeys = Object.values(last.store)
+        .filter((s) => s.typeName == 'shape')
+        .map((s) => s.meta.onchainShapeId);
+
+      const addedShapeKey = currentShapeKeys.filter(
+        (ak) => lastShapeKeys.indexOf(ak) == -1
+      );
+
+      return currentShapes
+        .filter((s) => addedShapeKey.indexOf(s.meta.onchainShapeId) != -1)
+        .map((s) => s as TLImageShape);
+    };
+
+    const getUpdatedShapes = (
+      currentJson: string,
+      lastJson: string
+    ): TLImageShape[] => {
+      const current = JSON.parse(currentJson) as StoreSnapshot<TLRecord>;
+      const currentShapes = Object.values(current.store).filter(
+        (s) => s.typeName == 'shape'
+      );
+
+      const last = JSON.parse(lastJson) as StoreSnapshot<TLRecord>;
+      const lastShapes = Object.values(last.store).filter(
+        (s) => s.typeName == 'shape'
+      );
+
+      return currentShapes
+        .filter((cs) => {
+          const lashShapeIndex = lastShapes.findIndex(
+            (ls) => ls.meta.onchainShapeId == cs.meta.onchainShapeId
+          );
+          if (lashShapeIndex == -1) {
+            return false;
+          }
+
+          return (
+            JSON.stringify(lastShapes[lashShapeIndex]) != JSON.stringify(cs)
+          );
+        })
+        .map((s) => s as TLImageShape);
+    };
+
+    const getRemovedShapeIds = (
+      currentJson: string,
+      lastJson: string
+    ): bigint[] => {
+      const current = JSON.parse(currentJson) as StoreSnapshot<TLRecord>;
+      const currentShapeKeys = Object.values(current.store)
+        .filter((s) => s.typeName == 'shape')
+        .map((s) => s.meta.onchainShapeId as string);
+
+      const last = JSON.parse(lastJson) as StoreSnapshot<TLRecord>;
+      const lastShapeKeys: string[] = Object.values(last.store)
+        .filter((s) => s.typeName == 'shape')
+        .map((s) => s.meta.onchainShapeId as string);
+
+      return lastShapeKeys
+        .filter((ak) => currentShapeKeys.indexOf(ak) == -1)
+        .map((k) => BigInt(k));
+    };
+
+    const getFormatShapesForContract = (
+      shapes: TLImageShape[],
+      assets: TLAsset[],
+      fid: number
+    ) => {
+      const formattedShapes = shapes.map((s) => {
+        const asset = assets.find((a) => a.id == s.props.assetId);
+        if (asset == undefined) {
+          throw new Error('asset is not found');
+        }
+        return {
+          id: BigInt(s.meta.onchainShapeId as string),
+          x: encodeFloat(s.x),
+          y: encodeFloat(s.y),
+          rotation: encodeFloat(s.rotation),
+          creator: s.meta.creator as Address,
+          createdAt: BigInt(s.meta.createdAt as number),
+          fid: BigInt(fid),
+          assetID: BigInt(asset.meta.onchainAssetId as string),
+          w: encodeFloat(s.props.w),
+          h: encodeFloat(s.props.h),
+          index: s.index
+        };
+      });
+
+      return formattedShapes;
+    };
+
     //
     // Memo
     //
@@ -403,26 +527,6 @@ const Canvas = track(
 
     const OpacityRegex = /"opacity":\s*(\d+(\.\d+)?),/g;
     const IsLockedRegex = /"isLocked":\s*(true|false),/g;
-    const assetKeyRegex = /asset:\d+/g;
-    const shapeKeyRegex = /shape:\d+/g;
-    const removeUnusedAssets = (data: string) => {
-      const parsedData = JSON.parse(data) as StoreSnapshot<TLRecord>;
-      const assetKeys = Object.keys(parsedData.store).filter(
-        (k) => k.match(assetKeyRegex) as string[]
-      );
-      const shapeKeys = Object.keys(parsedData.store).filter((k) =>
-        k.match(shapeKeyRegex)
-      ) as string[];
-      const unusedAssetKey = assetKeys.filter(
-        (ak) => shapeKeys.indexOf(ak) == -1
-      );
-
-      const dataWithoutAssetValues = { ...parsedData };
-      unusedAssetKey.forEach((key) => {
-        delete dataWithoutAssetValues.store[key as any];
-      });
-      return dataWithoutAssetValues;
-    };
 
     const isChangeCanvas = useMemo(() => {
       if (!address) {
@@ -1216,6 +1320,10 @@ const Canvas = track(
         throw new Error('fid is not found');
       }
 
+      if (lastSave == undefined) {
+        throw new Error('lastSave is not found');
+      }
+
       setIsSaveLoading(true);
       const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
       editor.updateShapes(
@@ -1229,20 +1337,14 @@ const Canvas = track(
 
       try {
         const previewURI = await getPreviewURL();
-
         const snapshot = editor.store.getSnapshot();
-
         const stringified = JSON.stringify(snapshot);
-        console.log(stringified);
-
         const shapes = Object.values(snapshot.store).filter(
           (s) => s.typeName == 'shape'
         ) as TLImageShape[];
-
         const assets = Object.values(snapshot.store).filter(
           (s) => s.typeName == 'asset'
         ) as TLImageAsset[];
-
         const formattedAssets = assets.map((a) => {
           const tokenContract = a.meta.tokenContract as {
             collectionAddress: Address;
@@ -1260,26 +1362,19 @@ const Canvas = track(
           };
         });
 
-        const formattedShapes = shapes.map((s) => {
-          const asset = assets.find((a) => a.id == s.props.assetId);
-          if (asset == undefined) {
-            throw new Error('asset is not found');
-          }
+        const addedShapes = getFormatShapesForContract(
+          getAddedShapes(stringified, lastSave),
+          assets,
+          Number(session.user!.id)
+        );
 
-          return {
-            id: BigInt(s.meta.onchainShapeId as string),
-            x: encodeFloat(s.x),
-            y: encodeFloat(s.y),
-            rotation: encodeFloat(s.rotation),
-            creator: s.meta.creator as Address,
-            createdAt: BigInt(s.meta.createdAt as number),
-            fid: BigInt(session.user!.id),
-            assetID: BigInt(asset.meta.onchainAssetId as string),
-            w: encodeFloat(s.props.w),
-            h: encodeFloat(s.props.h),
-            index: s.index
-          };
-        });
+        const updatedShapes = getFormatShapesForContract(
+          getUpdatedShapes(stringified, lastSave),
+          assets,
+          Number(session.user!.id)
+        );
+
+        const deletedShapeIds = getRemovedShapeIds(stringified, lastSave);
 
         const result = await writeContractAsync({
           abi: canvasAbi,
@@ -1288,39 +1383,34 @@ const Canvas = track(
           args: [
             feeTaker,
             canvasOwner,
-            formattedShapes,
+            addedShapes,
+            updatedShapes,
+            deletedShapeIds,
             formattedAssets,
             previewURI
           ],
           value: fee
         });
-
         await waitForTransactionReceipt(config, {
           hash: result,
           onReplaced: (res) => {
             console.log('onReplaced', res);
           }
         });
-
         setIsSavedSuccess(true);
         setLastSave(JSON.stringify(editor.store.getSnapshot()));
         editor.mark('latest');
-
         const split = previewURI.split('/');
         const cid = split[split.length - 1];
-
         const previewReq: CreatePreviewMappingRequest = { fid, cid };
         await httpClient.post('/preview/mapping', previewReq);
-
         if (!enabledNotification) {
           return;
         }
-
         if (Number(session.user.id) == fid) {
           // NOTE: consider adding self notification setting
           return;
         }
-
         const req: SaveCastRequest = {
           from: Number(session.user.id),
           to: fid,
