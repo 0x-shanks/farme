@@ -211,7 +211,7 @@ export default function Home() {
 
   if (
     isMainnet &&
-    session?.user?.id?.toLowerCase() != farcasterUser.address?.toLowerCase()
+    user?.wallet?.address.toLowerCase() != farcasterUser.address?.toLowerCase()
   ) {
     return (
       <main>
