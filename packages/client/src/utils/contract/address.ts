@@ -1,6 +1,6 @@
 import { Address } from 'viem';
 import testnet from './testnet.json';
-import mainnet from './testnet.json';
+import mainnet from './mainnet.json';
 import { isMainnet } from '../../app/constants';
 
 export const canvasAddress = isMainnet
