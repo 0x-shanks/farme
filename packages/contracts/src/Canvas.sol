@@ -49,6 +49,7 @@ contract Canvas is UUPSUpgradeable, OwnableUpgradeable {
   mapping(address => string) public canvasPreviewURI;
 
   event CreateSticker(address creator, uint256 id);
+  event EditCanvas(address editor, address canvasOwner);
 
   modifier requiredCanvasOwner(address canvasOwner) {
     if (canvasOwner == address(0)) {
@@ -131,8 +132,8 @@ contract Canvas is UUPSUpgradeable, OwnableUpgradeable {
     for (uint256 i = 0; i < shapeIDs[canvasOwner].length; i++) {
       bool isDeleteTarget = _getIsContain(deletedShapeIDs, shapeIDs[canvasOwner][i]);
       Shape memory shape = shapeMap[canvasOwner][shapeIDs[canvasOwner][i]];
-      bool isCanvasOwner = msg.sender == canvasOwner;
-      bool isCreator = msg.sender == shape.creator;
+      bool isCanvasOwner = _msgSender() == canvasOwner;
+      bool isCreator = _msgSender() == shape.creator;
       bool hasAuth = isCanvasOwner || isCreator;
 
       // Delete shapes
@@ -155,8 +156,8 @@ contract Canvas is UUPSUpgradeable, OwnableUpgradeable {
     for (uint256 i = 0; i < updatedShapes.length; i++) {
       Shape memory shape = shapeMap[canvasOwner][updatedShapes[i].id];
       Asset memory asset = assets[shape.assetID];
-      bool isCanvasOwner = msg.sender == canvasOwner;
-      bool isCreator = msg.sender == shape.creator;
+      bool isCanvasOwner = _msgSender() == canvasOwner;
+      bool isCreator = _msgSender() == shape.creator;
       uint256 assetID = getAssetId(asset.tokenID, asset.contractAddress, asset.chainID);
 
       // If you do not have the authority to make changes
@@ -178,6 +179,8 @@ contract Canvas is UUPSUpgradeable, OwnableUpgradeable {
 
     // Set preview
     canvasPreviewURI[canvasOwner] = previewURI;
+
+    emit EditCanvas(_msgSender(), canvasOwner);
   }
 
   function _getIsContain(uint256[] memory ids, uint256 target) internal pure returns (bool) {
@@ -285,14 +288,14 @@ contract Canvas is UUPSUpgradeable, OwnableUpgradeable {
     uint256 tokenID = token.setupNewTokenWithCreateReferral(newURI, maxSupply, createReferral);
 
     token.addPermission(0, fixedPriceMinterAddress, token.PERMISSION_BIT_MINTER());
-    token.addPermission(tokenID, msg.sender, token.PERMISSION_BIT_ADMIN());
+    token.addPermission(tokenID, _msgSender(), token.PERMISSION_BIT_ADMIN());
     token.callSale(
       tokenID,
       ZoraCreatorFixedPriceSaleStrategy(fixedPriceMinterAddress),
       abi.encodeWithSelector(ZoraCreatorFixedPriceSaleStrategy.setSale.selector, tokenID, salesConfig)
     );
 
-    token.adminMint(msg.sender, tokenID, 1, "0x");
+    token.adminMint(_msgSender(), tokenID, 1, "0x");
 
     uint256 chainID;
     assembly {
@@ -329,7 +332,7 @@ contract Canvas is UUPSUpgradeable, OwnableUpgradeable {
 
     canvasPreviewURI[canvasOwner] = previewURI;
 
-    emit CreateSticker(msg.sender, tokenID);
+    emit CreateSticker(_msgSender(), tokenID);
   }
 
   function getAssetId(uint256 tokenId, address contractAddress, uint256 chainId) public pure returns (uint256) {

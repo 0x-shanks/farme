@@ -9,6 +9,13 @@ contract ZoraCreator1155Mock is IZoraCreator1155 {
   event SetupNewTokenWithCreateReferral(string newURI, uint256 maxSupply, address createReferral);
   event AddPermission(uint256 tokenId, address user, uint256 permissionBits);
   event CallSale(uint256 tokenId, IMinter1155 salesConfig, bytes data);
+  event AdminMint(address recipient, uint256 tokenId, uint256 quantity, bytes data);
+
+  uint256 tokenId = 1;
+
+  function setTokenId(uint256 id) external {
+    tokenId = id;
+  }
 
   function setupNewTokenWithCreateReferral(
     string calldata newURI,
@@ -16,7 +23,7 @@ contract ZoraCreator1155Mock is IZoraCreator1155 {
     address createReferral
   ) external returns (uint256) {
     emit SetupNewTokenWithCreateReferral(newURI, maxSupply, createReferral);
-    return 0;
+    return tokenId;
   }
 
   function addPermission(uint256 tokenId, address user, uint256 permissionBits) external {
@@ -80,9 +87,13 @@ contract ZoraCreator1155Mock is IZoraCreator1155 {
     bytes calldata minterArguments
   ) external payable override {}
 
-  function PERMISSION_BIT_ADMIN() external override returns (uint256) {}
+  function PERMISSION_BIT_ADMIN() external pure override returns (uint256) {
+    return 2 ** 2;
+  }
 
-  function PERMISSION_BIT_MINTER() external override returns (uint256) {}
+  function PERMISSION_BIT_MINTER() external pure override returns (uint256) {
+    return 2 ** 1;
+  }
 
   function PERMISSION_BIT_SALES() external override returns (uint256) {}
 
@@ -100,7 +111,9 @@ contract ZoraCreator1155Mock is IZoraCreator1155 {
     address mintReferral
   ) external payable override {}
 
-  function adminMint(address recipient, uint256 tokenId, uint256 quantity, bytes memory data) external override {}
+  function adminMint(address recipient, uint256 tokenId, uint256 quantity, bytes memory data) external override {
+    emit AdminMint(recipient, tokenId, quantity, data);
+  }
 
   function adminMintBatch(
     address recipient,

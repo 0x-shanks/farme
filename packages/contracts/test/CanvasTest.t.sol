@@ -3,17 +3,18 @@ pragma solidity ^0.8.13;
 
 import { Test, console } from "forge-std/Test.sol";
 import { IZoraCreator1155 } from "@zoralabs/zora-1155-contracts/interfaces/IZoraCreator1155.sol";
+import { ZoraCreatorFixedPriceSaleStrategy } from "@zoralabs/zora-1155-contracts/minters/fixed-price/ZoraCreatorFixedPriceSaleStrategy.sol";
 
 import { Canvas } from "../src/Canvas.sol";
 import { ZoraCreator1155Mock } from "./mock/ZoraCreator1155Mock.sol";
 
 contract CanvasTest is Test {
   Canvas public canvas;
-  IZoraCreator1155 public tokenContract;
+  ZoraCreator1155Mock public tokenContract;
   address alice = address(32);
   address bob = address(64);
   address carol = address(96);
-  uint256 chainID = 999999999;
+  uint256 chainID = 31337;
 
   function setUp() public {
     canvas = new Canvas();
@@ -119,6 +120,8 @@ contract CanvasTest is Test {
     assets[0] = asset1;
 
     vm.prank(bob);
+    vm.expectEmit(true, true, false, true);
+    emit Canvas.EditCanvas(bob, alice);
     canvas.editCanvas(alice, shapes, new Canvas.Shape[](0), new uint256[](0), assets, "https://ipfs/preview1");
 
     bytes32 got = _getShapeHash(canvas.getShapeMap(alice, canvas.getShapeIDs(alice)[0]));
@@ -521,5 +524,177 @@ contract CanvasTest is Test {
     assertEq(canvas.getShapeIDs(alice).length, 0);
 
     assertEq(canvas.getCanvasPreviewURI(alice), "https://ipfs/preview9");
+  }
+
+  function testCreateSticker() public {
+    //
+    // Step 1: Alice drop a new sticker in her canvas
+    //
+    console.log("Step 1: Alice drop a new sticker in her canvas");
+
+    string memory newURI = "https://ipfs/asset-medatada";
+
+    uint256 assetID = _getAssetId(1, address(tokenContract), chainID);
+
+    Canvas.Shape memory shape = Canvas.Shape({
+      id: 1,
+      x: Canvas.Float({ decimal: 1, value: 1 }),
+      y: Canvas.Float({ decimal: 1, value: 1 }),
+      rotation: Canvas.Float({ decimal: 1, value: 1 }),
+      creator: alice,
+      createdAt: 1712296095,
+      fid: 64,
+      assetID: assetID,
+      w: Canvas.Float({ decimal: 1, value: 1 }),
+      h: Canvas.Float({ decimal: 1, value: 1 }),
+      index: "index1"
+    });
+
+    Canvas.Asset memory asset = Canvas.Asset({
+      tokenID: 1,
+      contractAddress: address(tokenContract),
+      chainID: chainID,
+      srcURI: "https://ipfs/asset1",
+      srcName: "asset1",
+      mimeType: "image/jpeg",
+      w: Canvas.Float({ decimal: 0, value: 400 }),
+      h: Canvas.Float({ decimal: 0, value: 400 })
+    });
+
+    uint256 maxSupply = 10000;
+
+    address fundsRecipient = address(200);
+    ZoraCreatorFixedPriceSaleStrategy.SalesConfig memory salesConfig = ZoraCreatorFixedPriceSaleStrategy.SalesConfig({
+      saleStart: 100,
+      saleEnd: 200,
+      maxTokensPerAddress: 10,
+      pricePerToken: 20,
+      fundsRecipient: fundsRecipient
+    });
+
+    address fixedPriceSaleStrategyAddress = address(300);
+    ZoraCreatorFixedPriceSaleStrategy fixedPriceSaleStrategy = ZoraCreatorFixedPriceSaleStrategy(
+      fixedPriceSaleStrategyAddress
+    );
+
+    address createReferral = address(400);
+
+    string memory previewURI = "https://ipfs/preview";
+
+    vm.prank(alice);
+    vm.expectEmit(true, true, true, false);
+    emit ZoraCreator1155Mock.SetupNewTokenWithCreateReferral(newURI, maxSupply, createReferral);
+
+    vm.expectEmit(true, true, true, false);
+    emit ZoraCreator1155Mock.AddPermission(0, fixedPriceSaleStrategyAddress, tokenContract.PERMISSION_BIT_MINTER());
+    vm.expectEmit(true, true, true, false);
+    emit ZoraCreator1155Mock.AddPermission(1, alice, tokenContract.PERMISSION_BIT_ADMIN());
+
+    vm.expectEmit(true, true, true, false);
+    emit ZoraCreator1155Mock.CallSale(
+      1,
+      fixedPriceSaleStrategy,
+      abi.encodeWithSelector(ZoraCreatorFixedPriceSaleStrategy.setSale.selector, 1, salesConfig)
+    );
+    vm.expectEmit(true, true, true, false);
+    emit ZoraCreator1155Mock.AdminMint(alice, 1, 1, "0x");
+    vm.expectEmit(true, true, false, false);
+    emit Canvas.CreateSticker(alice, 1);
+    canvas.createSticker(
+      alice,
+      newURI,
+      asset,
+      shape,
+      maxSupply,
+      fixedPriceSaleStrategyAddress,
+      salesConfig,
+      createReferral,
+      previewURI
+    );
+
+    bytes32 got = _getShapeHash(canvas.getShapeMap(alice, canvas.getShapeIDs(alice)[0]));
+    bytes32 want = _getShapeHash(shape);
+    assertEq(got, want);
+
+    got = _getAssetHash(canvas.getAsset(assetID));
+    want = _getAssetHash(asset);
+    assertEq(got, want);
+
+    assertEq(canvas.getCanvasPreviewURI(alice), previewURI);
+
+    //
+    // Step 2: Bob drop a new sticker in alice's canvas
+    //
+    console.log("Step 2: Bob drop a new sticker in alice's canvas");
+
+    tokenContract.setTokenId(2);
+
+    assetID = _getAssetId(2, address(tokenContract), chainID);
+
+    shape = Canvas.Shape({
+      id: 2,
+      x: Canvas.Float({ decimal: 1, value: 1 }),
+      y: Canvas.Float({ decimal: 1, value: 1 }),
+      rotation: Canvas.Float({ decimal: 1, value: 1 }),
+      creator: bob,
+      createdAt: 1712296095,
+      fid: 64,
+      assetID: assetID,
+      w: Canvas.Float({ decimal: 1, value: 1 }),
+      h: Canvas.Float({ decimal: 1, value: 1 }),
+      index: "index2"
+    });
+
+    asset = Canvas.Asset({
+      tokenID: 2,
+      contractAddress: address(tokenContract),
+      chainID: chainID,
+      srcURI: "https://ipfs/asset1",
+      srcName: "asset2",
+      mimeType: "image/jpeg",
+      w: Canvas.Float({ decimal: 0, value: 400 }),
+      h: Canvas.Float({ decimal: 0, value: 400 })
+    });
+
+    vm.prank(bob);
+    vm.expectEmit(true, true, true, false);
+    emit ZoraCreator1155Mock.SetupNewTokenWithCreateReferral(newURI, maxSupply, createReferral);
+
+    vm.expectEmit(true, true, true, false);
+    emit ZoraCreator1155Mock.AddPermission(0, fixedPriceSaleStrategyAddress, tokenContract.PERMISSION_BIT_MINTER());
+    vm.expectEmit(true, true, true, false);
+    emit ZoraCreator1155Mock.AddPermission(1, alice, tokenContract.PERMISSION_BIT_ADMIN());
+
+    vm.expectEmit(true, true, true, false);
+    emit ZoraCreator1155Mock.CallSale(
+      1,
+      fixedPriceSaleStrategy,
+      abi.encodeWithSelector(ZoraCreatorFixedPriceSaleStrategy.setSale.selector, 2, salesConfig)
+    );
+    vm.expectEmit(true, true, true, false);
+    emit ZoraCreator1155Mock.AdminMint(alice, 2, 1, "0x");
+    vm.expectEmit(true, true, false, false);
+    emit Canvas.CreateSticker(alice, 2);
+    canvas.createSticker(
+      alice,
+      newURI,
+      asset,
+      shape,
+      maxSupply,
+      fixedPriceSaleStrategyAddress,
+      salesConfig,
+      createReferral,
+      previewURI
+    );
+
+    got = _getShapeHash(canvas.getShapeMap(alice, canvas.getShapeIDs(alice)[1]));
+    want = _getShapeHash(shape);
+    assertEq(got, want);
+
+    got = _getAssetHash(canvas.getAsset(assetID));
+    want = _getAssetHash(asset);
+    assertEq(got, want);
+
+    assertEq(canvas.getCanvasPreviewURI(alice), previewURI);
   }
 }
