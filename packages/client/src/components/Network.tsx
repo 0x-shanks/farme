@@ -47,6 +47,7 @@ import { signOut } from 'next-auth/react';
 import { useLocalStorage } from 'usehooks-ts';
 import { MdLogin } from 'react-icons/md';
 import { getMintDuration } from '@/utils/getMintDuration';
+import { privacyPolicyLink, termsLink } from '@/app/constants';
 
 export const Network: FC<{
   user: UserResponseItem;
@@ -418,8 +419,11 @@ const Content = track(
                   </HStack>
 
                   <Box w="full">
-                    {/* TODO: fix href */}
-                    <Link href="">
+                    <Link
+                      href={privacyPolicyLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       <HStack w="full" justify="space-between">
                         <Text
                           w="full"
@@ -427,7 +431,7 @@ const Content = track(
                           fontSize="sm"
                           color="gray"
                         >
-                          Privacy
+                          Privacy Policy
                         </Text>
                         <Icon as={FaChevronRight} />
                       </HStack>
@@ -435,8 +439,11 @@ const Content = track(
                   </Box>
 
                   <Box w="full">
-                    {/* TODO: fix href */}
-                    <Link href="">
+                    <Link
+                      href={termsLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       <HStack w="full" justify="space-between">
                         <Text
                           w="full"
@@ -444,7 +451,7 @@ const Content = track(
                           fontSize="sm"
                           color="gray"
                         >
-                          Terms
+                          End User Terms
                         </Text>
                         <Icon as={FaChevronRight} />
                       </HStack>

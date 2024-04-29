@@ -12,9 +12,11 @@ import getIsPWA from '@/utils/getIsPWA';
 
 import {
   defaultChain,
+  privacyPolicyLink,
   siteDomain,
   siteOrigin,
-  supportedChains
+  supportedChains,
+  termsLink
 } from './constants';
 import { fallback, http } from 'viem';
 import { zora, zoraSepolia } from 'wagmi/chains';
@@ -76,7 +78,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
               defaultChain: defaultChain,
               supportedChains: supportedChains,
               walletConnectCloudProjectId:
-                process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID ?? ''
+                process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID ?? '',
+              legal: {
+                // TODO: replace
+                termsAndConditionsUrl: termsLink,
+                privacyPolicyUrl: privacyPolicyLink
+              }
             }}
           >
             <QueryClientProvider client={queryClient}>
