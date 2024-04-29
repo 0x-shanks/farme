@@ -24,3 +24,7 @@ export const siteDomain = siteOrigin.split('://')[1];
 
 export const maxErrorReason = 40;
 export const appFid = 489899;
+
+export const privacyPolicyLink =
+  'https://furtive-newt-212.notion.site/Privacy-Policy-65f021f27e3744fc9e70af4c12405ae4';
+export const termsLink = '';

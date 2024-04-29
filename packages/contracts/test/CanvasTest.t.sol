@@ -119,9 +119,9 @@ contract CanvasTest is Test {
 
     assets[0] = asset1;
 
-    vm.prank(bob);
     vm.expectEmit(true, true, false, true);
     emit Canvas.EditCanvas(bob, alice);
+    vm.prank(bob);
     canvas.editCanvas(alice, shapes, new Canvas.Shape[](0), new uint256[](0), assets, "https://ipfs/preview1");
 
     bytes32 got = _getShapeHash(canvas.getShapeMap(alice, canvas.getShapeIDs(alice)[0]));
@@ -581,7 +581,6 @@ contract CanvasTest is Test {
 
     string memory previewURI = "https://ipfs/preview";
 
-    vm.prank(alice);
     vm.expectEmit(true, true, true, false);
     emit ZoraCreator1155Mock.SetupNewTokenWithCreateReferral(newURI, maxSupply, createReferral);
 
@@ -600,6 +599,7 @@ contract CanvasTest is Test {
     emit ZoraCreator1155Mock.AdminMint(alice, 1, 1, "0x");
     vm.expectEmit(true, true, false, false);
     emit Canvas.CreateSticker(alice, 1);
+    vm.prank(alice);
     canvas.createSticker(
       alice,
       newURI,
@@ -656,7 +656,6 @@ contract CanvasTest is Test {
       h: Canvas.Float({ decimal: 0, value: 400 })
     });
 
-    vm.prank(bob);
     vm.expectEmit(true, true, true, false);
     emit ZoraCreator1155Mock.SetupNewTokenWithCreateReferral(newURI, maxSupply, createReferral);
 
@@ -672,9 +671,10 @@ contract CanvasTest is Test {
       abi.encodeWithSelector(ZoraCreatorFixedPriceSaleStrategy.setSale.selector, 2, salesConfig)
     );
     vm.expectEmit(true, true, true, false);
-    emit ZoraCreator1155Mock.AdminMint(alice, 2, 1, "0x");
+    emit ZoraCreator1155Mock.AdminMint(bob, 2, 1, "0x");
     vm.expectEmit(true, true, false, false);
     emit Canvas.CreateSticker(alice, 2);
+    vm.prank(bob);
     canvas.createSticker(
       alice,
       newURI,
