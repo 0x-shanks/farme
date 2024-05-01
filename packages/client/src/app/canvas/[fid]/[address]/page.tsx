@@ -91,7 +91,6 @@ import {
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { TokensResponse } from '@/models/tokensResponse';
-import { ipfsClient } from '@/utils/ipfs/client';
 import { httpClient } from '@/utils/http/client';
 import { decodeFloat, encodeFloat } from '@/utils/contract/float';
 import { getIPFSPreviewURL } from '@/utils/ipfs/utils';
@@ -141,6 +140,7 @@ import { useLocalStorage } from 'usehooks-ts';
 import { MdLogin } from 'react-icons/md';
 import { IoReload } from 'react-icons/io5';
 import { getMintDuration } from '@/utils/getMintDuration';
+import { ZoraIPFSResponse } from '@/models/zoraIPFSResponse';
 
 export default function CanvasPage({
   params
@@ -263,15 +263,22 @@ const Canvas = track(
           maxWidthOrHeight: 500
         });
 
-        const res = await ipfsClient.add(
-          {
-            content: compressedImage,
-            path: canvasOwner
-          },
-          { cidVersion: 1 }
+        // const res = await ipfsClient.add(
+        //   {
+        //     content: compressedImage,
+        //     path: canvasOwner
+        //   },
+        //   { cidVersion: 1 }
+        // );
+
+        const formData = new FormData();
+        formData.append('file', compressedImage);
+        const res = await httpClient.post<ZoraIPFSResponse>(
+          '/zora/ipfs',
+          formData
         );
 
-        previewURI = getIPFSPreviewURL(res.cid.toString());
+        previewURI = getIPFSPreviewURL(res.data.cid.toString());
       }
       return previewURI;
     };
@@ -313,18 +320,10 @@ const Canvas = track(
     };
 
     const updateBgRemoveFile = async (file: File, compressed: File) => {
-      const cidRes = await ipfsClient.add(
-        {
-          content: file,
-          path: ''
-        },
-        { cidVersion: 1, onlyHash: true }
-      );
-
-      console.log(cidRes.cid.toString());
+      const hash = keccak256(new Uint8Array(await file.arrayBuffer()));
 
       const cacheRes = await httpClient.get<BgRemovedCidResponse>(
-        `/cache/bg-remove/${cidRes.cid.toString()}`
+        `/cache/bg-remove/${hash}`
       );
       if (cacheRes.data.cid != '') {
         console.log('cache hit');
@@ -353,28 +352,32 @@ const Canvas = track(
             }
           }
         );
+        formData.delete('file');
 
         const bgRemovedFile = new File([bgRemovedRes.data], file.name, {
           type: 'image/png'
         });
         setBgRemovedFile(bgRemovedFile);
 
-        const bgRemovedIPFSRes = await ipfsClient.add(
-          {
-            content: bgRemovedFile,
-            path: ''
-          },
-          { cidVersion: 1 }
+        // const bgRemovedIPFSRes = await ipfsClient.add(
+        //   {
+        //     content: bgRemovedFile,
+        //     path: ''
+        //   },
+        //   { cidVersion: 1 }
+        // );
+
+        formData.append('file', bgRemovedFile);
+        const bgRemovedIPFSRes = await httpClient.post<ZoraIPFSResponse>(
+          '/zora/ipfs',
+          formData
         );
 
         const cacheReq: CreateBgRemovedCidRequest = {
-          bgRemovedCid: bgRemovedIPFSRes.cid.toString()
+          bgRemovedCid: bgRemovedIPFSRes.data.cid.toString()
         };
-        await httpClient.post(
-          `/cache/bg-remove/${cidRes.cid.toString()}`,
-          cacheReq
-        );
-        console.log(cidRes.cid.toString(), bgRemovedIPFSRes.cid.toString());
+        await httpClient.post(`/cache/bg-remove/${hash}`, cacheReq);
+        console.log(hash, bgRemovedIPFSRes.data.cid.toString());
       }
     };
 
@@ -1115,26 +1118,42 @@ const Canvas = track(
       );
 
       try {
-        const res = await ipfsClient.add(
-          {
-            path: fileName ?? '',
-            content: editedFile
-          },
-          { cidVersion: 1 }
+        // NOTE: kubo v4 is not adapted for zora's ipfs node
+        // const res = await ipfsClient.add(
+        //   {
+        //     path: fileName ?? '',
+        //     content: editedFile
+        //   },
+        //   { cidVersion: 1 }
+        // );
+
+        const formData = new FormData();
+        formData.append('file', editedFile);
+        const res = await httpClient.post<ZoraIPFSResponse>(
+          '/zora/ipfs',
+          formData
         );
+        formData.delete('file');
 
         const metadata = JSON.stringify({
           name: fileName,
           description: ``,
-          image: `ipfs://${res.cid}`,
+          image: `ipfs://${res.data.cid}`,
           decimals: 0,
           animation_url: ''
         });
 
-        const metaRes = await ipfsClient.add({
-          path: `${fileName}-metadata`,
-          content: metadata
-        });
+        formData.append('file', metadata);
+        const metaRes = await httpClient.post<ZoraIPFSResponse>(
+          '/zora/ipfs',
+          formData
+        );
+        formData.delete('file');
+
+        // const metaRes = await ipfsClient.add({
+        //   path: `${fileName}-metadata`,
+        //   content: metadata
+        // });
 
         const previewURI = await getPreviewURL();
 
@@ -1152,12 +1171,12 @@ const Canvas = track(
           functionName: 'createSticker',
           args: [
             canvasOwner,
-            `ipfs://${metaRes.cid.toString()}`,
+            `ipfs://${metaRes.data.cid.toString()}`,
             {
               tokenID: BigInt(0), // Calc in contract
               contractAddress: tokenAddress,
               chainID: BigInt(0), // Get in contract
-              srcURI: getIPFSPreviewURL(res.cid.toString()),
+              srcURI: getIPFSPreviewURL(res.data.cid.toString()),
               srcName: fileName ?? '',
               mimeType: asset.props.mimeType ?? '',
               w: encodeFloat(asset.props.w),
@@ -1227,7 +1246,7 @@ const Canvas = track(
             ...asset,
             props: {
               ...asset.props,
-              src: getIPFSPreviewURL(res.cid.toString())
+              src: getIPFSPreviewURL(res.data.cid.toString())
             },
             meta: {
               tokenContract,
