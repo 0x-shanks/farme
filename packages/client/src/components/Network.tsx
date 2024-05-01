@@ -138,15 +138,15 @@ const Content = track(
         const level = Math.floor(i / 8) + 1;
         let xOffset: number = 0;
         switch (offset) {
-          case 0:
-          case 3:
-          case 5:
-            xOffset = 1;
-            break;
+          case 7:
           case 2:
           case 4:
-          case 7:
             xOffset = -1;
+            break;
+          case 1:
+          case 3:
+          case 6:
+            xOffset = 1;
             break;
         }
 
@@ -154,13 +154,13 @@ const Content = track(
         switch (offset) {
           case 0:
           case 1:
-          case 2:
-            yOffset = 1;
-            break;
-          case 5:
-          case 6:
           case 7:
             yOffset = -1;
+            break;
+          case 4:
+          case 5:
+          case 6:
+            yOffset = 1;
             break;
         }
 
@@ -198,8 +198,27 @@ const Content = track(
 
       // Get Network
       (async () => {
+        const count = new Map<number, number>();
+
+        canvasData[0].forEach((shape) => {
+          const fid = Number(shape.fid);
+          const s = count.get(fid);
+          if (s == undefined) {
+            count.set(fid, 1);
+          } else {
+            count.set(fid, s + 1);
+          }
+        });
+
+        const queryParams = Array.from(count.keys())
+          .map((i) => {
+            const s = count.get(i);
+            return `init=${i}:${s}`;
+          })
+          .join('&');
+
         const res = await httpClient.get<UsersResponse>(
-          `/farcaster/${user?.fid}/network`
+          `/farcaster/${user?.fid}/network?${queryParams}`
         );
 
         const users = res.data.users;
