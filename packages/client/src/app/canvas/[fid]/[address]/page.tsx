@@ -1902,6 +1902,9 @@ const Canvas = track(
                       <ChakraImage
                         alt="white-sticker"
                         src="/images/stickers/white-sticker.png"
+                        animation={
+                          !bgRemovedFile ? 'fadeIn 1s infinite alternate;' : {}
+                        }
                       />
                     </Button>
                     <Button
@@ -1914,6 +1917,9 @@ const Canvas = track(
                       <ChakraImage
                         alt="black-sticker"
                         src="/images/stickers/black-sticker.png"
+                        animation={
+                          !bgRemovedFile ? 'fadeIn 1s infinite alternate;' : {}
+                        }
                       />
                     </Button>
                     <Button
@@ -1926,6 +1932,9 @@ const Canvas = track(
                       <ChakraImage
                         alt="no-background"
                         src="/images/stickers/no-background.png"
+                        animation={
+                          !bgRemovedFile ? 'fadeIn 1s infinite alternate;' : {}
+                        }
                       />
                     </Button>
                     <Button
@@ -1938,6 +1947,9 @@ const Canvas = track(
                       <ChakraImage
                         alt="instant-camera"
                         src="/images/stickers/instant-camera.png"
+                        animation={
+                          !bgRemovedFile ? 'fadeIn 1s infinite alternate;' : {}
+                        }
                       />
                     </Button>
                     <Button
@@ -1950,6 +1962,9 @@ const Canvas = track(
                       <ChakraImage
                         alt="rounded"
                         src="/images/stickers/rounded.png"
+                        animation={
+                          !bgRemovedFile ? 'fadeIn 1s infinite alternate;' : {}
+                        }
                       />
                     </Button>
                   </HStack>
@@ -2389,6 +2404,12 @@ const Canvas = track(
             </DrawerBody>
           </DrawerContent>
         </Drawer>
+
+        <style>
+          {`@keyframes fadeIn { 
+              from { opacity: 0; } 
+            }`}
+        </style>
       </Box>
     );
   }
