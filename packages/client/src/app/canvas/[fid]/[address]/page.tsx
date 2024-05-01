@@ -1836,9 +1836,11 @@ const Canvas = track(
                                   overflow="hidden"
                                 >{`Made by ${selectedShapeCreator?.displayName}`}</Text>
                                 <Text>
-                                  {fromUnixTime(
-                                    selectedShape?.meta.createdAt as number
-                                  ).toLocaleDateString()}
+                                  {!!selectedShape?.meta.createdAt
+                                    ? fromUnixTime(
+                                        selectedShape?.meta.createdAt as number
+                                      ).toLocaleDateString()
+                                    : ''}
                                 </Text>
                               </>
                             ) : (
@@ -2060,31 +2062,35 @@ const Canvas = track(
                           />
                         )}
 
-                        {selectedShapeId && selectedShape?.isLocked && (
-                          <Box
-                            pointerEvents={
-                              stickerUrl == undefined ? 'none' : 'all'
-                            }
-                          >
-                            <Link
-                              href={stickerUrl ?? ''}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                        {selectedShapeId &&
+                          (selectedShape?.isLocked ||
+                            (address == canvasOwner &&
+                              selectedShape?.meta.creator != undefined &&
+                              canvasOwner != selectedShape?.meta.creator)) && (
+                            <Box
+                              pointerEvents={
+                                stickerUrl == undefined ? 'none' : 'all'
+                              }
                             >
-                              <IconButton
-                                aria-label="mint-sticker"
-                                icon={<Icon as={AddStickerIcon} />}
-                                colorScheme="primary"
-                                rounded="full"
-                                shadow="xl"
-                                pointerEvents="all"
-                                size="lg"
-                                onClick={handleOpenMintStickerModal}
-                                isDisabled={stickerUrl == undefined}
-                              />
-                            </Link>
-                          </Box>
-                        )}
+                              <Link
+                                href={stickerUrl ?? ''}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <IconButton
+                                  aria-label="mint-sticker"
+                                  icon={<Icon as={AddStickerIcon} />}
+                                  colorScheme="primary"
+                                  rounded="full"
+                                  shadow="xl"
+                                  pointerEvents="all"
+                                  size="lg"
+                                  onClick={handleOpenMintStickerModal}
+                                  isDisabled={stickerUrl == undefined}
+                                />
+                              </Link>
+                            </Box>
+                          )}
                       </HStack>
                       <HStack>
                         {isChangeCanvas ? (
@@ -2144,34 +2150,46 @@ const Canvas = track(
               >
                 <VStack px={6} py={4} justify="center" w="full">
                   {!!selectedShapeId && (
-                    <Card shadow="lg">
-                      <CardBody>
-                        <VStack spacing={1}>
-                          <Avatar
-                            size="sm"
-                            src={selectedShapeCreator?.pfp}
-                            borderWidth={1}
-                            borderColor="white"
-                            shadow="lg"
-                          />
-                          {selectedShapeCreator && selectedShape ? (
-                            <>
-                              <Text>{`Made by ${selectedShapeCreator?.displayName}`}</Text>
-                              <Text>
-                                {fromUnixTime(
-                                  selectedShape?.meta.createdAt as number
-                                ).toLocaleDateString()}
-                              </Text>
-                            </>
-                          ) : (
-                            <>
-                              <SkeletonText noOfLines={1} w={32} my={2} />
-                              <SkeletonText noOfLines={1} w={20} />
-                            </>
-                          )}
-                        </VStack>
-                      </CardBody>
-                    </Card>
+                    <Link
+                      href={`/canvas/${selectedShapeCreator?.fid}/${selectedShapeCreator?.address}`}
+                    >
+                      <Card
+                        shadow="lg"
+                        w={40}
+                        pointerEvents={
+                          selectedShapeCreator && selectedShape ? 'all' : 'none'
+                        }
+                      >
+                        <CardBody>
+                          <VStack spacing={1}>
+                            <Avatar
+                              size="sm"
+                              src={selectedShapeCreator?.pfp}
+                              borderWidth={1}
+                              borderColor="white"
+                              shadow="lg"
+                            />
+                            {selectedShapeCreator && selectedShape ? (
+                              <>
+                                <Text>{`Made by ${selectedShapeCreator?.displayName}`}</Text>
+                                <Text>
+                                  {!!selectedShape?.meta.createdAt
+                                    ? fromUnixTime(
+                                        selectedShape?.meta.createdAt as number
+                                      ).toLocaleDateString()
+                                    : ''}
+                                </Text>
+                              </>
+                            ) : (
+                              <>
+                                <SkeletonText noOfLines={1} w={32} my={2} />
+                                <SkeletonText noOfLines={1} w={20} />
+                              </>
+                            )}
+                          </VStack>
+                        </CardBody>
+                      </Card>
+                    </Link>
                   )}
                 </VStack>
                 <Link href="/">
