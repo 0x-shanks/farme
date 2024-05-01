@@ -1,7 +1,7 @@
 import { UsersResponse } from '@/models/userResponse';
 import { farcasterHubClient } from '@/utils/farcaster/client';
 import { CastAddBody, ReactionBody, UserDataType } from '@farcaster/hub-nodejs';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 import { cache } from 'react';
 import { Address, fromBytes } from 'viem';
@@ -10,10 +10,14 @@ export const revalidate = 3600 * 24; // A whole day
 // export const revalidate = 1; // A whole day
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { fid: number } }
 ) {
   const fid = params.fid;
+
+  const searchParams = request.nextUrl.searchParams;
+  const inits = searchParams.getAll('init');
+  const canvasAppearanceWeight = 2;
 
   const getReactions = cache(
     async () =>
@@ -63,6 +67,14 @@ export async function GET(
   );
 
   const score = new Map<number, number>();
+
+  inits.forEach((i) => {
+    const fid = parseInt(i.split(':')[0]);
+    const count = parseInt(i.split(':')[0]);
+    if (!fid || !count) return;
+
+    score.set(fid, count + canvasAppearanceWeight);
+  });
 
   reactionBodies.forEach((b) => {
     if (b.targetCastId?.fid != undefined) {
