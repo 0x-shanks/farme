@@ -1738,51 +1738,58 @@ const Canvas = track(
           </VStack>
         )}
 
-        <HStack
-          pos="absolute"
-          top={10}
-          left={0}
-          right={0}
-          w="full"
-          justify="center"
-          spacing={3}
+        <Link
+          href={`https://warpcast.com/${farcasterUser?.userName}`}
+          target="_blank"
+          rel="noopener noreferrer"
         >
-          <Avatar
-            src={farcasterUser?.pfp ?? ''}
-            shadow="xl"
-            borderWidth={2}
-            borderColor="white"
-          />
-          <Box w={28}>
-            {!!farcasterUser ? (
-              <>
-                <Text
-                  fontWeight={600}
-                  textAlign="start"
-                  w="full"
-                  textOverflow="ellipsis"
-                  whiteSpace="nowrap"
-                  overflow="hidden"
-                >
-                  {farcasterUser.displayName}
-                </Text>
-                <Text
-                  textColor="gray"
-                  fontSize="small"
-                  textAlign="start"
-                  w="full"
-                  textOverflow="ellipsis"
-                  whiteSpace="nowrap"
-                  overflow="hidden"
-                >{`@${farcasterUser?.userName}`}</Text>
-              </>
-            ) : (
-              <>
-                <SkeletonText noOfLines={2} w="full" />
-              </>
-            )}
-          </Box>
-        </HStack>
+          <HStack
+            pos="absolute"
+            top={10}
+            left={0}
+            right={0}
+            w="full"
+            justify="center"
+            spacing={3}
+            pointerEvents={!!farcasterUser ? 'all' : 'none'}
+          >
+            <Avatar
+              src={farcasterUser?.pfp ?? ''}
+              shadow="xl"
+              borderWidth={2}
+              borderColor="white"
+            />
+            <Box w={28}>
+              {!!farcasterUser ? (
+                <>
+                  <Text
+                    fontWeight={600}
+                    textAlign="start"
+                    w="full"
+                    textOverflow="ellipsis"
+                    whiteSpace="nowrap"
+                    overflow="hidden"
+                  >
+                    {farcasterUser.displayName}
+                  </Text>
+                  <Text
+                    textColor="gray"
+                    fontSize="small"
+                    textAlign="start"
+                    w="full"
+                    textOverflow="ellipsis"
+                    whiteSpace="nowrap"
+                    overflow="hidden"
+                  >{`@${farcasterUser?.userName}`}</Text>
+                </>
+              ) : (
+                <>
+                  <SkeletonText noOfLines={2} w="full" />
+                </>
+              )}
+            </Box>
+          </HStack>
+        </Link>
 
         {ready && (
           <>
@@ -1801,34 +1808,49 @@ const Canvas = track(
                     </Button>
                   )}
                   {!!selectedShapeId && !editedFile && !isSaveLoading && (
-                    <Card shadow="lg">
-                      <CardBody>
-                        <VStack spacing={1}>
-                          <Avatar
-                            size="sm"
-                            src={selectedShapeCreator?.pfp}
-                            borderWidth={1}
-                            borderColor="white"
-                            shadow="lg"
-                          />
-                          {selectedShapeCreator && selectedShape ? (
-                            <>
-                              <Text>{`Made by ${selectedShapeCreator?.displayName}`}</Text>
-                              <Text>
-                                {fromUnixTime(
-                                  selectedShape?.meta.createdAt as number
-                                ).toLocaleDateString()}
-                              </Text>
-                            </>
-                          ) : (
-                            <>
-                              <SkeletonText noOfLines={1} w={32} my={2} />
-                              <SkeletonText noOfLines={1} w={20} />
-                            </>
-                          )}
-                        </VStack>
-                      </CardBody>
-                    </Card>
+                    <Link
+                      href={`/canvas/${selectedShapeCreator?.fid}/${selectedShapeCreator?.address}`}
+                    >
+                      <Card
+                        shadow="lg"
+                        w={40}
+                        pointerEvents={
+                          selectedShapeCreator && selectedShape ? 'all' : 'none'
+                        }
+                      >
+                        <CardBody>
+                          <VStack spacing={1}>
+                            <Avatar
+                              size="sm"
+                              src={selectedShapeCreator?.pfp}
+                              borderWidth={1}
+                              borderColor="white"
+                              shadow="lg"
+                            />
+                            {selectedShapeCreator && selectedShape ? (
+                              <>
+                                <Text
+                                  w="full"
+                                  textOverflow="ellipsis"
+                                  whiteSpace="nowrap"
+                                  overflow="hidden"
+                                >{`Made by ${selectedShapeCreator?.displayName}`}</Text>
+                                <Text>
+                                  {fromUnixTime(
+                                    selectedShape?.meta.createdAt as number
+                                  ).toLocaleDateString()}
+                                </Text>
+                              </>
+                            ) : (
+                              <>
+                                <SkeletonText noOfLines={1} w={32} my={2} />
+                                <SkeletonText noOfLines={1} w={20} />
+                              </>
+                            )}
+                          </VStack>
+                        </CardBody>
+                      </Card>
+                    </Link>
                   )}
                 </VStack>
 
