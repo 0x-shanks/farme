@@ -91,7 +91,6 @@ import {
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { TokensResponse } from '@/models/tokensResponse';
-import { ipfsClient } from '@/utils/ipfs/client';
 import { httpClient } from '@/utils/http/client';
 import { decodeFloat, encodeFloat } from '@/utils/contract/float';
 import { getIPFSPreviewURL } from '@/utils/ipfs/utils';
@@ -141,6 +140,7 @@ import { useLocalStorage } from 'usehooks-ts';
 import { MdLogin } from 'react-icons/md';
 import { IoReload } from 'react-icons/io5';
 import { getMintDuration } from '@/utils/getMintDuration';
+import { ZoraIPFSResponse } from '@/models/zoraIPFSResponse';
 
 export default function CanvasPage({
   params
@@ -263,15 +263,22 @@ const Canvas = track(
           maxWidthOrHeight: 500
         });
 
-        const res = await ipfsClient.add(
-          {
-            content: compressedImage,
-            path: canvasOwner
-          },
-          { cidVersion: 1 }
+        // const res = await ipfsClient.add(
+        //   {
+        //     content: compressedImage,
+        //     path: canvasOwner
+        //   },
+        //   { cidVersion: 1 }
+        // );
+
+        const formData = new FormData();
+        formData.append('file', compressedImage);
+        const res = await httpClient.post<ZoraIPFSResponse>(
+          '/zora/ipfs',
+          formData
         );
 
-        previewURI = getIPFSPreviewURL(res.cid.toString());
+        previewURI = getIPFSPreviewURL(res.data.cid.toString());
       }
       return previewURI;
     };
@@ -313,18 +320,10 @@ const Canvas = track(
     };
 
     const updateBgRemoveFile = async (file: File, compressed: File) => {
-      const cidRes = await ipfsClient.add(
-        {
-          content: file,
-          path: ''
-        },
-        { cidVersion: 1, onlyHash: true }
-      );
-
-      console.log(cidRes.cid.toString());
+      const hash = keccak256(new Uint8Array(await file.arrayBuffer()));
 
       const cacheRes = await httpClient.get<BgRemovedCidResponse>(
-        `/cache/bg-remove/${cidRes.cid.toString()}`
+        `/cache/bg-remove/${hash}`
       );
       if (cacheRes.data.cid != '') {
         console.log('cache hit');
@@ -353,28 +352,32 @@ const Canvas = track(
             }
           }
         );
+        formData.delete('file');
 
         const bgRemovedFile = new File([bgRemovedRes.data], file.name, {
           type: 'image/png'
         });
         setBgRemovedFile(bgRemovedFile);
 
-        const bgRemovedIPFSRes = await ipfsClient.add(
-          {
-            content: bgRemovedFile,
-            path: ''
-          },
-          { cidVersion: 1 }
+        // const bgRemovedIPFSRes = await ipfsClient.add(
+        //   {
+        //     content: bgRemovedFile,
+        //     path: ''
+        //   },
+        //   { cidVersion: 1 }
+        // );
+
+        formData.append('file', bgRemovedFile);
+        const bgRemovedIPFSRes = await httpClient.post<ZoraIPFSResponse>(
+          '/zora/ipfs',
+          formData
         );
 
         const cacheReq: CreateBgRemovedCidRequest = {
-          bgRemovedCid: bgRemovedIPFSRes.cid.toString()
+          bgRemovedCid: bgRemovedIPFSRes.data.cid.toString()
         };
-        await httpClient.post(
-          `/cache/bg-remove/${cidRes.cid.toString()}`,
-          cacheReq
-        );
-        console.log(cidRes.cid.toString(), bgRemovedIPFSRes.cid.toString());
+        await httpClient.post(`/cache/bg-remove/${hash}`, cacheReq);
+        console.log(hash, bgRemovedIPFSRes.data.cid.toString());
       }
     };
 
@@ -1115,26 +1118,42 @@ const Canvas = track(
       );
 
       try {
-        const res = await ipfsClient.add(
-          {
-            path: fileName ?? '',
-            content: editedFile
-          },
-          { cidVersion: 1 }
+        // NOTE: kubo v4 is not adapted for zora's ipfs node
+        // const res = await ipfsClient.add(
+        //   {
+        //     path: fileName ?? '',
+        //     content: editedFile
+        //   },
+        //   { cidVersion: 1 }
+        // );
+
+        const formData = new FormData();
+        formData.append('file', editedFile);
+        const res = await httpClient.post<ZoraIPFSResponse>(
+          '/zora/ipfs',
+          formData
         );
+        formData.delete('file');
 
         const metadata = JSON.stringify({
           name: fileName,
           description: ``,
-          image: `ipfs://${res.cid}`,
+          image: `ipfs://${res.data.cid}`,
           decimals: 0,
           animation_url: ''
         });
 
-        const metaRes = await ipfsClient.add({
-          path: `${fileName}-metadata`,
-          content: metadata
-        });
+        formData.append('file', metadata);
+        const metaRes = await httpClient.post<ZoraIPFSResponse>(
+          '/zora/ipfs',
+          formData
+        );
+        formData.delete('file');
+
+        // const metaRes = await ipfsClient.add({
+        //   path: `${fileName}-metadata`,
+        //   content: metadata
+        // });
 
         const previewURI = await getPreviewURL();
 
@@ -1152,12 +1171,12 @@ const Canvas = track(
           functionName: 'createSticker',
           args: [
             canvasOwner,
-            `ipfs://${metaRes.cid.toString()}`,
+            `ipfs://${metaRes.data.cid.toString()}`,
             {
               tokenID: BigInt(0), // Calc in contract
               contractAddress: tokenAddress,
               chainID: BigInt(0), // Get in contract
-              srcURI: getIPFSPreviewURL(res.cid.toString()),
+              srcURI: getIPFSPreviewURL(res.data.cid.toString()),
               srcName: fileName ?? '',
               mimeType: asset.props.mimeType ?? '',
               w: encodeFloat(asset.props.w),
@@ -1227,7 +1246,7 @@ const Canvas = track(
             ...asset,
             props: {
               ...asset.props,
-              src: getIPFSPreviewURL(res.cid.toString())
+              src: getIPFSPreviewURL(res.data.cid.toString())
             },
             meta: {
               tokenContract,
@@ -1738,51 +1757,58 @@ const Canvas = track(
           </VStack>
         )}
 
-        <HStack
-          pos="absolute"
-          top={10}
-          left={0}
-          right={0}
-          w="full"
-          justify="center"
-          spacing={3}
+        <Link
+          href={`https://warpcast.com/${farcasterUser?.userName}`}
+          target="_blank"
+          rel="noopener noreferrer"
         >
-          <Avatar
-            src={farcasterUser?.pfp ?? ''}
-            shadow="xl"
-            borderWidth={2}
-            borderColor="white"
-          />
-          <Box w={28}>
-            {!!farcasterUser ? (
-              <>
-                <Text
-                  fontWeight={600}
-                  textAlign="start"
-                  w="full"
-                  textOverflow="ellipsis"
-                  whiteSpace="nowrap"
-                  overflow="hidden"
-                >
-                  {farcasterUser.displayName}
-                </Text>
-                <Text
-                  textColor="gray"
-                  fontSize="small"
-                  textAlign="start"
-                  w="full"
-                  textOverflow="ellipsis"
-                  whiteSpace="nowrap"
-                  overflow="hidden"
-                >{`@${farcasterUser?.userName}`}</Text>
-              </>
-            ) : (
-              <>
-                <SkeletonText noOfLines={2} w="full" />
-              </>
-            )}
-          </Box>
-        </HStack>
+          <HStack
+            pos="absolute"
+            top={10}
+            left={0}
+            right={0}
+            w="full"
+            justify="center"
+            spacing={3}
+            pointerEvents={!!farcasterUser ? 'all' : 'none'}
+          >
+            <Avatar
+              src={farcasterUser?.pfp ?? ''}
+              shadow="xl"
+              borderWidth={2}
+              borderColor="white"
+            />
+            <Box w={28}>
+              {!!farcasterUser ? (
+                <>
+                  <Text
+                    fontWeight={600}
+                    textAlign="start"
+                    w="full"
+                    textOverflow="ellipsis"
+                    whiteSpace="nowrap"
+                    overflow="hidden"
+                  >
+                    {farcasterUser.displayName}
+                  </Text>
+                  <Text
+                    textColor="gray"
+                    fontSize="small"
+                    textAlign="start"
+                    w="full"
+                    textOverflow="ellipsis"
+                    whiteSpace="nowrap"
+                    overflow="hidden"
+                  >{`@${farcasterUser?.userName}`}</Text>
+                </>
+              ) : (
+                <>
+                  <SkeletonText noOfLines={2} w="full" />
+                </>
+              )}
+            </Box>
+          </HStack>
+        </Link>
 
         {ready && (
           <>
@@ -1801,34 +1827,51 @@ const Canvas = track(
                     </Button>
                   )}
                   {!!selectedShapeId && !editedFile && !isSaveLoading && (
-                    <Card shadow="lg">
-                      <CardBody>
-                        <VStack spacing={1}>
-                          <Avatar
-                            size="sm"
-                            src={selectedShapeCreator?.pfp}
-                            borderWidth={1}
-                            borderColor="white"
-                            shadow="lg"
-                          />
-                          {selectedShapeCreator && selectedShape ? (
-                            <>
-                              <Text>{`Made by ${selectedShapeCreator?.displayName}`}</Text>
-                              <Text>
-                                {fromUnixTime(
-                                  selectedShape?.meta.createdAt as number
-                                ).toLocaleDateString()}
-                              </Text>
-                            </>
-                          ) : (
-                            <>
-                              <SkeletonText noOfLines={1} w={32} my={2} />
-                              <SkeletonText noOfLines={1} w={20} />
-                            </>
-                          )}
-                        </VStack>
-                      </CardBody>
-                    </Card>
+                    <Link
+                      href={`/canvas/${selectedShapeCreator?.fid}/${selectedShapeCreator?.address}`}
+                    >
+                      <Card
+                        shadow="lg"
+                        w={40}
+                        pointerEvents={
+                          selectedShapeCreator && selectedShape ? 'all' : 'none'
+                        }
+                      >
+                        <CardBody>
+                          <VStack spacing={1}>
+                            <Avatar
+                              size="sm"
+                              src={selectedShapeCreator?.pfp}
+                              borderWidth={1}
+                              borderColor="white"
+                              shadow="lg"
+                            />
+                            {selectedShapeCreator && selectedShape ? (
+                              <>
+                                <Text
+                                  w="full"
+                                  textOverflow="ellipsis"
+                                  whiteSpace="nowrap"
+                                  overflow="hidden"
+                                >{`Made by ${selectedShapeCreator?.displayName}`}</Text>
+                                <Text>
+                                  {!!selectedShape?.meta.createdAt
+                                    ? fromUnixTime(
+                                        selectedShape?.meta.createdAt as number
+                                      ).toLocaleDateString()
+                                    : ''}
+                                </Text>
+                              </>
+                            ) : (
+                              <>
+                                <SkeletonText noOfLines={1} w={32} my={2} />
+                                <SkeletonText noOfLines={1} w={20} />
+                              </>
+                            )}
+                          </VStack>
+                        </CardBody>
+                      </Card>
+                    </Link>
                   )}
                 </VStack>
 
@@ -2038,31 +2081,35 @@ const Canvas = track(
                           />
                         )}
 
-                        {selectedShapeId && selectedShape?.isLocked && (
-                          <Box
-                            pointerEvents={
-                              stickerUrl == undefined ? 'none' : 'all'
-                            }
-                          >
-                            <Link
-                              href={stickerUrl ?? ''}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                        {selectedShapeId &&
+                          (selectedShape?.isLocked ||
+                            (address == canvasOwner &&
+                              selectedShape?.meta.creator != undefined &&
+                              canvasOwner != selectedShape?.meta.creator)) && (
+                            <Box
+                              pointerEvents={
+                                stickerUrl == undefined ? 'none' : 'all'
+                              }
                             >
-                              <IconButton
-                                aria-label="mint-sticker"
-                                icon={<Icon as={AddStickerIcon} />}
-                                colorScheme="primary"
-                                rounded="full"
-                                shadow="xl"
-                                pointerEvents="all"
-                                size="lg"
-                                onClick={handleOpenMintStickerModal}
-                                isDisabled={stickerUrl == undefined}
-                              />
-                            </Link>
-                          </Box>
-                        )}
+                              <Link
+                                href={stickerUrl ?? ''}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <IconButton
+                                  aria-label="mint-sticker"
+                                  icon={<Icon as={AddStickerIcon} />}
+                                  colorScheme="primary"
+                                  rounded="full"
+                                  shadow="xl"
+                                  pointerEvents="all"
+                                  size="lg"
+                                  onClick={handleOpenMintStickerModal}
+                                  isDisabled={stickerUrl == undefined}
+                                />
+                              </Link>
+                            </Box>
+                          )}
                       </HStack>
                       <HStack>
                         {isChangeCanvas ? (
@@ -2122,34 +2169,46 @@ const Canvas = track(
               >
                 <VStack px={6} py={4} justify="center" w="full">
                   {!!selectedShapeId && (
-                    <Card shadow="lg">
-                      <CardBody>
-                        <VStack spacing={1}>
-                          <Avatar
-                            size="sm"
-                            src={selectedShapeCreator?.pfp}
-                            borderWidth={1}
-                            borderColor="white"
-                            shadow="lg"
-                          />
-                          {selectedShapeCreator && selectedShape ? (
-                            <>
-                              <Text>{`Made by ${selectedShapeCreator?.displayName}`}</Text>
-                              <Text>
-                                {fromUnixTime(
-                                  selectedShape?.meta.createdAt as number
-                                ).toLocaleDateString()}
-                              </Text>
-                            </>
-                          ) : (
-                            <>
-                              <SkeletonText noOfLines={1} w={32} my={2} />
-                              <SkeletonText noOfLines={1} w={20} />
-                            </>
-                          )}
-                        </VStack>
-                      </CardBody>
-                    </Card>
+                    <Link
+                      href={`/canvas/${selectedShapeCreator?.fid}/${selectedShapeCreator?.address}`}
+                    >
+                      <Card
+                        shadow="lg"
+                        w={40}
+                        pointerEvents={
+                          selectedShapeCreator && selectedShape ? 'all' : 'none'
+                        }
+                      >
+                        <CardBody>
+                          <VStack spacing={1}>
+                            <Avatar
+                              size="sm"
+                              src={selectedShapeCreator?.pfp}
+                              borderWidth={1}
+                              borderColor="white"
+                              shadow="lg"
+                            />
+                            {selectedShapeCreator && selectedShape ? (
+                              <>
+                                <Text>{`Made by ${selectedShapeCreator?.displayName}`}</Text>
+                                <Text>
+                                  {!!selectedShape?.meta.createdAt
+                                    ? fromUnixTime(
+                                        selectedShape?.meta.createdAt as number
+                                      ).toLocaleDateString()
+                                    : ''}
+                                </Text>
+                              </>
+                            ) : (
+                              <>
+                                <SkeletonText noOfLines={1} w={32} my={2} />
+                                <SkeletonText noOfLines={1} w={20} />
+                              </>
+                            )}
+                          </VStack>
+                        </CardBody>
+                      </Card>
+                    </Link>
                   )}
                 </VStack>
                 <Link href="/">

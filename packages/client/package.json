@@ -38,7 +38,7 @@
     "formidable": "^3.5.1",
     "framer-motion": "^11.0.8",
     "frog": "^0.8.6",
-    "kubo-rpc-client": "^3.0.4",
+    "kubo-rpc-client": "^4.1.1",
     "next": "14.1.1",
     "next-auth": "^4.24.7",
     "next-pwa": "^5.6.0",
