@@ -141,6 +141,7 @@ import { MdLogin } from 'react-icons/md';
 import { IoReload } from 'react-icons/io5';
 import { getMintDuration } from '@/utils/getMintDuration';
 import { ZoraIPFSResponse } from '@/models/zoraIPFSResponse';
+import { denoise } from '@/utils/image/denoise';
 
 export default function CanvasPage({
   params
@@ -354,7 +355,9 @@ const Canvas = track(
         );
         formData.delete('file');
 
-        const bgRemovedFile = new File([bgRemovedRes.data], file.name, {
+        let filteredImageBuffer = await denoise(bgRemovedRes.data);
+
+        const bgRemovedFile = new File([filteredImageBuffer], file.name, {
           type: 'image/png'
         });
         setBgRemovedFile(bgRemovedFile);
@@ -377,7 +380,6 @@ const Canvas = track(
           bgRemovedCid: bgRemovedIPFSRes.data.cid.toString()
         };
         await httpClient.post(`/cache/bg-remove/${hash}`, cacheReq);
-        console.log(hash, bgRemovedIPFSRes.data.cid.toString());
       }
     };
 
