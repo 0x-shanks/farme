@@ -843,6 +843,8 @@ const Canvas = track(
         throw new Error('image mimeType is not found');
       }
 
+      setSelectedShapeId(undefined);
+
       onStickerClose();
       setIsInsertStickerLoading(true);
 
@@ -927,6 +929,8 @@ const Canvas = track(
       if (!address) {
         throw new Error('address is not found');
       }
+
+      setSelectedShapeId(undefined);
 
       const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
       editor.updateShapes(

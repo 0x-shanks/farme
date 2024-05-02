@@ -78,7 +78,13 @@ const Content = track(
     const [defaultExpiredPeriod, setDefaultExpiredPeriod] =
       useLocalStorage<number>('expiredPeriod', 5);
 
-    const { data: canvasData, isSuccess: isCanvasSuccess } = useReadContract({
+    const onceCanvasFetch = useRef<boolean>(false);
+    const {
+      data: canvasData,
+      isSuccess: isCanvasSuccess,
+      refetch: refetchCanvas,
+      isRefetching: isCanvasRefetching
+    } = useReadContract({
       abi: canvasAbi,
       address: canvasAddress,
       functionName: 'getCanvas',
@@ -91,6 +97,15 @@ const Content = track(
     const detailW = 200;
     const detailH = 360;
 
+    // NOTE: refetch canvas when back into home
+    useEffect(() => {
+      if (isCanvasSuccess && !onceCanvasFetch.current) {
+        console.log('refetch canvas');
+        refetchCanvas();
+        onceCanvasFetch.current = true;
+      }
+    }, []);
+
     useEffect(() => {
       if (!user?.fid) {
         return;
@@ -100,7 +115,7 @@ const Content = track(
         return;
       }
 
-      if (!isCanvasSuccess) {
+      if (!isCanvasSuccess || isCanvasRefetching) {
         return;
       }
 
@@ -247,7 +262,7 @@ const Content = track(
 
         setNetworkReady(true);
       })();
-    }, [user?.fid, user.address, isCanvasSuccess]);
+    }, [user?.fid, user.address, isCanvasSuccess, isCanvasRefetching]);
 
     const handleBack = () => {
       router.back();
