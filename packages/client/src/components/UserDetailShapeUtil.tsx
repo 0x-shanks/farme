@@ -5,7 +5,9 @@ import {
   Card,
   CardBody,
   Image,
-  Box
+  Box,
+  Center,
+  Spinner
 } from '@chakra-ui/react';
 import {
   Geometry2d,
@@ -109,12 +111,20 @@ export class UserDetailShapeUtil extends ShapeUtil<IUserDetailShape> {
           <Card shadow="xl">
             <CardBody bgColor="#F8FBFC" borderColor="white" borderWidth={4}>
               {!!shape.props.preview ? (
-                <Image
-                  w={150}
-                  h={200}
-                  src={shape.props.preview}
-                  objectFit="contain"
-                />
+                <Box w={150} h={200} pos="relative">
+                  <Image
+                    w="full"
+                    h="full"
+                    src={shape.props.preview}
+                    objectFit="contain"
+                    pos="relative"
+                    zIndex={10}
+                    alt="Preview"
+                  />
+                  <Center w="full" h="full" top={0} left={0} pos="absolute">
+                    <Spinner />
+                  </Center>
+                </Box>
               ) : (
                 <Box w={150} h={200} />
               )}
