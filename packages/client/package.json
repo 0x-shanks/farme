@@ -25,6 +25,7 @@
     "@privy-io/react-auth": "^1.60.6",
     "@privy-io/wagmi": "^0.2.3",
     "@sentry/nextjs": "^7.112.2",
+    "@supabase/supabase-js": "^2.43.0",
     "@tanstack/react-query": "^5.24.6",
     "@tldraw/editor": "^2.0.1",
     "@vercel/kv": "^1.0.1",
