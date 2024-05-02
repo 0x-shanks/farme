@@ -192,6 +192,10 @@ contract Canvas is UUPSUpgradeable, OwnableUpgradeable {
     return false;
   }
 
+  function _hashFloat(Float memory num) internal pure returns (bytes32) {
+    return keccak256(abi.encodePacked(num.value, num.decimal));
+  }
+
   function _getIsChange(
     Shape memory bs,
     Shape memory as_,
@@ -200,35 +204,33 @@ contract Canvas is UUPSUpgradeable, OwnableUpgradeable {
   ) internal pure returns (bool) {
     bytes32 beforeS = keccak256(
       abi.encodePacked(
-        bs.x.value,
-        bs.x.decimal,
-        bs.y.value,
-        bs.y.decimal,
-        bs.rotation.value,
-        bs.rotation.decimal,
-        bs.w.value,
-        bs.w.decimal,
-        bs.h.value,
-        bs.h.decimal,
-        bs.index,
-        bs.assetID
+        bs.id,
+        _hashFloat(bs.x),
+        _hashFloat(bs.y),
+        _hashFloat(bs.rotation),
+        bs.creator,
+        bs.createdAt,
+        bs.fid,
+        bs.assetID,
+        _hashFloat(bs.w),
+        _hashFloat(bs.h),
+        bs.index
       )
     );
 
     bytes32 afterS = keccak256(
       abi.encodePacked(
-        as_.x.value,
-        as_.x.decimal,
-        as_.y.value,
-        as_.y.decimal,
-        as_.rotation.value,
-        as_.rotation.decimal,
-        as_.w.value,
-        as_.w.decimal,
-        as_.h.value,
-        as_.h.decimal,
-        as_.index,
-        as_.assetID
+        as_.id,
+        _hashFloat(as_.x),
+        _hashFloat(as_.y),
+        _hashFloat(as_.rotation),
+        as_.creator,
+        as_.createdAt,
+        as_.fid,
+        as_.assetID,
+        _hashFloat(as_.w),
+        _hashFloat(as_.h),
+        as_.index
       )
     );
 
@@ -244,10 +246,8 @@ contract Canvas is UUPSUpgradeable, OwnableUpgradeable {
         ba.srcURI,
         ba.srcName,
         ba.mimeType,
-        ba.w.value,
-        ba.w.decimal,
-        ba.h.value,
-        ba.h.decimal
+        _hashFloat(ba.w),
+        _hashFloat(ba.h)
       )
     );
 
@@ -259,10 +259,8 @@ contract Canvas is UUPSUpgradeable, OwnableUpgradeable {
         aa.srcURI,
         aa.srcName,
         aa.mimeType,
-        aa.w.value,
-        aa.w.decimal,
-        aa.h.value,
-        aa.h.decimal
+        _hashFloat(aa.w),
+        _hashFloat(aa.h)
       )
     );
 

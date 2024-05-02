@@ -481,8 +481,7 @@ const Canvas = track(
 
     const getFormatShapesForContract = (
       shapes: TLImageShape[],
-      assets: TLAsset[],
-      fid: number
+      assets: TLAsset[]
     ) => {
       const formattedShapes = shapes.map((s) => {
         const asset = assets.find((a) => a.id == s.props.assetId);
@@ -496,7 +495,7 @@ const Canvas = track(
           rotation: encodeFloat(s.rotation),
           creator: s.meta.creator as Address,
           createdAt: BigInt(s.meta.createdAt as number),
-          fid: BigInt(fid),
+          fid: BigInt(s.meta.fid as string),
           assetID: BigInt(asset.meta.onchainAssetId as string),
           w: encodeFloat(s.props.w),
           h: encodeFloat(s.props.h),
@@ -636,6 +635,7 @@ const Canvas = track(
         });
 
         canvasData[0].forEach((shape) => {
+          console.log(shape);
           editor.createShape({
             x: decodeFloat(shape.x),
             y: decodeFloat(shape.y),
@@ -1376,9 +1376,7 @@ const Canvas = track(
         const previewURI = await getPreviewURL();
         const snapshot = editor.store.getSnapshot();
         const stringified = JSON.stringify(snapshot);
-        const shapes = Object.values(snapshot.store).filter(
-          (s) => s.typeName == 'shape'
-        ) as TLImageShape[];
+
         const assets = Object.values(snapshot.store).filter(
           (s) => s.typeName == 'asset'
         ) as TLImageAsset[];
@@ -1401,14 +1399,12 @@ const Canvas = track(
 
         const addedShapes = getFormatShapesForContract(
           getAddedShapes(stringified, lastSave),
-          assets,
-          Number(session.user!.id)
+          assets
         );
 
         const updatedShapes = getFormatShapesForContract(
           getUpdatedShapes(stringified, lastSave),
-          assets,
-          Number(session.user!.id)
+          assets
         );
 
         const deletedShapeIds = getRemovedShapeIds(stringified, lastSave);
@@ -2174,9 +2170,7 @@ const Canvas = track(
                             />
                             <IconButton
                               aria-label="save"
-                              icon={
-                                <Icon as={isSavedSuccess ? FaCheck : LuSave} />
-                              }
+                              icon={<Icon as={LuSave} />}
                               colorScheme="primary"
                               rounded="full"
                               shadow="xl"
@@ -2189,8 +2183,12 @@ const Canvas = track(
                         ) : (
                           <>
                             <IconButton
-                              aria-label="save"
-                              icon={<Icon as={IoIosArrowBack} />}
+                              aria-label="back"
+                              icon={
+                                <Icon
+                                  as={isSavedSuccess ? FaCheck : IoIosArrowBack}
+                                />
+                              }
                               colorScheme="primary"
                               rounded="full"
                               shadow="xl"
