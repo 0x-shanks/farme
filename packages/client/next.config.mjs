@@ -3,7 +3,6 @@
 import nextPWA from 'next-pwa';
 import { withSentryConfig } from '@sentry/nextjs';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const withPWA = nextPWA({
   dest: 'public',
   disable: process.env.NODE_ENV === 'development',
