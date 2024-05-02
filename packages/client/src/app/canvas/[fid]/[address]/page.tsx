@@ -635,7 +635,6 @@ const Canvas = track(
         });
 
         canvasData[0].forEach((shape) => {
-          console.log(shape);
           editor.createShape({
             x: decodeFloat(shape.x),
             y: decodeFloat(shape.y),
