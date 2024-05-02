@@ -142,6 +142,7 @@ import { IoReload } from 'react-icons/io5';
 import { getMintDuration } from '@/utils/getMintDuration';
 import { ZoraIPFSResponse } from '@/models/zoraIPFSResponse';
 import { denoise } from '@/utils/image/denoise';
+import * as Sentry from '@sentry/nextjs';
 
 export default function CanvasPage({
   params
@@ -1299,6 +1300,21 @@ const Canvas = track(
             }))
         );
 
+        Sentry.captureException(e, {
+          tags: {
+            action: 'drop',
+            userAddress: address,
+            userFid: session.user.id,
+            userName: session.user.name,
+            canvasOwnerAddress: canvasOwner,
+            canvasOwnerFid: fid,
+            canvasOwnerName: farcasterUser?.userName,
+            privyId: user?.id,
+            walletConnectorType: user?.wallet?.connectorType,
+            walletClientType: user?.wallet?.walletClientType
+          }
+        });
+
         if (e instanceof TransactionExecutionError) {
           const split = e.details.split(':');
           let reason = split[split.length - 1];
@@ -1439,6 +1455,21 @@ const Canvas = track(
         };
         httpClient.post('/farcaster/cast/save', req);
       } catch (e) {
+        Sentry.captureException(e, {
+          tags: {
+            action: 'save',
+            userAddress: address,
+            userFid: session.user.id,
+            userName: session.user.name,
+            canvasOwnerAddress: canvasOwner,
+            canvasOwnerFid: fid,
+            canvasOwnerName: farcasterUser?.userName,
+            privyId: user?.id,
+            walletConnectorType: user?.wallet?.connectorType,
+            walletClientType: user?.wallet?.walletClientType
+          }
+        });
+
         if (e instanceof TransactionExecutionError) {
           const split = e.details.split(':');
           let reason = split[split.length - 1];
