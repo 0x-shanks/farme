@@ -4,10 +4,13 @@ import { createClient } from '@supabase/supabase-js';
 import { supabaseUrl } from '@/utils/supabase/client';
 
 export async function POST(request: NextRequest) {
-  if (!process.env.SUPABASE_KEY) {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
     throw new Error('supabase key is not found');
   }
-  const supabaseClient = createClient(supabaseUrl, process.env.SUPABASE_KEY);
+  const supabaseClient = createClient(
+    supabaseUrl,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
 
   const searchParams = request.nextUrl.searchParams;
   const old = searchParams.get('old');
