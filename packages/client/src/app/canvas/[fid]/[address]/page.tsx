@@ -215,6 +215,8 @@ const Canvas = track(
       useLocalStorage<number>('expiredPeriod', 5);
     const [expiredPeriodSlider, setExpiredPeriodSlider] =
       useState<number>(defaultExpiredPeriod);
+    const [isInsertStickerLoading, setIsInsertStickerLoading] =
+      useState<boolean>();
 
     const {
       isOpen: isStickerOpen,
@@ -841,75 +843,82 @@ const Canvas = track(
         throw new Error('image mimeType is not found');
       }
 
-      const res = await fetch(image.url);
-      const blob = await res.blob();
-      const file = new File([blob], name ?? '', { type: image.mimeType });
-
-      const compressedImage = await imageCompression(file, {
-        maxWidthOrHeight: 1000
-      });
-      setUploadedFile(compressedImage);
-
-      await editor.putExternalContent({
-        type: 'files',
-        files: [compressedImage],
-        point: editor.getViewportPageBounds().center,
-        ignoreParent: false
-      });
-
-      const shapeId = editor.getSelectedShapeIds()[0];
-      const shape = editor.getShape<TLImageShape>(shapeId);
-
-      if (!shape) {
-        throw new Error('shape is not found');
-      }
-
-      const assetId = shape.props.assetId;
-      if (!assetId) {
-        throw new Error('assetId is not found');
-      }
-
-      const asset = editor.getAsset(assetId);
-      if (!asset) {
-        throw new Error('asset is not found');
-      }
-
-      const rawAssetId = getAssetId(
-        tokenId,
-        tokenContract.collectionAddress as Address,
-        BigInt(tokenContract.chain)
-      );
-
-      const now = getUnixTime(new Date());
-      const rawShapeId = getShapeId(address, BigInt(now));
-
-      editor.updateShape({
-        ...shape,
-        meta: {
-          creator: address,
-          createdAt: now,
-          fid: session?.user?.id,
-          onchainShapeId: rawShapeId.toString()
-        }
-      });
-
-      editor.updateAssets([
-        {
-          ...asset,
-          props: { ...asset.props, src: image.url },
-          meta: {
-            tokenContract,
-            tokenId,
-            onchainAssetId: rawAssetId.toString()
-          }
-        }
-      ]);
-
-      setUploadedShapeId(shapeId);
-      setFileName('😃');
-
       onStickerClose();
-      await updateBgRemoveFile(file, compressedImage);
+      setIsInsertStickerLoading(true);
+
+      try {
+        const res = await fetch(image.url);
+        const blob = await res.blob();
+        const file = new File([blob], name ?? '', { type: image.mimeType });
+
+        const compressedImage = await imageCompression(file, {
+          maxWidthOrHeight: 1000
+        });
+        setUploadedFile(compressedImage);
+
+        await editor.putExternalContent({
+          type: 'files',
+          files: [compressedImage],
+          point: editor.getViewportPageBounds().center,
+          ignoreParent: false
+        });
+
+        const shapeId = editor.getSelectedShapeIds()[0];
+        const shape = editor.getShape<TLImageShape>(shapeId);
+
+        if (!shape) {
+          throw new Error('shape is not found');
+        }
+
+        const assetId = shape.props.assetId;
+        if (!assetId) {
+          throw new Error('assetId is not found');
+        }
+
+        const asset = editor.getAsset(assetId);
+        if (!asset) {
+          throw new Error('asset is not found');
+        }
+
+        const rawAssetId = getAssetId(
+          tokenId,
+          tokenContract.collectionAddress as Address,
+          BigInt(tokenContract.chain)
+        );
+
+        const now = getUnixTime(new Date());
+        const rawShapeId = getShapeId(address, BigInt(now));
+
+        editor.updateShape({
+          ...shape,
+          meta: {
+            creator: address,
+            createdAt: now,
+            fid: session?.user?.id,
+            onchainShapeId: rawShapeId.toString()
+          }
+        });
+
+        editor.updateAssets([
+          {
+            ...asset,
+            props: { ...asset.props, src: image.url },
+            meta: {
+              tokenContract,
+              tokenId,
+              onchainAssetId: rawAssetId.toString()
+            }
+          }
+        ]);
+
+        setUploadedShapeId(shapeId);
+        setFileName('😃');
+        updateBgRemoveFile(file, compressedImage);
+      } catch (e) {
+        throw e;
+      } finally {
+        setIsInsertStickerLoading(false);
+      }
     };
 
     const handleInsertImage = async (
@@ -1708,6 +1717,20 @@ const Canvas = track(
         left={0}
         right={0}
       >
+        {isInsertStickerLoading && (
+          <Center w="full" h="full" pos="relative" zIndex={30}>
+            <Box
+              pos="absolute"
+              top={0}
+              left={0}
+              w="full"
+              h="full"
+              bgColor="black"
+              opacity={0.2}
+            />
+            <Spinner size="xl" color="white" thickness="4px" />
+          </Center>
+        )}
         {isChangeCanvas && (
           <VStack
             pos="absolute"
