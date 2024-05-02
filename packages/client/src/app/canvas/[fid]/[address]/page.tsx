@@ -49,7 +49,8 @@ import {
   Slider,
   SliderTrack,
   SliderFilledTrack,
-  SliderThumb
+  SliderThumb,
+  Skeleton
 } from '@chakra-ui/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CiImageOn } from 'react-icons/ci';
@@ -143,6 +144,8 @@ import { getMintDuration } from '@/utils/getMintDuration';
 import { ZoraIPFSResponse } from '@/models/zoraIPFSResponse';
 import { denoise } from '@/utils/image/denoise';
 import * as Sentry from '@sentry/nextjs';
+import { PreviewImageResponse } from '@/models/previewImageResponse';
+import { supabaseDomain } from '@/utils/supabase/client';
 
 export default function CanvasPage({
   params
@@ -217,6 +220,7 @@ const Canvas = track(
       useState<number>(defaultExpiredPeriod);
     const [isInsertStickerLoading, setIsInsertStickerLoading] =
       useState<boolean>();
+    const [progressMessage, setProgressMessage] = useState<string>('');
 
     const {
       isOpen: isStickerOpen,
@@ -277,12 +281,20 @@ const Canvas = track(
 
         const formData = new FormData();
         formData.append('file', compressedImage);
-        const res = await httpClient.post<ZoraIPFSResponse>(
-          '/zora/ipfs',
+
+        const res = await httpClient.post<PreviewImageResponse>(
+          '/preview/image',
           formData
         );
 
-        previewURI = getIPFSPreviewURL(res.data.cid.toString());
+        previewURI = res.data.url;
+
+        // const res = await httpClient.post<ZoraIPFSResponse>(
+        //   '/zora/ipfs',
+        //   formData
+        // );
+
+        // previewURI = getIPFSPreviewURL(res.data.cid.toString());
       }
       return previewURI;
     };
@@ -804,7 +816,7 @@ const Canvas = track(
       if (isDropLoading || isSaveLoading) {
         const timer = setTimeout(() => {
           setShouldRetry(true);
-        }, 5000);
+        }, 10000);
         return () => clearTimeout(timer);
       }
     }, [isDropLoading, isSaveLoading, shouldRetry]);
@@ -1142,6 +1154,7 @@ const Canvas = track(
         //   { cidVersion: 1 }
         // );
 
+        setProgressMessage('Creating the image...');
         const formData = new FormData();
         formData.append('file', editedFile);
         const res = await httpClient.post<ZoraIPFSResponse>(
@@ -1150,6 +1163,7 @@ const Canvas = track(
         );
         formData.delete('file');
 
+        setProgressMessage('Creating the metadata...');
         const metadata = JSON.stringify({
           name: fileName,
           description: ``,
@@ -1170,6 +1184,7 @@ const Canvas = track(
         //   content: metadata
         // });
 
+        setProgressMessage('Creating the preview image...');
         const previewURI = await getPreviewURL();
 
         const salesConfig = {
@@ -1180,6 +1195,7 @@ const Canvas = track(
           fundsRecipient: address
         };
 
+        setProgressMessage('Waiting for signing...');
         const result = await writeContractAsync({
           abi: canvasAbi,
           address: canvasAddress,
@@ -1218,6 +1234,7 @@ const Canvas = track(
           ]
         });
 
+        setProgressMessage('Waiting for transaction completion...');
         const receipt = await waitForTransactionReceipt(config, {
           hash: result
         });
@@ -1279,26 +1296,34 @@ const Canvas = track(
         editor.mark('latest');
         setShouldShowDrop(false);
 
-        if (!enabledNotification) {
-          return;
+        if (enabledNotification && Number(session.user.id) != fid) {
+          const domain = getDomainFromChain(defaultChain.id);
+          const shortChainName = getChainNameShorthand(defaultChain.id);
+
+          const url = `https://${domain}/collect/${shortChainName}:${tokenAddress.toLowerCase()}/${tokenId}?referrer=${address}`;
+
+          const req: DropCastRequest = {
+            from: Number(session.user.id),
+            to: fid,
+            url
+          };
+          httpClient.post('/farcaster/cast/drop', req);
         }
 
-        if (Number(session.user.id) == fid) {
-          // NOTE: consider adding self notification setting
-          return;
+        const oldPreviewURL = canvasData?.[2];
+        const oldPreviewDomain = oldPreviewURL
+          ? oldPreviewURL.split('/')[1]
+          : undefined;
+
+        if (oldPreviewURL != undefined && oldPreviewDomain == supabaseDomain) {
+          const path =
+            '/preview/image/' +
+            oldPreviewURL
+              .split('/')
+              [oldPreviewURL.split('/').length - 1].replace('.png', '');
+
+          httpClient.delete(path);
         }
-
-        const domain = getDomainFromChain(defaultChain.id);
-        const shortChainName = getChainNameShorthand(defaultChain.id);
-
-        const url = `https://${domain}/collect/${shortChainName}:${tokenAddress.toLowerCase()}/${tokenId}?referrer=${address}`;
-
-        const req: DropCastRequest = {
-          from: Number(session.user.id),
-          to: fid,
-          url
-        };
-        httpClient.post('/farcaster/cast/drop', req);
       } catch (e) {
         const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
         editor.updateShapes(
@@ -1351,6 +1376,7 @@ const Canvas = track(
           console.error(e);
         }
       } finally {
+        setProgressMessage('');
         setShouldRetry(false);
         setIsDropLoading(false);
       }
@@ -1385,6 +1411,7 @@ const Canvas = track(
       );
 
       try {
+        setProgressMessage('Creating the preview image...');
         const previewURI = await getPreviewURL();
         const snapshot = editor.store.getSnapshot();
         const stringified = JSON.stringify(snapshot);
@@ -1421,6 +1448,7 @@ const Canvas = track(
 
         const deletedShapeIds = getRemovedShapeIds(stringified, lastSave);
 
+        setProgressMessage('Waiting for signing...');
         const result = await writeContractAsync({
           abi: canvasAbi,
           address: canvasAddress,
@@ -1436,32 +1464,47 @@ const Canvas = track(
           ],
           value: fee
         });
+
+        setProgressMessage('Waiting for transaction completion...');
         await waitForTransactionReceipt(config, {
           hash: result,
           onReplaced: (res) => {
             console.log('onReplaced', res);
           }
         });
-        setIsSavedSuccess(true);
         setLastSave(JSON.stringify(editor.store.getSnapshot()));
         editor.mark('latest');
         const split = previewURI.split('/');
         const cid = split[split.length - 1];
         const previewReq: CreatePreviewMappingRequest = { fid, cid };
+
+        setProgressMessage('Preparing to make preview...');
         await httpClient.post('/preview/mapping', previewReq);
-        if (!enabledNotification) {
-          return;
+        setIsSavedSuccess(true);
+
+        if (enabledNotification && Number(session.user.id) != fid) {
+          const req: SaveCastRequest = {
+            from: Number(session.user.id),
+            to: fid,
+            url: `${siteOrigin}/frames/${cid}`
+          };
+          httpClient.post('/farcaster/cast/save', req);
         }
-        if (Number(session.user.id) == fid) {
-          // NOTE: consider adding self notification setting
-          return;
+
+        const oldPreviewURL = canvasData?.[2];
+        const oldPreviewDomain = oldPreviewURL
+          ? oldPreviewURL.split('/')[1]
+          : undefined;
+
+        if (oldPreviewURL != undefined && oldPreviewDomain == supabaseDomain) {
+          const path =
+            '/preview/image/' +
+            oldPreviewURL
+              .split('/')
+              [oldPreviewURL.split('/').length - 1].replace('.png', '');
+
+          httpClient.delete(path);
         }
-        const req: SaveCastRequest = {
-          from: Number(session.user.id),
-          to: fid,
-          url: `${siteOrigin}/frames/${cid}`
-        };
-        httpClient.post('/farcaster/cast/save', req);
       } catch (e) {
         Sentry.captureException(e, {
           tags: {
@@ -1502,6 +1545,7 @@ const Canvas = track(
           console.error(e);
         }
       } finally {
+        setProgressMessage('');
         setShouldRetry(false);
         setIsSaveLoading(false);
       }
@@ -2182,7 +2226,7 @@ const Canvas = track(
                           )}
                       </HStack>
                       <HStack>
-                        {isChangeCanvas ? (
+                        {isChangeCanvas || isSaveLoading ? (
                           <>
                             <IconButton
                               aria-label="reset"
@@ -2295,6 +2339,26 @@ const Canvas = track(
               </VStack>
             )}
           </>
+        )}
+
+        {progressMessage && (
+          <HStack
+            pos="absolute"
+            bottom={4}
+            left={0}
+            right={0}
+            w="full"
+            justify="center"
+          >
+            <Skeleton
+              w={2}
+              h={2}
+              startColor="green.400"
+              endColor="green.100"
+              rounded="full"
+            />
+            <Text size="sm">{progressMessage}</Text>
+          </HStack>
         )}
 
         <Drawer
