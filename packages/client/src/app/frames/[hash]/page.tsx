@@ -7,10 +7,10 @@ import { RedirectHome } from '@/components/redirectHome';
 export async function generateMetadata({
   params
 }: {
-  params: { cid: string };
+  params: { hash: string };
 }): Promise<Metadata> {
   const frameMetadata = await getFrameMetadata(
-    `${siteOrigin}/api/farcaster/frames/${params.cid}`
+    `${siteOrigin}/api/farcaster/frames/${params.hash}`
   );
   return {
     other: frameMetadata
