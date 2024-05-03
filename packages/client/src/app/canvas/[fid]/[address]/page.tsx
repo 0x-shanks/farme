@@ -515,6 +515,9 @@ const Canvas = track(
         if (asset == undefined) {
           throw new Error('asset is not found');
         }
+        if (!asset.meta.onchainAssetId) {
+          throw new Error('onchainAssetId is not found');
+        }
         return {
           id: BigInt(s.meta.onchainShapeId as string),
           x: encodeFloat(s.x),
@@ -634,8 +637,14 @@ const Canvas = track(
     // Side effect
     //
 
+    const loadOnce = useRef<boolean>(false);
+
     // Load canvas
     useEffect(() => {
+      if (loadOnce.current) {
+        return;
+      }
+
       if (!canvasAddress) {
         return;
       }
@@ -716,6 +725,8 @@ const Canvas = track(
 
         setLastSave(JSON.stringify(editor.store.getSnapshot()));
         editor.mark('latest');
+
+        loadOnce.current = true;
       }
     }, [canvasData, isCanvasSuccess, canvasOwner, address, authenticated]);
 
@@ -1316,7 +1327,12 @@ const Canvas = track(
             },
             meta: {
               tokenContract,
-              tokenId
+              tokenId,
+              onchainAssetId: getAssetId(
+                tokenId.toString(),
+                tokenAddress,
+                BigInt(defaultChain.id)
+              ).toString()
             }
           }
         ]);
