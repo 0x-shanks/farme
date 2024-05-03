@@ -47,7 +47,7 @@ import { signOut } from 'next-auth/react';
 import { useLocalStorage } from 'usehooks-ts';
 import { MdLogin } from 'react-icons/md';
 import { getMintDuration } from '@/utils/getMintDuration';
-import { privacyPolicyLink, termsLink } from '@/app/constants';
+import { defaultChain, privacyPolicyLink, termsLink } from '@/app/constants';
 
 export const Network: FC<{
   user: UserResponseItem;
@@ -91,7 +91,8 @@ const Content = track(
       args: [user.address!],
       query: {
         enabled: user.address != undefined
-      }
+      },
+      chainId: defaultChain.id // NOTE:
     });
 
     const detailW = 200;

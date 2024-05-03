@@ -153,6 +153,7 @@ import { denoise } from '@/utils/image/denoise';
 import * as Sentry from '@sentry/nextjs';
 import { PreviewImageResponse } from '@/models/previewImageResponse';
 import { supabaseDomain } from '@/utils/supabase/client';
+import { IoMdShare } from 'react-icons/io';
 
 export default function CanvasPage({
   params
@@ -250,7 +251,12 @@ const Canvas = track(
 
     // Contract
     const { writeContractAsync } = useWriteContract();
-    const { data: canvasData, isSuccess: isCanvasSuccess } = useReadContract({
+    const {
+      data: canvasData,
+      isSuccess: isCanvasSuccess,
+      refetch: canvasRefetch,
+      isRefetching: isCanvasRefetching
+    } = useReadContract({
       abi: canvasAbi,
       address: canvasAddress,
       functionName: 'getCanvas',
@@ -275,7 +281,7 @@ const Canvas = track(
           type: 'image/png'
         });
         const compressedImage = await imageCompression(imageFile, {
-          maxWidthOrHeight: 500
+          maxWidthOrHeight: 1000
         });
 
         // const res = await ipfsClient.add(
@@ -602,6 +608,27 @@ const Canvas = track(
       () => getMintDuration(expiredPeriodSlider),
       [expiredPeriodSlider]
     );
+
+    const shareLink = useMemo(() => {
+      if (canvasData?.[2] == undefined) {
+        return undefined;
+      }
+
+      console.log(canvasData[2]);
+
+      const split = canvasData[2].split('/');
+      if (split == undefined) {
+        return undefined;
+      }
+      const hash = split[split.length - 1].replace('.png', '');
+
+      const params = {
+        text: 'Visit my canvas and see the collections✨',
+        parentUrl: 'https://warpcast.com/~/channel/farme',
+        'embeds[]': `https://farme.club/frames/${hash}`
+      };
+      return `https://warpcast.com/~/compose?${new URLSearchParams(params).toString()}`;
+    }, [canvasData?.[2]]);
 
     //
     // Side effect
@@ -1303,6 +1330,9 @@ const Canvas = track(
         editor.mark('latest');
         setShouldShowDrop(false);
 
+        // Post async
+        canvasRefetch();
+
         if (enabledNotification && Number(session.user.id) != fid) {
           const domain = getDomainFromChain(defaultChain.id);
           const shortChainName = getChainNameShorthand(defaultChain.id);
@@ -1511,6 +1541,9 @@ const Canvas = track(
         setProgressMessage('Preparing to make preview...');
         await httpClient.post('/preview/mapping', previewReq);
         setIsSavedSuccess(true);
+
+        // Post async
+        canvasRefetch();
 
         if (enabledNotification && Number(session.user.id) != fid) {
           const req: SaveCastRequest = {
@@ -1948,6 +1981,21 @@ const Canvas = track(
                 </>
               )}
             </Box>
+            <Link
+              href={shareLink ?? ''}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <IconButton
+                colorScheme="primary"
+                aria-label=""
+                rounded="full"
+                icon={<Icon as={IoMdShare} color="primary.500" />}
+                variant="ghost"
+                pointerEvents={shareLink ? 'all' : 'none'}
+                isDisabled={!shareLink || isCanvasRefetching}
+              />
+            </Link>
           </HStack>
         </Link>
 
