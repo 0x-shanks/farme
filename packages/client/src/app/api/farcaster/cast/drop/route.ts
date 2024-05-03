@@ -64,7 +64,8 @@ export async function POST(request: Request) {
       embeds: [{ url: parsedBody.url }],
       embedsDeprecated: [],
       mentions: [parsedBody.to, parsedBody.from],
-      mentionsPositions: [0, 44]
+      mentionsPositions: [0, 44],
+      parentUrl: 'https://warpcast.com/~/channel/farme'
     },
     dataOptions,
     ed25519Signer
