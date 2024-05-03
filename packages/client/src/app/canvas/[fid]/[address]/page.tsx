@@ -2188,6 +2188,7 @@ const Canvas = track(
                             pointerEvents="all"
                             onClick={handleDeleteInsertedImage}
                             size="lg"
+                            isDisabled={isDropLoading}
                           />
 
                           {shouldSwitchNetworkDrop ? (
@@ -2262,6 +2263,7 @@ const Canvas = track(
                           pointerEvents="all"
                           size="lg"
                           onClick={handleStickerOpen}
+                          isDisabled={isDropLoading || isSaveLoading}
                         />
 
                         <Box pos="relative" pointerEvents="all">
@@ -2272,6 +2274,7 @@ const Canvas = track(
                             rounded="full"
                             shadow="xl"
                             size="lg"
+                            isDisabled={isDropLoading || isSaveLoading}
                           />
                           <Box>
                             <Input
@@ -2298,6 +2301,7 @@ const Canvas = track(
                             pointerEvents="all"
                             size="lg"
                             onClick={handleDeleteImage}
+                            isDisabled={isDropLoading || isSaveLoading}
                           />
                         )}
 
@@ -2325,7 +2329,11 @@ const Canvas = track(
                                   pointerEvents="all"
                                   size="lg"
                                   onClick={handleOpenMintStickerModal}
-                                  isDisabled={stickerUrl == undefined}
+                                  isDisabled={
+                                    stickerUrl == undefined ||
+                                    isDropLoading ||
+                                    isSaveLoading
+                                  }
                                 />
                               </Link>
                             </Box>
@@ -2343,6 +2351,7 @@ const Canvas = track(
                               pointerEvents="all"
                               size="lg"
                               onClick={handleReset}
+                              isDisabled={isSaveLoading}
                             />
                             <IconButton
                               aria-label="save"
