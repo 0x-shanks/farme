@@ -73,14 +73,21 @@ import {
 import { addDays, addMonths, addWeeks, addYears, getUnixTime } from 'date-fns';
 import { canvasAbi } from '@/utils/contract/generated';
 import { canvasAddress, tokenAddress } from '@/utils/contract/address';
-import { getWalletClient, waitForTransactionReceipt } from '@wagmi/core';
+import {
+  getBalance,
+  getWalletClient,
+  waitForTransactionReceipt
+} from '@wagmi/core';
 import {
   Address,
+  ContractFunctionExecutionError,
   createPublicClient,
   decodeEventLog,
   encodePacked,
+  formatEther,
   fromHex,
   http,
+  InsufficientFundsError,
   keccak256,
   TransactionExecutionError
 } from 'viem';
@@ -1336,7 +1343,7 @@ const Canvas = track(
               isLocked: false
             }))
         );
-
+        console.error(e);
         Sentry.captureException(e, {
           tags: {
             action: 'drop',
@@ -1352,7 +1359,10 @@ const Canvas = track(
           }
         });
 
-        if (e instanceof TransactionExecutionError) {
+        if (
+          e instanceof ContractFunctionExecutionError ||
+          e instanceof TransactionExecutionError
+        ) {
           const split = e.details.split(':');
           let reason = split[split.length - 1];
           if (reason.length > maxErrorReason) {
@@ -1365,6 +1375,14 @@ const Canvas = track(
             description: reason,
             position: 'top-right'
           });
+        } else if (e instanceof Error) {
+          toast({
+            status: 'error',
+            variant: 'subtle',
+            isClosable: true,
+            description: e.message,
+            position: 'top-right'
+          });
         } else {
           toast({
             status: 'error',
@@ -1373,7 +1391,6 @@ const Canvas = track(
             description: 'Unknown error',
             position: 'top-right'
           });
-          console.error(e);
         }
       } finally {
         setProgressMessage('');
@@ -1385,6 +1402,10 @@ const Canvas = track(
     const handleSave = async () => {
       if (canvasOwner == undefined) {
         throw new Error('canvasOwner is not found');
+      }
+
+      if (address == undefined) {
+        throw new Error('address is not found');
       }
 
       if (
@@ -1411,6 +1432,15 @@ const Canvas = track(
       );
 
       try {
+        setProgressMessage('Checking the balance...');
+        const balance = await getBalance(config, {
+          address
+        });
+
+        if (balance.value < fee) {
+          throw new Error('Insufficient funds: You need at least 0.000777 ETH');
+        }
+
         setProgressMessage('Creating the preview image...');
         const previewURI = await getPreviewURL();
         const snapshot = editor.store.getSnapshot();
@@ -1475,8 +1505,8 @@ const Canvas = track(
         setLastSave(JSON.stringify(editor.store.getSnapshot()));
         editor.mark('latest');
         const split = previewURI.split('/');
-        const cid = split[split.length - 1];
-        const previewReq: CreatePreviewMappingRequest = { fid, cid };
+        const hash = split[split.length - 1];
+        const previewReq: CreatePreviewMappingRequest = { fid, hash };
 
         setProgressMessage('Preparing to make preview...');
         await httpClient.post('/preview/mapping', previewReq);
@@ -1486,7 +1516,7 @@ const Canvas = track(
           const req: SaveCastRequest = {
             from: Number(session.user.id),
             to: fid,
-            url: `${siteOrigin}/frames/${cid}`
+            url: `${siteOrigin}/frames/${hash}`
           };
           httpClient.post('/farcaster/cast/save', req);
         }
@@ -1506,6 +1536,7 @@ const Canvas = track(
           httpClient.delete(path);
         }
       } catch (e) {
+        console.error(e);
         Sentry.captureException(e, {
           tags: {
             action: 'save',
@@ -1521,17 +1552,29 @@ const Canvas = track(
           }
         });
 
-        if (e instanceof TransactionExecutionError) {
+        if (
+          e instanceof TransactionExecutionError ||
+          e instanceof ContractFunctionExecutionError
+        ) {
           const split = e.details.split(':');
           let reason = split[split.length - 1];
           if (reason.length > maxErrorReason) {
             reason = `${reason.slice(0, maxErrorReason)}...`;
           }
+
           toast({
             status: 'error',
             variant: 'subtle',
             isClosable: true,
             description: reason,
+            position: 'top-right'
+          });
+        } else if (e instanceof Error) {
+          toast({
+            status: 'error',
+            variant: 'subtle',
+            isClosable: true,
+            description: e.message,
             position: 'top-right'
           });
         } else {
@@ -1542,7 +1585,6 @@ const Canvas = track(
             description: 'Unknown error',
             position: 'top-right'
           });
-          console.error(e);
         }
       } finally {
         setProgressMessage('');
