@@ -1335,6 +1335,12 @@ const Canvas = track(
           }
         ]);
 
+        const split = previewURI.split('/');
+        const hash = split[split.length - 1].replace('.png', '');
+        const previewReq: CreatePreviewMappingRequest = { fid, hash };
+        setProgressMessage('Preparing to make preview...');
+        await httpClient.post('/preview/mapping', previewReq);
+
         setUploadedFile(undefined);
         setUploadedShapeId(undefined);
         setBgRemovedFile(undefined);
@@ -1549,7 +1555,7 @@ const Canvas = track(
         setLastSave(JSON.stringify(editor.store.getSnapshot()));
         editor.mark('latest');
         const split = previewURI.split('/');
-        const hash = split[split.length - 1];
+        const hash = split[split.length - 1].replace('.png', '');
         const previewReq: CreatePreviewMappingRequest = { fid, hash };
 
         setProgressMessage('Preparing to make preview...');
