@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const file = formData.get('file') as File;
   const hash = keccak256(new Uint8Array(await file.arrayBuffer()));
-  const filePath = `preview/${hash}.png`;
+  const filePath = `preview/${hash.substring(0, 34)}.png`;
 
   const { error } = await supabaseClient.storage
     .from('images')
