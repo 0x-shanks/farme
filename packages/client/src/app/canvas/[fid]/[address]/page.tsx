@@ -625,7 +625,7 @@ const Canvas = track(
       const params = {
         text: 'Visit my canvas and see the collections✨',
         parentUrl: 'https://warpcast.com/~/channel/farme',
-        'embeds[]': `https://farme.club/frames/${hash}`
+        'embeds[]': `${siteOrigin}/frames/${hash}`
       };
       return `https://warpcast.com/~/compose?${new URLSearchParams(params).toString()}`;
     }, [canvasData?.[2]]);
