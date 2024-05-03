@@ -617,8 +617,6 @@ const Canvas = track(
         return undefined;
       }
 
-      console.log(canvasData[2]);
-
       const split = canvasData[2].split('/');
       if (split == undefined) {
         return undefined;
@@ -861,7 +859,7 @@ const Canvas = track(
       if (isDropLoading || isSaveLoading) {
         const timer = setTimeout(() => {
           setShouldRetry(true);
-        }, 10000);
+        }, 30000);
         return () => clearTimeout(timer);
       }
     }, [isDropLoading, isSaveLoading, shouldRetry]);
@@ -1888,7 +1886,11 @@ const Canvas = track(
               shadow="xl"
               icon={<Icon as={LiaUndoAltSolid} />}
               onClick={handleUndo}
-              isDisabled={editor.history.getNumUndos() == 0}
+              isDisabled={
+                editor.history.getNumUndos() == 0 ||
+                isDropLoading ||
+                isSaveLoading
+              }
             />
             <IconButton
               aria-label=""
@@ -1897,7 +1899,11 @@ const Canvas = track(
               shadow="xl"
               icon={<Icon as={LiaRedoAltSolid} />}
               onClick={handleRedo}
-              isDisabled={editor.history.getNumRedos() == 0}
+              isDisabled={
+                editor.history.getNumRedos() == 0 ||
+                isDropLoading ||
+                isSaveLoading
+              }
             />
           </VStack>
         )}
@@ -1919,6 +1925,7 @@ const Canvas = track(
               shadow="xl"
               icon={<Icon as={TbStackFront} />}
               onClick={handleBringToFront}
+              isDisabled={isDropLoading || isSaveLoading}
             />
             <IconButton
               aria-label=""
@@ -1927,6 +1934,7 @@ const Canvas = track(
               shadow="xl"
               icon={<Icon as={TbStackPop} />}
               onClick={handleBringForward}
+              isDisabled={isDropLoading || isSaveLoading}
             />
             <IconButton
               aria-label=""
@@ -1935,6 +1943,7 @@ const Canvas = track(
               shadow="xl"
               icon={<Icon as={TbStackPush} />}
               onClick={handleSendBackward}
+              isDisabled={isDropLoading || isSaveLoading}
             />
             <IconButton
               aria-label=""
@@ -1943,6 +1952,7 @@ const Canvas = track(
               shadow="xl"
               icon={<Icon as={TbStackBack} />}
               onClick={handleSendToBack}
+              isDisabled={isDropLoading || isSaveLoading}
             />
           </VStack>
         )}
@@ -2102,7 +2112,9 @@ const Canvas = track(
                       w="15%"
                       h="full"
                       onClick={() => handleMakeSticker('white')}
-                      isDisabled={!bgRemovedFile}
+                      isDisabled={
+                        !bgRemovedFile || isDropLoading || isSaveLoading
+                      }
                     >
                       <ChakraImage
                         alt="white-sticker"
@@ -2117,7 +2129,9 @@ const Canvas = track(
                       w="15%"
                       h="full"
                       onClick={() => handleMakeSticker('black')}
-                      isDisabled={!bgRemovedFile}
+                      isDisabled={
+                        !bgRemovedFile || isDropLoading || isSaveLoading
+                      }
                     >
                       <ChakraImage
                         alt="black-sticker"
@@ -2132,7 +2146,9 @@ const Canvas = track(
                       w="15%"
                       h="full"
                       onClick={() => handleMakeSticker('no-bg')}
-                      isDisabled={!bgRemovedFile}
+                      isDisabled={
+                        !bgRemovedFile || isDropLoading || isSaveLoading
+                      }
                     >
                       <ChakraImage
                         alt="no-background"
@@ -2147,7 +2163,9 @@ const Canvas = track(
                       w="15%"
                       h="full"
                       onClick={() => handleMakeSticker('insta')}
-                      isDisabled={!bgRemovedFile}
+                      isDisabled={
+                        !bgRemovedFile || isDropLoading || isSaveLoading
+                      }
                     >
                       <ChakraImage
                         alt="instant-camera"
@@ -2162,7 +2180,9 @@ const Canvas = track(
                       w="15%"
                       h="full"
                       onClick={() => handleMakeSticker('rounded')}
-                      isDisabled={!bgRemovedFile}
+                      isDisabled={
+                        !bgRemovedFile || isDropLoading || isSaveLoading
+                      }
                     >
                       <ChakraImage
                         alt="rounded"
@@ -2226,6 +2246,7 @@ const Canvas = track(
                               textAlign="center"
                               rounded="full"
                               colorScheme="primary"
+                              isDisabled={isDropLoading || isSaveLoading}
                             >
                               {fileName}
                             </Button>
@@ -2242,6 +2263,7 @@ const Canvas = track(
                             colorScheme="primary"
                             pointerEvents="all"
                             onChange={setExpiredPeriodSlider}
+                            isDisabled={isDropLoading || isSaveLoading}
                           >
                             <SliderTrack>
                               <SliderFilledTrack />
