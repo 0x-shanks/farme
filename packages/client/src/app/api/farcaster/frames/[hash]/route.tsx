@@ -7,6 +7,7 @@ import { getIPFSPreviewURL } from '@/utils/ipfs/utils';
 import { kv } from '@vercel/kv';
 import { previewPrefix } from '@/utils/kv/prefix';
 import { siteOrigin } from '@/app/constants';
+import { supabaseUrl } from '@/utils/supabase/client';
 
 const app = new Frog({
   basePath: '/api/farcaster/frames/:cid',
@@ -15,14 +16,15 @@ const app = new Frog({
 
 app.frame('/', async (c) => {
   const split = c.initialPath.split('/');
-  const cid = split[split.length - 1];
+  const hash = split[split.length - 1];
 
-  const fid = await kv.get<string>(`${previewPrefix}${cid}`);
+  const fid = await kv.get<string>(`${previewPrefix}${hash}`);
 
   const url = `${siteOrigin}/network/${fid}`;
+  const previewImage = `${supabaseUrl}/storage/v1/object/public/images/preview/${hash}.png`;
 
   return c.res({
-    image: getIPFSPreviewURL(cid),
+    image: previewImage,
     intents: [
       <Button.Link href={url} key="button1">
         Check farme!
