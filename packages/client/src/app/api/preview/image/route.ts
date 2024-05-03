@@ -12,9 +12,6 @@ export async function POST(request: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY
   );
 
-  const searchParams = request.nextUrl.searchParams;
-  const old = searchParams.get('old');
-
   const formData = await request.formData();
   const file = formData.get('file') as File;
   const hash = keccak256(new Uint8Array(await file.arrayBuffer()));
@@ -22,14 +19,12 @@ export async function POST(request: NextRequest) {
 
   const { error } = await supabaseClient.storage
     .from('images')
-    .upload(filePath, file);
+    .upload(filePath, file, {
+      upsert: true
+    });
 
   if (error) {
     throw error;
-  }
-
-  if (!!old) {
-    await supabaseClient.storage.from('images').remove([`preview/${old}.png`]);
   }
 
   const { data } = supabaseClient.storage.from('images').getPublicUrl(filePath);
