@@ -7,6 +7,6 @@ export async function POST(request: Request) {
   const req = (await request.json()) as CreatePreviewMappingRequest;
 
   await kv.set(`${circlePrefix}${req.hash}`, req.fid.toString());
-  await kv.set(`${circlePrefix}${req.fid.toString()}`, req.hash);
+  // await kv.set(`${circlePrefix}${req.fid.toString()}`, req.hash);
   return NextResponse.json('');
 }

@@ -43,17 +43,17 @@ export async function POST(request: NextRequest) {
     url: data.publicUrl
   };
 
-  const oldHash = await kv.get<string>(`${circlePrefix}${fid}`);
-  if (!!oldHash) {
-    const { error } = await supabaseClient.storage
-      .from('images')
-      .remove([`circle/${oldHash}.png`]);
+  // const oldHash = await kv.get<string>(`${circlePrefix}${fid}`);
+  // if (!!oldHash) {
+  //   const { error } = await supabaseClient.storage
+  //     .from('images')
+  //     .remove([`circle/${oldHash}.png`]);
 
-    if (error) {
-      throw error;
-    }
-    await kv.del(`${circlePrefix}${fid}`);
-  }
+  //   if (error) {
+  //     throw error;
+  //   }
+  //   await kv.del(`${circlePrefix}${fid}`);
+  // }
 
   return new Response(JSON.stringify(res), { status: 200 });
 }

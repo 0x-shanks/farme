@@ -62,6 +62,8 @@ import { CircleImageResponse } from '@/models/circleImageResponse';
 import { CreateCircleMappingRequest } from '@/models/createCircleMappingRequest';
 import * as Sentry from '@sentry/nextjs';
 import imageCompression from 'browser-image-compression';
+import { Hex, keccak256, toHex } from 'viem';
+import { supabaseUrl } from '@/utils/supabase/client';
 
 export const Network: FC<{
   user: UserResponseItem;
@@ -364,31 +366,45 @@ const Content = track(
       }
       setIsPrepareCircleLoading(true);
       try {
-        const circleImageFile = new File([circleBlob], '', {
-          type: circleBlob.type
-        });
+        const key = keccak256(toHex(profileImageUrls.join(',')));
+        const hash = localStorage.getItem(`circleChache-${key}`);
+        if (hash == null) {
+          const circleImageFile = new File([circleBlob], '', {
+            type: circleBlob.type
+          });
 
-        setProgressMessage('Preparing to make the image...');
-        const compressedImage = await imageCompression(circleImageFile, {
-          maxWidthOrHeight: 1000
-        });
+          setProgressMessage('Preparing to make the image...');
+          const compressedImage = await imageCompression(circleImageFile, {
+            maxWidthOrHeight: 1000
+          });
 
-        const formData = new FormData();
-        formData.append('file', compressedImage);
+          const formData = new FormData();
+          formData.append('file', compressedImage);
 
-        const res = await httpClient.post<CircleImageResponse>(
-          `/circle/image?fid=${user.fid}`,
-          formData
-        );
+          const res = await httpClient.post<CircleImageResponse>(
+            `/circle/image?fid=${user.fid}`,
+            formData
+          );
 
-        setStorageCircleImageUrl(res.data.url);
+          setStorageCircleImageUrl(res.data.url);
 
-        const split = res.data.url.split('/');
-        const hash = split[split.length - 1].replace('.png', '');
+          const split = res.data.url.split('/');
+          const newHash = split[split.length - 1].replace('.png', '');
 
-        const circleReq: CreateCircleMappingRequest = { fid: user.fid, hash };
-        setProgressMessage('Preparing to make frames...');
-        await httpClient.post('circle/mapping', circleReq);
+          localStorage.setItem(`circleChache-${key}`, newHash);
+
+          const circleReq: CreateCircleMappingRequest = {
+            fid: user.fid,
+            hash: newHash
+          };
+          setProgressMessage('Preparing to make frames...');
+          await httpClient.post('circle/mapping', circleReq);
+        } else {
+          setStorageCircleImageUrl(
+            `${supabaseUrl}/storage/v1/object/public/images/circle/${hash}.png`
+          );
+        }
+
         setIsPrepareCircleSuccess(true);
       } catch (e) {
         Sentry.captureException(e, {

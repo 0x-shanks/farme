@@ -1372,15 +1372,15 @@ const Canvas = track(
           ? oldPreviewURL.split('/')[1]
           : undefined;
 
-        if (oldPreviewURL != undefined && oldPreviewDomain == supabaseDomain) {
-          const path =
-            '/preview/image/' +
-            oldPreviewURL
-              .split('/')
-              [oldPreviewURL.split('/').length - 1].replace('.png', '');
+        // if (oldPreviewURL != undefined && oldPreviewDomain == supabaseDomain) {
+        //   const path =
+        //     '/preview/image/' +
+        //     oldPreviewURL
+        //       .split('/')
+        //       [oldPreviewURL.split('/').length - 1].replace('.png', '');
 
-          httpClient.delete(path);
-        }
+        //   httpClient.delete(path);
+        // }
       } catch (e) {
         const allShapeIds = Array.from(editor.getCurrentPageShapeIds());
         editor.updateShapes(
@@ -1579,15 +1579,15 @@ const Canvas = track(
           ? oldPreviewURL.split('/')[1]
           : undefined;
 
-        if (oldPreviewURL != undefined && oldPreviewDomain == supabaseDomain) {
-          const path =
-            '/preview/image/' +
-            oldPreviewURL
-              .split('/')
-              [oldPreviewURL.split('/').length - 1].replace('.png', '');
+        // if (oldPreviewURL != undefined && oldPreviewDomain == supabaseDomain) {
+        //   const path =
+        //     '/preview/image/' +
+        //     oldPreviewURL
+        //       .split('/')
+        //       [oldPreviewURL.split('/').length - 1].replace('.png', '');
 
-          httpClient.delete(path);
-        }
+        //   httpClient.delete(path);
+        // }
       } catch (e) {
         console.error(e);
         Sentry.captureException(e, {
