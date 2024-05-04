@@ -773,7 +773,12 @@ const Content = track(
 
         <Box pos="absolute" opacity={0}>
           {Array.from(Array(23).keys()).map((num) => (
-            <img crossOrigin="anonymous" id={`canvas-img-${num}`} src="" />
+            <img
+              crossOrigin="anonymous"
+              id={`canvas-img-${num}`}
+              src=""
+              key={`canvas-img-${num}`}
+            />
           ))}
         </Box>
       </>
