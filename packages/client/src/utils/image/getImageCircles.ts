@@ -77,6 +77,9 @@ export const renderImageCircle = async (
     const newCanvas = document.createElement('canvas'); // 新しいcanvas要素
     const newCtx = newCanvas.getContext('2d');
 
+    img.setAttribute('crossorigin', 'anonymous');
+    img.crossOrigin = 'Anonymous';
+
     newCanvas.width = size;
     newCanvas.height = size;
 
