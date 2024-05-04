@@ -314,10 +314,7 @@ const Content = track(
     );
 
     const urlToFile = async (url: string) => {
-      const params = new URLSearchParams({
-        url
-      });
-      const response = await fetch(`/api/proxy?${params.toString()}`);
+      const response = await fetch(url);
       const blob = await response.blob();
       const file = new File([blob], '', { type: blob.type });
       return file;
@@ -773,6 +770,12 @@ const Content = track(
             </DrawerBody>
           </DrawerContent>
         </Drawer>
+
+        <Box pos="absolute" opacity={0}>
+          {Array.from(Array(23).keys()).map((num) => (
+            <img crossOrigin="anonymous" id={`canvas-img-${num}`} src="" />
+          ))}
+        </Box>
       </>
     );
   }

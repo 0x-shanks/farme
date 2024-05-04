@@ -52,6 +52,7 @@ export const getImageCircles = async (files: File[]): Promise<Blob> => {
       let y = centerY + (radic + margin) * Math.sin(angle);
 
       await renderImageCircle(
+        i,
         file,
         ctx as CanvasRenderingContext2D,
         x - radius / 2,
@@ -73,6 +74,7 @@ export const getImageCircles = async (files: File[]): Promise<Blob> => {
 };
 
 export const renderImageCircle = async (
+  index: number,
   file: File,
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -80,8 +82,10 @@ export const renderImageCircle = async (
   size: number
 ): Promise<void> => {
   return new Promise((resolve, reject) => {
-    const img = new Image();
-    const newCanvas = document.createElement('canvas'); // 新しいcanvas要素
+    const img = document.getElementById(
+      `canvas-img-${index}`
+    ) as HTMLImageElement | null;
+    const newCanvas = document.createElement('canvas');
     const newCtx = newCanvas.getContext('2d');
 
     newCanvas.width = size;
@@ -89,6 +93,9 @@ export const renderImageCircle = async (
 
     if (newCtx == null) {
       throw new Error('ctx is not found');
+    }
+    if (img == null) {
+      throw new Error('img is not found');
     }
 
     img.onload = () => {
