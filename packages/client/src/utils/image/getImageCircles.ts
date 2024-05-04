@@ -1,5 +1,5 @@
 import { siteOrigin } from '../../app/constants';
-export const getImageCircles = async (files: File[]): Promise<string> => {
+export const getImageCircles = async (files: File[]): Promise<Blob> => {
   const canvas = document.createElement('canvas');
   let ctx = canvas.getContext('2d');
   canvas.width = 1000;
@@ -61,8 +61,15 @@ export const getImageCircles = async (files: File[]): Promise<string> => {
     })
   );
 
-  const dataURL = canvas.toDataURL('image/png');
-  return dataURL;
+  75;
+
+  const blob = await new Promise<Blob | null>((resolve) =>
+    canvas.toBlob((b) => resolve(b))
+  );
+  if (blob == null) {
+    throw new Error('cannot make blob');
+  }
+  return blob;
 };
 
 export const renderImageCircle = async (
@@ -76,9 +83,6 @@ export const renderImageCircle = async (
     const img = new Image();
     const newCanvas = document.createElement('canvas'); // 新しいcanvas要素
     const newCtx = newCanvas.getContext('2d');
-
-    img.setAttribute('crossorigin', 'anonymous');
-    img.crossOrigin = 'Anonymous';
 
     newCanvas.width = size;
     newCanvas.height = size;

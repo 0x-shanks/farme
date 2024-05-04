@@ -327,15 +327,15 @@ const Content = track(
 
       (async () => {
         const files = await Promise.all(
-          profileImageUrls.map(async (url, i) => await urlToFile(url))
+          profileImageUrls.map(async (url) => await urlToFile(url))
         );
 
-        const url = await getImageCircles(files);
-        setCircleUrl(url);
+        const blob = await getImageCircles(files);
+        setCircleBlob(blob);
       })();
     }, [isNetworkReady]);
 
-    const [circleUrl, setCircleUrl] = useState<string>();
+    const [circleBlob, setCircleBlob] = useState<Blob>();
 
     const {
       isOpen: isCircleOpen,
@@ -356,18 +356,16 @@ const Content = track(
     const { user: privyUser } = usePrivy();
 
     const prepareImage = async () => {
-      if (!circleUrl) {
-        throw new Error('circleUrl is not found');
+      if (!circleBlob) {
+        throw new Error('circleBlob is not found');
       }
       if (!user.fid) {
         throw new Error('fid is not found');
       }
       setIsPrepareCircleLoading(true);
       try {
-        const fileData = circleUrl.replace(/^data:\w+\/\w+;base64,/, '');
-        const decodedFile = Buffer.from(fileData, 'base64');
-        const circleImageFile = new File([decodedFile], '', {
-          type: 'image/png'
+        const circleImageFile = new File([circleBlob], '', {
+          type: circleBlob.type
         });
 
         setProgressMessage('Preparing to make the image...');
@@ -436,6 +434,13 @@ const Content = track(
       onCircleClose();
     };
 
+    const circleUrl = useMemo(() => {
+      if (circleBlob == undefined) {
+        return undefined;
+      }
+      return URL.createObjectURL(circleBlob);
+    }, [circleBlob]);
+
     const shareLink = useMemo(() => {
       if (storageCircleImageUrl == undefined) {
         return undefined;
@@ -487,7 +492,7 @@ const Content = track(
                 />
               </Box>
 
-              {pathname == '/' && !!circleUrl && (
+              {pathname == '/' && !!circleBlob && (
                 <Box
                   pointerEvents="all"
                   pos="absolute"
@@ -603,7 +608,9 @@ const Content = track(
                     <Text size="sm">{errorMessage}</Text>
                   </HStack>
                 )}
-                {isPrepareCircleSuccess && <Text size="sm">Done🎉</Text>}
+                {isPrepareCircleSuccess && (
+                  <Text size="sm">Ready to share🎉</Text>
+                )}
               </VStack>
             </DrawerBody>
             <DrawerFooter pb={12}>
