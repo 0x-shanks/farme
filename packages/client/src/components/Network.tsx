@@ -31,7 +31,10 @@ import {
   Slider,
   SliderTrack,
   SliderFilledTrack,
-  SliderThumb
+  SliderThumb,
+  DrawerFooter,
+  Skeleton,
+  useToast
 } from '@chakra-ui/react';
 import { IoIosArrowBack } from 'react-icons/io';
 import { canvasAbi } from '@/utils/contract/generated';
@@ -43,11 +46,22 @@ import { usePrivy } from '@privy-io/react-auth';
 import { FiHome } from 'react-icons/fi';
 import Link from 'next/link';
 import { FaChevronRight } from 'react-icons/fa';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import { useLocalStorage } from 'usehooks-ts';
 import { MdLogin } from 'react-icons/md';
 import { getMintDuration } from '@/utils/getMintDuration';
-import { defaultChain, privacyPolicyLink, termsLink } from '@/app/constants';
+import {
+  defaultChain,
+  privacyPolicyLink,
+  siteOrigin,
+  termsLink
+} from '@/app/constants';
+import { getImageCircles } from '@/utils/image/getImageCircles';
+import { vibur } from '@/app/fonts';
+import { CircleImageResponse } from '@/models/circleImageResponse';
+import { CreateCircleMappingRequest } from '@/models/createCircleMappingRequest';
+import * as Sentry from '@sentry/nextjs';
+import imageCompression from 'browser-image-compression';
 
 export const Network: FC<{
   user: UserResponseItem;
@@ -77,6 +91,7 @@ const Content = track(
     const { logout, authenticated } = usePrivy();
     const [defaultExpiredPeriod, setDefaultExpiredPeriod] =
       useLocalStorage<number>('expiredPeriod', 5);
+    const [profileImageUrls, setProfileImageUrls] = useState<string[]>([]);
 
     const onceCanvasFetch = useRef<boolean>(false);
     const {
@@ -261,6 +276,11 @@ const Content = track(
           editor.deleteShape(`shape:${i}` as TLShapeId);
         }
 
+        setProfileImageUrls([
+          user.pfp ?? '',
+          ...users.map((u) => u.pfp).filter((i) => i != undefined)
+        ]);
+
         setNetworkReady(true);
       })();
     }, [user?.fid, user.address, isCanvasSuccess, isCanvasRefetching]);
@@ -293,6 +313,148 @@ const Content = track(
       [defaultExpiredPeriod]
     );
 
+    const urlToFile = async (url: string) => {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const file = new File([blob], '', { type: blob.type });
+      return file;
+    };
+
+    useEffect(() => {
+      if (!isNetworkReady) {
+        return;
+      }
+
+      (async () => {
+        const files = await Promise.all(
+          profileImageUrls.map(async (url, i) => await urlToFile(url))
+        );
+
+        const url = await getImageCircles(files);
+        setCircleUrl(url);
+      })();
+    }, [isNetworkReady]);
+
+    const [circleUrl, setCircleUrl] = useState<string>();
+
+    const {
+      isOpen: isCircleOpen,
+      onOpen: onCircleOpen,
+      onClose: onCircleClose
+    } = useDisclosure();
+
+    const [progressMessage, setProgressMessage] = useState<string>('');
+    const [isPrepareCircleLoading, setIsPrepareCircleLoading] =
+      useState<boolean>(false);
+    const [isPrepareCircleSuccess, setIsPrepareCircleSuccess] =
+      useState<boolean>(false);
+    const [errorMessage, setErrorMessage] = useState<string>('');
+    const [storageCircleImageUrl, setStorageCircleImageUrl] =
+      useState<string>('');
+
+    const { data: session } = useSession();
+    const { user: privyUser } = usePrivy();
+
+    const prepareImage = async () => {
+      if (!circleUrl) {
+        throw new Error('circleUrl is not found');
+      }
+      if (!user.fid) {
+        throw new Error('fid is not found');
+      }
+      setIsPrepareCircleLoading(true);
+      try {
+        const fileData = circleUrl.replace(/^data:\w+\/\w+;base64,/, '');
+        const decodedFile = Buffer.from(fileData, 'base64');
+        const circleImageFile = new File([decodedFile], '', {
+          type: 'image/png'
+        });
+
+        setProgressMessage('Preparing to make the image...');
+        const compressedImage = await imageCompression(circleImageFile, {
+          maxWidthOrHeight: 1000
+        });
+
+        const formData = new FormData();
+        formData.append('file', compressedImage);
+
+        const res = await httpClient.post<CircleImageResponse>(
+          `/circle/image?fid=${user.fid}`,
+          formData
+        );
+
+        setStorageCircleImageUrl(res.data.url);
+
+        const split = res.data.url.split('/');
+        const hash = split[split.length - 1].replace('.png', '');
+
+        const circleReq: CreateCircleMappingRequest = { fid: user.fid, hash };
+        setProgressMessage('Preparing to make frames...');
+        await httpClient.post('circle/mapping', circleReq);
+        setIsPrepareCircleSuccess(true);
+      } catch (e) {
+        Sentry.captureException(e, {
+          tags: {
+            action: 'circle',
+            userAddress: privyUser?.wallet?.address,
+            userFid: session?.user?.id,
+            userName: session?.user?.name,
+            privyId: privyUser?.id,
+            walletConnectorType: privyUser?.wallet?.connectorType,
+            walletClientType: privyUser?.wallet?.walletClientType
+          }
+        });
+        if (e instanceof Error) {
+          setErrorMessage(e.message);
+        } else {
+          setErrorMessage('Unknown error');
+        }
+        setProgressMessage('');
+        setStorageCircleImageUrl('');
+      } finally {
+        setProgressMessage('');
+        setIsPrepareCircleLoading(false);
+      }
+    };
+
+    useEffect(() => {
+      if (!isCircleOpen) {
+        return;
+      }
+
+      (async () => {
+        await prepareImage();
+      })();
+    }, [isCircleOpen]);
+
+    const handleCircleClose = () => {
+      setIsPrepareCircleLoading(false);
+      setIsPrepareCircleSuccess(false);
+      setProgressMessage('');
+      setErrorMessage('');
+      setStorageCircleImageUrl('');
+      onCircleClose();
+    };
+
+    const shareLink = useMemo(() => {
+      if (storageCircleImageUrl == undefined) {
+        return undefined;
+      }
+
+      const split = storageCircleImageUrl.split('/');
+      if (split == undefined) {
+        return undefined;
+      }
+      const hash = split[split.length - 1].replace('.png', '');
+
+      const params = {
+        text: 'My farme circle✨',
+        parentUrl: 'https://warpcast.com/~/channel/farme',
+        'embeds[]': `${siteOrigin}/frames/circle/${hash}`
+      };
+      return `https://warpcast.com/~/compose?${new URLSearchParams(params).toString()}`;
+    }, [storageCircleImageUrl]);
+
     return (
       <>
         <Box
@@ -324,6 +486,33 @@ const Content = track(
                   onClick={onSettingOpen}
                 />
               </Box>
+
+              {pathname == '/' && !!circleUrl && (
+                <Box
+                  pointerEvents="all"
+                  pos="absolute"
+                  bottom={8}
+                  right={0}
+                  px={6}
+                  py={4}
+                >
+                  <Button
+                    variant="unstyled"
+                    h={70}
+                    w={70}
+                    overflow="hidden"
+                    rounded="md"
+                    onClick={onCircleOpen}
+                  >
+                    <Image
+                      src={circleUrl}
+                      h={70}
+                      w={70}
+                      transform="scale(1.5)"
+                    />
+                  </Button>
+                </Box>
+              )}
 
               <HStack
                 pos="absolute"
@@ -381,13 +570,74 @@ const Content = track(
 
         <Drawer
           placement="bottom"
+          onClose={handleCircleClose}
+          isOpen={isCircleOpen}
+        >
+          <DrawerOverlay />
+          <DrawerContent>
+            <DrawerCloseButton />
+            <DrawerHeader className={vibur.className} fontSize="4xl">
+              Share your circle
+            </DrawerHeader>
+            <DrawerBody w="full">
+              <VStack w="full">
+                <Text fontWeight="bold" fontSize="lg">
+                  Share farme circle on farcaster
+                </Text>
+                <Image src={circleUrl} w="70%" />
+                {progressMessage && (
+                  <HStack w="full" justify="center">
+                    <Skeleton
+                      w={2}
+                      h={2}
+                      startColor="green.400"
+                      endColor="green.100"
+                      rounded="full"
+                    />
+                    <Text size="sm">{progressMessage}</Text>
+                  </HStack>
+                )}
+                {errorMessage && (
+                  <HStack w="full" justify="center">
+                    <Box w={2} h={2} bgColor="red.400" rounded="full" />
+                    <Text size="sm">{errorMessage}</Text>
+                  </HStack>
+                )}
+                {isPrepareCircleSuccess && <Text size="sm">Done🎉</Text>}
+              </VStack>
+            </DrawerBody>
+            <DrawerFooter pb={12}>
+              <Link
+                href={shareLink ?? ''}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button
+                  colorScheme="primary"
+                  rounded="full"
+                  isDisabled={!isPrepareCircleSuccess || !shareLink}
+                  pointerEvents={
+                    isPrepareCircleSuccess && shareLink ? 'all' : 'none'
+                  }
+                >
+                  Share on farcaster
+                </Button>
+              </Link>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+
+        <Drawer
+          placement="bottom"
           onClose={onSettingClose}
           isOpen={isSettingOpen}
         >
           <DrawerOverlay />
           <DrawerContent>
             <DrawerCloseButton />
-            <DrawerHeader>Settings</DrawerHeader>
+            <DrawerHeader className={vibur.className} fontSize="4xl">
+              Settings
+            </DrawerHeader>
             <DrawerBody w="full" pb={20}>
               <VStack w="full" spacing={6}>
                 <VStack w="full">
