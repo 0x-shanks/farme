@@ -82,9 +82,7 @@ export const renderImageCircle = async (
   size: number
 ): Promise<void> => {
   return new Promise((resolve, reject) => {
-    const img = document.getElementById(
-      `canvas-img-${index}`
-    ) as HTMLImageElement | null;
+    const img = new Image();
     const newCanvas = document.createElement('canvas');
     const newCtx = newCanvas.getContext('2d');
 
@@ -93,9 +91,6 @@ export const renderImageCircle = async (
 
     if (newCtx == null) {
       throw new Error('ctx is not found');
-    }
-    if (img == null) {
-      throw new Error('img is not found');
     }
 
     img.onload = () => {
@@ -115,7 +110,7 @@ export const renderImageCircle = async (
     img.onerror = (error) => {
       reject(error);
     };
-
+    img.crossOrigin = 'anonymous';
     img.src = URL.createObjectURL(file);
   });
 };
@@ -135,6 +130,7 @@ export const renderLogo = async (
       reject(error);
     };
 
+    img.crossOrigin = 'anonymous';
     img.src = `${siteOrigin}/images/logo-white.png`;
   });
 };
