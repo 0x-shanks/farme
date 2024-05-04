@@ -17,7 +17,7 @@ export const fee = parseEther('0.000777');
 
 export const siteOrigin =
   process.env.NEXT_PUBLIC_ORIGIN ||
-  process.env.VERCEL_URL ||
+  process.env.NEXT_PUBLIC_VERCEL_URL ||
   'http://localhost:8000';
 
 export const siteDomain = siteOrigin.split('://')[1];
