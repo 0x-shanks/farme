@@ -278,7 +278,7 @@ const Content = track(
 
         setProfileImageUrls([
           user.pfp ?? '',
-          ...users.map((u) => u.pfp).filter((i) => i != undefined)
+          ...(users.map((u) => u.pfp).filter((i) => i != undefined) as string[])
         ]);
 
         setNetworkReady(true);

@@ -53,7 +53,7 @@ export const getImageCircles = async (files: File[]): Promise<string> => {
 
       await renderImageCircle(
         file,
-        ctx,
+        ctx as CanvasRenderingContext2D,
         x - radius / 2,
         y - radius / 2,
         radius
