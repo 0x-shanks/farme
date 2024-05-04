@@ -314,7 +314,10 @@ const Content = track(
     );
 
     const urlToFile = async (url: string) => {
-      const response = await fetch(url);
+      const params = new URLSearchParams({
+        url
+      });
+      const response = await fetch(`/api/proxy?${params.toString()}`);
       const blob = await response.blob();
       const file = new File([blob], '', { type: blob.type });
       return file;
