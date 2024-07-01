@@ -21,7 +21,7 @@ export async function GET(
 
   const getReactions = cache(
     async () =>
-      await farcasterHubClient.getReactionsByFid({
+      await farcasterHubClient.read.getReactionsByFid({
         fid,
         pageSize: 50,
         reverse: true
@@ -45,7 +45,7 @@ export async function GET(
 
   const getCastsByMention = cache(
     async () =>
-      await farcasterHubClient.getCastsByMention({
+      await farcasterHubClient.read.getCastsByMention({
         fid: fid,
         pageSize: 20,
         reverse: true
@@ -109,12 +109,16 @@ export async function GET(
   fids = fids.slice(0, fids.length - 1 > 23 ? 23 : fids.length - 1);
 
   const users = await Promise.all(
-    fids.map(cache(async (fid) => farcasterHubClient.getUserDataByFid({ fid })))
+    fids.map(
+      cache(async (fid) => farcasterHubClient.read.getUserDataByFid({ fid }))
+    )
   );
 
   const verifications = await Promise.all(
     fids.map(
-      cache(async (fid) => farcasterHubClient.getVerificationsByFid({ fid }))
+      cache(async (fid) =>
+        farcasterHubClient.read.getVerificationsByFid({ fid })
+      )
     )
   );
 

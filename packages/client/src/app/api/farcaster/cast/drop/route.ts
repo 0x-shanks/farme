@@ -71,7 +71,7 @@ export async function POST(request: Request) {
     ed25519Signer
   );
   if (cast.isOk()) {
-    const res = await farcasterHubClient.submitMessage(cast.value);
+    const res = await farcasterHubClient.write.submitMessage(cast.value);
     if (res.isErr()) {
       throw res.error;
     }

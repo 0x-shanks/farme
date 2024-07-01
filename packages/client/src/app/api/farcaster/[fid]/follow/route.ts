@@ -15,7 +15,7 @@ export async function GET(
 
   const getFollowStatus = cache(
     async () =>
-      await farcasterHubClient.getLink({
+      await farcasterHubClient.read.getLink({
         fid,
         targetFid: appFid,
         linkType: 'follow'

@@ -16,11 +16,11 @@ export async function GET(
   const fid = params.fid;
 
   const getUser = cache(
-    async () => await farcasterHubClient.getUserDataByFid({ fid })
+    async () => await farcasterHubClient.read.getUserDataByFid({ fid })
   );
 
   const getVerification = cache(
-    async () => await farcasterHubClient.getVerificationsByFid({ fid })
+    async () => await farcasterHubClient.read.getVerificationsByFid({ fid })
   );
 
   const user = await getUser();

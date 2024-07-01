@@ -1,4 +1,12 @@
-import { farcasterHubURL } from '@/app/constants';
-import { getSSLHubRpcClient } from '@farcaster/hub-nodejs';
+import { farcasterHubReadURL, farcasterHubWriteURL } from '@/app/constants';
+import { getSSLHubRpcClient, HubRpcClient } from '@farcaster/hub-nodejs';
 
-export const farcasterHubClient = getSSLHubRpcClient(farcasterHubURL);
+type Client = {
+  read: HubRpcClient;
+  write: HubRpcClient;
+};
+
+export const farcasterHubClient: Client = {
+  read: getSSLHubRpcClient(farcasterHubReadURL),
+  write: getSSLHubRpcClient(farcasterHubWriteURL)
+};
