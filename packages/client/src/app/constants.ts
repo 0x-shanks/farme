@@ -5,8 +5,10 @@ export const isMainnet = process.env.NEXT_PUBLIC_IS_MAINNNET == 'true';
 export const defaultChain = isMainnet ? zora : zoraSepolia;
 export const supportedChains = [defaultChain];
 
-export const farcasterHubURL =
-  process.env.NEXT_PUBLIC_FARCASTER_HUB_ENDPOINT ?? 'hub-grpc.pinata.cloud';
+export const farcasterHubReadURL =
+  process.env.FARCASTER_HUB_ENDPOINT ?? 'hub-grpc.pinata.cloud';
+
+export const farcasterHubWriteURL = 'hub-grpc.pinata.cloud';
 
 // NOTE: must be EOA
 export const createReferral = process.env
