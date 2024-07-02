@@ -1,6 +1,8 @@
 import { UsersResponse } from '@/models/userResponse';
 import { farcasterHubClient } from '@/utils/farcaster/client';
+import { neynarClient } from '@/utils/neynar/client';
 import { CastAddBody, ReactionBody, UserDataType } from '@farcaster/hub-nodejs';
+import { FollowSortType } from '@neynar/nodejs-sdk';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { cache } from 'react';
@@ -18,6 +20,28 @@ export async function GET(
   const searchParams = request.nextUrl.searchParams;
   const inits = searchParams.getAll('init');
   const canvasAppearanceWeight = 2;
+  const followingWeight = 10;
+  const followerWeight = 10;
+
+  const getFollowers = cache(
+    async () =>
+      await neynarClient.fetchUserFollowersV2(fid, {
+        sortType: FollowSortType.Algorithmic,
+        limit: 100
+      })
+  );
+
+  const followers = await getFollowers();
+
+  const getFollowing = cache(
+    async () =>
+      await neynarClient.fetchUserFollowingV2(fid, {
+        sortType: FollowSortType.Algorithmic,
+        limit: 100
+      })
+  );
+
+  const following = await getFollowing();
 
   const getReactions = cache(
     async () =>
@@ -74,6 +98,28 @@ export async function GET(
     if (!fid || !count) return;
 
     score.set(fid, count + canvasAppearanceWeight);
+  });
+
+  followers.users.forEach((u) => {
+    //@ts-ignore
+    const fid = u.user.fid;
+    const s = score.get(fid);
+    if (s == undefined) {
+      score.set(fid, followerWeight);
+    } else {
+      score.set(fid, s + followerWeight);
+    }
+  });
+
+  following.users.forEach((u) => {
+    //@ts-ignore
+    const fid = u.user.fid;
+    const s = score.get(fid);
+    if (s == undefined) {
+      score.set(fid, followingWeight);
+    } else {
+      score.set(fid, s + followingWeight);
+    }
   });
 
   reactionBodies.forEach((b) => {
